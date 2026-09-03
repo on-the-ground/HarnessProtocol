@@ -1,0 +1,16 @@
+.gradle/
+.idea/
+.venv/
+__pycache__/
+*.py[cod]
+build/
+**/build/
+node_modules/
+bridges/node_modules/
+*.iml
+*.log
+.kotlin/
+.pytest_cache/
+_stage/
+.venv*/
+*.egg-info/
