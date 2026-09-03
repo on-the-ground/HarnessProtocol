@@ -50,7 +50,7 @@ AgentHarness ── creates/resumes ──> AgentSession ── release
 
 ```kotlin
 dependencies {
-    implementation("dev.harnessprotocol:harness-bundle:0.1.0-SNAPSHOT")
+    implementation("io.github.joohyung-park:harness-bundle:0.1.0")
 }
 ```
 

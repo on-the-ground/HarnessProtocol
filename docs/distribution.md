@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.harnessprotocol:harness-bundle:0.1.0-SNAPSHOT")
+    implementation("io.github.joohyung-park:harness-bundle:0.1.0")
 }
 ```
 
@@ -41,7 +41,7 @@ val harness: AgentHarness = Harnesses.create(configuration.provider)
 기본 좌표는 다음과 같다.
 
 ```text
-dev.harnessprotocol:harness-bundle:0.1.0-SNAPSHOT
+io.github.joohyung-park:harness-bundle:0.1.0
 ```
 
 좌표는 발행 시 바꿀 수 있다.
@@ -52,7 +52,13 @@ dev.harnessprotocol:harness-bundle:0.1.0-SNAPSHOT
   -PpublicationVersion=1.0.0
 ```
 
-실제 Maven Central 공개에는 프로젝트 URL, SCM, 개발자, 라이선스 선택, 서명, repository credential을 조직 정보에 맞게 추가해야 한다. 이 저장소는 아직 그 정보를 임의로 만들지 않는다.
+Maven Central(Central Portal) 공개용 bundle은 다음으로 만든다.
+
+```powershell
+.\gradlew.bat bundleForMavenCentral -PpublicationVersion=1.0.0
+```
+
+각 모듈을 `build/staging-deploy`에 서명된 상태로 publish한 뒤 `build/bundle/bundle.zip`으로 묶는다. `publicationVersion`을 지정하지 않으면 기본값(`0.1.0`)이 쓰이지만, SNAPSHOT 버전은 Central Portal이 bundle 업로드를 거부하므로 릴리즈할 땐 항상 release 버전을 명시해야 한다. POM의 URL/SCM/라이선스(Apache-2.0)/개발자 정보와 GPG 서명은 이미 구성되어 있다 — namespace(`io.github.joohyung-park`)는 Central Portal 계정에서 GitHub 소유권으로 인증된 상태여야 한다.
 
 ## JAR에 포함되는 것
 
@@ -81,9 +87,9 @@ SDK API를 감추는 것과 provider runtime을 없애는 것은 다른 문제�
 하나의 provider만 필요하면 bundle 대신 다음을 직접 사용할 수 있다.
 
 ```text
-dev.harnessprotocol:harness-protocol
-dev.harnessprotocol:harness-codex
-dev.harnessprotocol:harness-gemini-cli
+io.github.joohyung-park:harness-protocol
+io.github.joohyung-park:harness-codex
+io.github.joohyung-park:harness-gemini-cli
 ```
 
 `harness-process-bridge`는 adapter의 내부 runtime dependency이므로 소비자가 직접 참조하지 않는다. `harness-adapter-testkit`은 test-only 모듈이며 발행되지 않는다.

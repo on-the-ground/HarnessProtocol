@@ -1,5 +1,6 @@
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.plugins.signing.SigningExtension
 
 plugins {
     kotlin("jvm") version "2.2.0" apply false
@@ -14,8 +15,8 @@ val artifactDescriptions = mapOf(
     "harness-bundle" to "Single dependency containing Harness Protocol and its SDK adapters",
 )
 
-val publicationGroup = providers.gradleProperty("publicationGroup").orElse("dev.harnessprotocol")
-val publicationVersion = providers.gradleProperty("publicationVersion").orElse("0.1.0-SNAPSHOT")
+val publicationGroup = providers.gradleProperty("publicationGroup").orElse("io.github.joohyung-park")
+val publicationVersion = providers.gradleProperty("publicationVersion").orElse("0.1.0")
 
 allprojects {
     group = publicationGroup.get()
@@ -33,9 +34,11 @@ allprojects {
 subprojects {
     pluginManager.withPlugin("java-library") {
         pluginManager.apply("maven-publish")
+        pluginManager.apply("signing")
 
         extensions.configure<JavaPluginExtension> {
             withSourcesJar()
+            withJavadocJar()
         }
 
         extensions.configure<PublishingExtension> {
@@ -44,6 +47,25 @@ subprojects {
                 pom {
                     name.set(project.name)
                     description.set(artifactDescriptions[project.name])
+                    url.set("https://github.com/on-the-ground/HarnessProtocol")
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("on-the-ground")
+                            name.set("Joohyung Park")
+                            email.set("joohyung.park@on-the-ground.org")
+                        }
+                    }
+                    scm {
+                        connection.set("scm:git:https://github.com/on-the-ground/HarnessProtocol.git")
+                        developerConnection.set("scm:git:ssh://git@github.com/on-the-ground/HarnessProtocol.git")
+                        url.set("https://github.com/on-the-ground/HarnessProtocol")
+                    }
                 }
             }
             repositories {
@@ -51,6 +73,45 @@ subprojects {
                     name = "buildRepository"
                     url = rootProject.layout.buildDirectory.dir("repository").get().asFile.toURI()
                 }
+                maven {
+                    name = "stagingDeploy"
+                    url = rootProject.layout.buildDirectory.dir("staging-deploy").get().asFile.toURI()
+                }
+            }
+        }
+
+        val mavenJava = extensions.getByType<PublishingExtension>().publications["mavenJava"]
+        extensions.configure<SigningExtension> {
+            sign(mavenJava)
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Maven Central bundle: publish every module to a shared local staging
+// directory, then zip it into the single bundle.zip the Central Portal
+// Publisher API expects.
+// ---------------------------------------------------------------------------
+// The Central Portal rejects a bundle containing more than one version (or any
+// SNAPSHOT) per module, so wipe leftovers from a prior invocation before republishing.
+val cleanStagingDeploy = tasks.register<Delete>("cleanStagingDeploy") {
+    delete(layout.buildDirectory.dir("staging-deploy"))
+}
+
+val bundleForMavenCentral = tasks.register<Zip>("bundleForMavenCentral") {
+    group = "publishing"
+    description = "Assembles a Maven Central Publisher API bundle from the staging repository"
+    from(layout.buildDirectory.dir("staging-deploy"))
+    archiveFileName.set("bundle.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("bundle"))
+}
+
+gradle.projectsEvaluated {
+    bundleForMavenCentral.configure {
+        subprojects.forEach { subproject ->
+            subproject.tasks.findByName("publishMavenJavaPublicationToStagingDeployRepository")?.let {
+                it.dependsOn(cleanStagingDeploy)
+                dependsOn(it)
             }
         }
     }
