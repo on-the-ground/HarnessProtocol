@@ -23,12 +23,54 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.measureTime
 
 @Serializable data class EffectArgs(val marker: String)
 
 @Timeout(15)
 class KoogNativeToolTest {
     @TempDir lateinit var directory: Path
+
+    @Test fun `several noncooperative graph tools share one cleanup budget and retain late effects`() = runBlocking<Unit> {
+        val entered = List(4) { CompletableDeferred<Unit>() }
+        val finished = List(4) { CompletableDeferred<Unit>() }
+        val proceed = CompletableDeferred<Unit>()
+        val tool = object : SimpleTool<EffectArgs>(typeToken<EffectArgs>(), "late_effect", "Write an isolated late marker") {
+            override suspend fun execute(args: EffectArgs): String = withContext(NonCancellable) {
+                val index = args.marker.toInt()
+                entered[index].complete(Unit)
+                proceed.await()
+                Files.writeString(directory.resolve("late-$index.txt"), "effect-$index")
+                finished[index].complete(Unit)
+                "written"
+            }
+        }
+        val harness = KoogHarness({ object : PromptExecutor() {
+            private var first = true
+            override suspend fun execute(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): Message.Assistant {
+                val index = prompt.messages.last().textContent()
+                return if (first) {
+                    first = false
+                    Message.Assistant(MessagePart.Tool.Call("late-$index", "late_effect", """{"marker":"$index"}"""), ResponseMetaInfo.Empty)
+                } else Message.Assistant("done", ResponseMetaInfo.Empty)
+            }
+            override fun executeStreaming(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): Flow<StreamFrame> = error("not used")
+            override suspend fun moderate(prompt: Prompt, model: LLModel): ModerationResult = error("not used")
+            override fun close() = Unit
+        } }, OpenAIModels.Chat.GPT4o, ToolRegistry { tool(tool) }, cleanupBudget = CleanupBudget(200.milliseconds, 300.milliseconds, false))
+        try {
+            val tasks = List(4) { index -> harness.createSession(SessionSpec()).startTask(TaskRequest(TaskInput.Text("$index"))) }
+            withTimeout(5_000) { entered.awaitAll() }
+            val elapsed = measureTime { withContext(Dispatchers.IO) { harness.close() } }
+            assertTrue(elapsed < 450.milliseconds, "Noncooperative grace periods must not add up: $elapsed")
+            val outcomes = tasks.map { assertIs<TaskOutcome.Unresolved>(withTimeout(1_000) { it.awaitOutcome() }) }
+            repeat(4) { assertFalse(Files.exists(directory.resolve("late-$it.txt"))) }
+            proceed.complete(Unit)
+            withTimeout(5_000) { finished.awaitAll() }
+            repeat(4) { assertEquals("effect-$it", Files.readString(directory.resolve("late-$it.txt"))) }
+            assertEquals(outcomes, tasks.map { it.awaitOutcome() })
+        } finally { proceed.complete(Unit); harness.close() }
+    }
 
     @Test fun `failed multi-call graph retains observed output and native context for the next task`() = runBlocking<Unit> {
         val calls = AtomicInteger()

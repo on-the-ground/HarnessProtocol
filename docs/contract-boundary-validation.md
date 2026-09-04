@@ -31,3 +31,11 @@
 빈 응답은 native API가 받는 것과 adapter가 확보하는 것을 구별한다. Codex는 산출물 없는 Completed와 실제 빈 텍스트 Completed를 각각 제공한다. Koog는 빈 텍스트를 제공하지만 조각이 전혀 없는 응답은 graph에서 실패한다. Gemini SDK는 빈/무내용 모델 응답을 실패로 처리하고 empty content 이벤트를 제공하지 않는다. 이 경우 Failed와 null output을 보존하며 빈 텍스트를 합성하지 않는다.
 
 [최초 실행](../harness-native-integration/evidence/g05-outcome-first-run.json)의 5개 실패 중 2개는 native 재시도마다 fixture가 같은 텍스트를 다시 보냈기 때문이었다. 재시도에는 출력 전 HTTP 400을 반환하도록 유도 경계를 수정했다. 나머지 3개는 모든 runtime이 빈 응답을 정상 완료로 받는다는 잘못된 fixture 가정이었다. Port/production 구현은 바꾸지 않았다. 수치 사용량의 구간 합산·누락·snapshot 검증은 G11에서 별도로 다룬다.
+
+## G06 — 다중 자원 정리와 늦은 효과
+
+공통 3개 정의를 세 runtime에 연결한 9개와 Koog 도구 검사 3개가 [모두 통과](../harness-native-integration/evidence/g06-cleanup.json)했다. 12개 중 기존 Koog 검사 2개는 회귀 재실행이며 신규 검사 수에 더하지 않는다.
+
+네 session의 실제 모델 호출을 보류한 채 close해 전체 상한 안의 종결 회수·닫힌 핸들 거절·terminal 보존을 확인했다. release 호출자의 coroutine 취소에도 정리가 진행되고, 다른 작업의 정리가 이미 Completed인 outcome을 바꾸지 않는다. process 정리에는 전체 상한에 500ms의 관측 허용치를 적용하며 자원 수에 따라 늘리지 않는다.
+
+Koog에서는 네 실제 도구를 NonCancellable 상태로 보류하고 200ms per-task / 300ms total 설정에서 close가 450ms 안에 끝나는지 검증했다. 네 outcome 모두 Unresolved이고 아직 파일 효과가 없으며, 도구를 풀면 네 파일에 실제 효과가 발생해도 기존 outcome은 유지된다. 관찰만 끊어졌다는 이유로 Cancelled를 합성하지 않는다. 이 실행에서 production 수정은 필요하지 않았다.
