@@ -39,3 +39,9 @@
 네 session의 실제 모델 호출을 보류한 채 close해 전체 상한 안의 종결 회수·닫힌 핸들 거절·terminal 보존을 확인했다. release 호출자의 coroutine 취소에도 정리가 진행되고, 다른 작업의 정리가 이미 Completed인 outcome을 바꾸지 않는다. process 정리에는 전체 상한에 500ms의 관측 허용치를 적용하며 자원 수에 따라 늘리지 않는다.
 
 Koog에서는 네 실제 도구를 NonCancellable 상태로 보류하고 200ms per-task / 300ms total 설정에서 close가 450ms 안에 끝나는지 검증했다. 네 outcome 모두 Unresolved이고 아직 파일 효과가 없으며, 도구를 풀면 네 파일에 실제 효과가 발생해도 기존 outcome은 유지된다. 관찰만 끊어졌다는 이유로 Cancelled를 합성하지 않는다. 이 실행에서 production 수정은 필요하지 않았다.
+
+## G07 — 의미 이벤트와 진단의 독립 과부하
+
+공통 1개 정의를 세 runtime에 연결해 [3개 통과](../harness-native-integration/evidence/g07-observation.json). Codex·Gemini는 실제 모델 스트림 700조각, Koog는 실제 graph 도구 400회를 수행한다. 의미/진단의 빠른 구독자와 첫 이벤트에서 멈춘 구독자를 동시에 연결한다. 느린 두 구독자가 모두 멈춰 있어도 작업은 Completed에 도달하고, 각각의 전달 건수와 gap 건수 합은 빠른 구독자의 관측과 일치한다. 의미 terminal은 마지막에 정확히 한 번 남는다.
+
+[최초 실행](../harness-native-integration/evidence/g07-observation-first-run.json)은 Gemini의 반복 감지와 Koog graph의 텍스트 종결 우선 규칙에 의해 부하 생성이 조기 종료됐다. Gemini 조각을 구별 가능한 값으로 만들고, Koog 공식 singleRunStrategy의 중간 응답을 tool-only로 구성했다. 그래프의 반복 상한도 충분히 설정했다. runtime의 정상 종료 규칙을 바꾸거나 Port에 인위적인 이벤트를 주입하지 않았다.
