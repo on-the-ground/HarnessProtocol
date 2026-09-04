@@ -6,6 +6,8 @@
 
 Host는 stdin 요청과 stdout 응답·이벤트를 한 줄에 하나의 JSON 객체로 교환한다. stderr는 진단용이고 현재 Kotlin bridge가 마지막 32KB를 보관한다. host는 lazy start하며 현재 bridge는 예기치 않은 종료 뒤 자동 재시작하지 않는다.
 
+`JsonLineProcessBridge`의 environment mode는 기본 `INHERIT`에서 부모 환경 위에 명시 값을 덮어쓴다. `REPLACE`는 부모 환경을 비우고 호출자가 제공한 항목만 host process에 전달한다. Codex와 Gemini host options는 각 adapter namespace에서 같은 두 모드를 노출한다.
+
 다음 wire 이름은 현 구현 그대로다. 공개 Task 이름 전환이 내부 wire의 동시 rename을 강제하지는 않는다.
 
 | method | params | result |

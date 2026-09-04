@@ -94,6 +94,10 @@ class GeminiCliHarness private constructor(
                 command = options.nodeCommand + bridgeScript.toAbsolutePath().toString(),
                 workingDirectory = options.processWorkingDirectory,
                 environment = environment,
+                environmentMode = when (options.environmentMode) {
+                    GeminiCliSdkOptions.EnvironmentMode.INHERIT -> dev.harnessprotocol.bridge.ProcessEnvironmentMode.INHERIT
+                    GeminiCliSdkOptions.EnvironmentMode.REPLACE -> dev.harnessprotocol.bridge.ProcessEnvironmentMode.REPLACE
+                },
             )
             return GeminiCliHarness(bridge, CoroutineScope(SupervisorJob() + Dispatchers.Default))
         }
@@ -113,7 +117,10 @@ data class GeminiCliSdkOptions(
     ),
     val processWorkingDirectory: Path? = null,
     val environment: Map<String, String> = emptyMap(),
-)
+    val environmentMode: EnvironmentMode = EnvironmentMode.INHERIT,
+) {
+    enum class EnvironmentMode { INHERIT, REPLACE }
+}
 
 private class GeminiSession(
     private val state: BridgeHarnessRuntime.SessionState,

@@ -24,6 +24,7 @@ import kotlinx.serialization.json.put
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
@@ -84,6 +85,25 @@ class ProcessLifecycleTest {
         BridgeAgentExecution(id, SessionId("s"), bridge.events(id.value), bridge, scope, map(id))
     }
 
+    private fun environmentHost(): List<String>? {
+        val py = python() ?: return null
+        val script = Files.createTempFile("environment-host-", ".py")
+        script.toFile().deleteOnExit()
+        script.toFile().writeText(
+            """
+            import json, os, sys
+            for line in sys.stdin:
+                req = json.loads(line)
+                result = {
+                    "hasPath": "PATH" in os.environ,
+                    "sentinel": os.environ.get("AHP_ENV_SENTINEL", ""),
+                }
+                print(json.dumps({"kind": "response", "id": req["id"], "result": result}), flush=True)
+            """.trimIndent(),
+        )
+        return listOf(py, script.toAbsolutePath().toString())
+    }
+
     private fun withBridge(ending: String, block: suspend (JsonLineProcessBridge, CoroutineScope) -> Unit) {
         val command = host(ending) ?: return println("skipped: no python interpreter")
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -100,6 +120,33 @@ class ProcessLifecycleTest {
     fun `completes through a real host process`() = withBridge("complete") { bridge, scope ->
         val execution = start(bridge, scope)
         assertEquals("ok", withTimeout(10_000) { execution.awaitResult() }.finalMessage)
+    }
+
+    @Test
+    fun `inherit mode overlays entries and retains the parent environment`() {
+        val command = environmentHost() ?: return println("skipped: no python interpreter")
+        JsonLineProcessBridge(
+            command = command,
+            environment = mapOf("AHP_ENV_SENTINEL" to "inherited"),
+        ).use { bridge ->
+            val result = runBlocking { bridge.request("environment") }
+            assertTrue((result["hasPath"] as JsonPrimitive).content.toBoolean())
+            assertEquals("inherited", (result["sentinel"] as JsonPrimitive).content)
+        }
+    }
+
+    @Test
+    fun `replace mode exposes only explicitly supplied environment entries`() {
+        val command = environmentHost() ?: return println("skipped: no python interpreter")
+        JsonLineProcessBridge(
+            command = command,
+            environment = mapOf("AHP_ENV_SENTINEL" to "isolated"),
+            environmentMode = ProcessEnvironmentMode.REPLACE,
+        ).use { bridge ->
+            val result = runBlocking { bridge.request("environment") }
+            assertFalse((result["hasPath"] as JsonPrimitive).content.toBoolean())
+            assertEquals("isolated", (result["sentinel"] as JsonPrimitive).content)
+        }
     }
 
     @Test
