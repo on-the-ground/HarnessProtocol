@@ -354,6 +354,7 @@ private fun JsonObject.toUsage(): AgentUsage = AgentUsage(
     outputTokens = longOrNull("outputTokens") ?: longOrNull("output_tokens"),
     reasoningTokens = longOrNull("reasoningOutputTokens") ?: longOrNull("reasoning_output_tokens"),
     totalTokens = longOrNull("totalTokens") ?: longOrNull("total_tokens"),
+    cacheWriteInputTokens = longOrNull("cacheWriteInputTokens") ?: longOrNull("cache_write_input_tokens"),
 )
 
 private fun JsonObject.obj(name: String): JsonObject? = this[name] as? JsonObject

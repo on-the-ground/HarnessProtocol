@@ -31,10 +31,15 @@ class CodexEventMapperTest {
         put("turn", buildJsonObject { put("status", status); error?.let { put("error", it) } })
     })
 
-    private fun usage(total: Triple<Long, Long, Long>, last: Triple<Long, Long, Long>) = raw("thread/tokenUsage/updated", buildJsonObject {
+    private fun usage(
+        total: Triple<Long, Long, Long>,
+        last: Triple<Long, Long, Long>,
+        totalCacheWrite: Long = 0,
+        lastCacheWrite: Long = 0,
+    ) = raw("thread/tokenUsage/updated", buildJsonObject {
         put("tokenUsage", buildJsonObject {
-            put("total", buildJsonObject { put("inputTokens", total.first); put("outputTokens", total.second); put("totalTokens", total.third); put("cachedInputTokens", 0); put("reasoningOutputTokens", 0) })
-            put("last", buildJsonObject { put("inputTokens", last.first); put("outputTokens", last.second); put("totalTokens", last.third); put("cachedInputTokens", 0); put("reasoningOutputTokens", 0) })
+            put("total", buildJsonObject { put("inputTokens", total.first); put("outputTokens", total.second); put("totalTokens", total.third); put("cachedInputTokens", 0); put("reasoningOutputTokens", 0); put("cacheWriteInputTokens", totalCacheWrite) })
+            put("last", buildJsonObject { put("inputTokens", last.first); put("outputTokens", last.second); put("totalTokens", last.third); put("cachedInputTokens", 0); put("reasoningOutputTokens", 0); put("cacheWriteInputTokens", lastCacheWrite) })
         })
     })
 
@@ -60,8 +65,23 @@ class CodexEventMapperTest {
     fun `reads nested last and total usage`() {
         val events = mapper.map(usage(total = Triple(100, 40, 140), last = Triple(30, 10, 40)))
         val changed = assertIs<AgentEvent.UsageChanged>(events.first())
-        assertEquals(AgentUsage(inputTokens = 30, cachedInputTokens = 0, outputTokens = 10, reasoningTokens = 0, totalTokens = 40), changed.execution)
+        assertEquals(AgentUsage(inputTokens = 30, cachedInputTokens = 0, outputTokens = 10, reasoningTokens = 0, totalTokens = 40, cacheWriteInputTokens = 0), changed.execution)
         assertEquals(140, changed.session?.totalTokens)
+    }
+
+    @Test
+    fun `preserves cache write input tokens`() {
+        val events = mapper.map(
+            usage(
+                total = Triple(100, 40, 140),
+                last = Triple(30, 10, 40),
+                totalCacheWrite = 9,
+                lastCacheWrite = 4,
+            ),
+        )
+        val changed = assertIs<AgentEvent.UsageChanged>(events.first())
+        assertEquals(4, changed.execution.cacheWriteInputTokens)
+        assertEquals(9, changed.session?.cacheWriteInputTokens)
     }
 
     @Test

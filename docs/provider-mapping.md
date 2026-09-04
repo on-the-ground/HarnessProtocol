@@ -18,7 +18,7 @@
 | Outcome | 현재 turn completion/error를 이전 결과·예외로 변환 | finished/error 및 host 알림 | 결과·예외 관찰. 세 경로 모두 새 TaskOutcome/Unresolved 의미로 개정 |
 | 산출물 | final-answer 메시지, 부족하면 관찰한 delta | 누적 content | String 결과. TaskOutput과 schema 보장 분리 필요 |
 | Tool/effect | tool·command·file·search item lifecycle | tool request/response | 실제 registry 호출 hooks. 내부 node는 자동으로 tool이 되지 않음 |
-| Usage/context | token usage, compaction 알림 | usageMetadata, chat-compressed | 메타데이터가 없으면 unknown. 전체 측정·compaction 미검증 |
+| Usage/context | input/cache-hit/cache-write/output/reasoning token usage, compaction 알림 | usageMetadata, chat-compressed | 메타데이터가 없으면 unknown. 전체 측정·compaction 미검증 |
 | 진단 | 원본 method/payload | 원본 type/value | hooks/internal 객체. ProviderDiagnostic 선택 경로로 분리 |
 
 같은 purpose를 서로 다른 수단으로 이행할 수 있다. provider thread를 그대로 노출하거나 Koog graph에 맞춰 Port를 바꾸지 않는다. TaskId·SessionId·WorkId의 외부 의미는 native ID 형식과 분리한다.

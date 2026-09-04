@@ -68,7 +68,7 @@ Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요
 
 `UsageChanged`는 **그 시점까지의 Task 누적 snapshot**이다. 소비자는 이전 snapshot에 더하지 않고 새 값으로 갱신한다. provider의 증분은 adapter에서 누적하고, 이미 누적인 값은 반복 합산하지 않는다. Session 누적은 실제 관찰할 수 있을 때 별도 범위로 전달한다. 이전 Task의 사용량을 현재 Task에 섞지 않는다.
 
-일부 필드만 알려지면 알려진 필드만 제공한다. unknown을 0으로 만들거나 provider가 제공하지 않은 비용을 계산한 사실처럼 보고하지 않는다. provider 통계 reset·누락으로 Task 누적을 확정할 수 없으면 그 불확실성을 보존한다. outcome의 사용량은 같은 측정 범위의 최종 관찰과 일치해야 한다. AgentUsage.plus는 겹치지 않는 구간의 합이며 한쪽이 unknown이면 합도 unknown이다. 누적 snapshot은 교체하고, 실제 0을 아는 baseline에만 AgentUsage.Zero를 사용한다. 필수 측정을 요구한 선택 계약이 있다면 unknown으로 대체해 그 계약을 통과하지 않는다.
+일부 필드만 알려지면 알려진 필드만 제공한다. input·cache hit·cache write·output·reasoning 중 provider가 구분해 보고한 값은 서로 바꾸거나 버리지 않는다. unknown을 0으로 만들거나 provider가 제공하지 않은 비용을 계산한 사실처럼 보고하지 않는다. provider 통계 reset·누락으로 Task 누적을 확정할 수 없으면 그 불확실성을 보존한다. outcome의 사용량은 같은 측정 범위의 최종 관찰과 일치해야 한다. AgentUsage.plus는 겹치지 않는 구간의 합이며 한쪽이 unknown이면 합도 unknown이다. 누적 snapshot은 교체하고, 실제 0을 아는 baseline에만 AgentUsage.Zero를 사용한다. 필수 측정을 요구한 선택 계약이 있다면 unknown으로 대체해 그 계약을 통과하지 않는다.
 
 경고는 유효한 요구가 유지되는 가운데 전달할 부가 정보다. 지원 불가, 필수 의미 손실, 확인된 실패를 warning으로 낮추지 않는다.
 

@@ -389,6 +389,7 @@ sealed interface AgentEvent {
  * @property outputTokens generated output tokens according to provider accounting
  * @property reasoningTokens reasoning tokens when reported separately
  * @property totalTokens provider-reported total token count
+ * @property cacheWriteInputTokens input tokens written to a provider prompt cache
  */
 data class AgentUsage(
     val inputTokens: Long? = null,
@@ -396,6 +397,7 @@ data class AgentUsage(
     val outputTokens: Long? = null,
     val reasoningTokens: Long? = null,
     val totalTokens: Long? = null,
+    val cacheWriteInputTokens: Long? = null,
 ) {
     /** Field-wise sum where `null + n = n` and `null + null = null`. */
     operator fun plus(other: AgentUsage): AgentUsage = AgentUsage(
@@ -404,6 +406,7 @@ data class AgentUsage(
         outputTokens = add(outputTokens, other.outputTokens),
         reasoningTokens = add(reasoningTokens, other.reasoningTokens),
         totalTokens = add(totalTokens, other.totalTokens),
+        cacheWriteInputTokens = add(cacheWriteInputTokens, other.cacheWriteInputTokens),
     )
 
     /** Field-wise difference; `null` wherever either side is unknown. */
@@ -413,6 +416,7 @@ data class AgentUsage(
         outputTokens = sub(outputTokens, other.outputTokens),
         reasoningTokens = sub(reasoningTokens, other.reasoningTokens),
         totalTokens = sub(totalTokens, other.totalTokens),
+        cacheWriteInputTokens = sub(cacheWriteInputTokens, other.cacheWriteInputTokens),
     )
 
     private fun add(a: Long?, b: Long?): Long? = if (a == null) b else if (b == null) a else a + b

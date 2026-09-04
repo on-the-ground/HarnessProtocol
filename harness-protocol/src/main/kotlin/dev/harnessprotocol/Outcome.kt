@@ -159,26 +159,30 @@ data class AgentUsage(
     val outputTokens: Long? = null,
     val reasoningTokens: Long? = null,
     val totalTokens: Long? = null,
+    /** Input tokens written to a provider prompt cache, when reported separately. */
+    val cacheWriteInputTokens: Long? = null,
 ) {
     /**
      * 서로 겹치지 않는 실행 구간의 필드별 합. 어느 쪽이든 unknown이면 합도 unknown이다.
      * 누적 snapshot을 갱신하는 연산이 아니다. 합산의 시작점이 실제 0임을 알 때만 [Zero]를 쓴다.
      */
     operator fun plus(other: AgentUsage): AgentUsage = AgentUsage(
-        add(inputTokens, other.inputTokens),
-        add(cachedInputTokens, other.cachedInputTokens),
-        add(outputTokens, other.outputTokens),
-        add(reasoningTokens, other.reasoningTokens),
-        add(totalTokens, other.totalTokens),
+        inputTokens = add(inputTokens, other.inputTokens),
+        cachedInputTokens = add(cachedInputTokens, other.cachedInputTokens),
+        outputTokens = add(outputTokens, other.outputTokens),
+        reasoningTokens = add(reasoningTokens, other.reasoningTokens),
+        totalTokens = add(totalTokens, other.totalTokens),
+        cacheWriteInputTokens = add(cacheWriteInputTokens, other.cacheWriteInputTokens),
     )
 
     /** 필드별 차. 어느 쪽이든 모르거나 누적값이 감소해 baseline을 신뢰할 수 없으면 `null`이다. */
     operator fun minus(other: AgentUsage): AgentUsage = AgentUsage(
-        sub(inputTokens, other.inputTokens),
-        sub(cachedInputTokens, other.cachedInputTokens),
-        sub(outputTokens, other.outputTokens),
-        sub(reasoningTokens, other.reasoningTokens),
-        sub(totalTokens, other.totalTokens),
+        inputTokens = sub(inputTokens, other.inputTokens),
+        cachedInputTokens = sub(cachedInputTokens, other.cachedInputTokens),
+        outputTokens = sub(outputTokens, other.outputTokens),
+        reasoningTokens = sub(reasoningTokens, other.reasoningTokens),
+        totalTokens = sub(totalTokens, other.totalTokens),
+        cacheWriteInputTokens = sub(cacheWriteInputTokens, other.cacheWriteInputTokens),
     )
 
     private fun add(a: Long?, b: Long?): Long? = if (a == null || b == null) null else Math.addExact(a, b)
@@ -189,6 +193,6 @@ data class AgentUsage(
         val Unknown = AgentUsage()
 
         /** 모든 필드가 실제 0임이 알려진 baseline. 측정하지 않았다는 뜻이 아니다. */
-        val Zero = AgentUsage(0, 0, 0, 0, 0)
+        val Zero = AgentUsage(0, 0, 0, 0, 0, 0)
     }
 }
