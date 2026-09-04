@@ -1,91 +1,60 @@
 # Semantic contract
 
-## 포트에 넣는 기준
+이 문서는 [설계 선언](../AHP_CHARTER.md)을 구체화한 개정 계약의 판단 기준이다. 구현은 이 의미에 맞춰 전환한다. 이름은 [추상과 용어](abstraction-and-terminology.md), 상세 행동은 [Protocol reference](protocol-reference.md)를 따른다.
 
-어떤 개념을 기본 포트에 넣으려면 다음 다섯 질문에 모두 "예"여야 한다.
+## 설계 주체
 
-1. **provider-neutral 목적인가.** 호출자가 달성하려는 것이 특정 SDK의 수단이 아니라 "agent를 이렇게 운용하고 싶다"는 의도로 서술되는가.
-2. **core lifecycle/control-plane 목적인가.** session을 열고, agent loop를 실행하고, 관찰·개입·종료·재개하는 모든 harness가 본질적으로 다뤄야 하는가.
-3. **최소 한 어댑터가 공개·지원 API로 그 의미를 검증 가능하게 보존하는가.** wire protocol이나 제품 UI에만 있고 현재 adapter SDK로 구현하지 못하면 아직 public port를 확정하지 않는다.
-4. **결과와 진행을 공통 의미로 관찰할 수 있는가.**
-5. **보존하지 못하는 어댑터는 실행 전에 거절할 수 있는가.** `validate`가 ERROR를 낼 수 있어야 한다. 조용한 downgrade가 유일한 선택지라면 포트에 넣지 않는다.
+비즈니스 애플리케이션은 하네스에 실행 책임을 위임한다. Port가 표현할 대상은 호출자의 목적과 필요한 보장이다. SDK 메서드, 로컬 process 수명, 내부 graph·prompt 구조를 공통 계약의 주체로 삼지 않는다.
 
-기준 3은 "모든 어댑터"가 아니다. 지원이 비대칭인 core 목적은 포트에 두고 어댑터가 거절한다. 그래야 provider가 기능을 추가했을 때 포트가 아니라 어댑터의 validate만 넓어진다.
+Adapter는 단순 번역 외에 저장·중재·수명 관리가 필요할 수 있다. 그 책임이 정당한 업무 요구를 이행하기 위한 것인지, 잘못된 추상을 유지하기 위한 것인지 구별한다. adapter가 구현할 수 있다는 사실과 기본 계약으로 요구해야 한다는 판단은 별개다.
 
-### 포트에 넣지 않는 것
+## 추상에 포함할 기준
 
-- SDK 메서드 모양이 같다는 이유만으로 넣지 않는다.
-- provider-neutral이라는 이유만으로 넣지 않는다. host tool 등록, structured output처럼 embedding surface를 넓히는 선택 기능은 capability다.
-- 특정 provider의 대화 관리·확장 메커니즘(fork, archive, MCP 관리)은 capability다.
+1. **구체적인 업무 목적:** 호출자가 어떤 결정을 하거나 행동을 이어가기 위해 필요한가?
+2. **관찰 가능한 보장:** 지원, 성공, 거절, 실패와 불확실성을 소비자가 어떻게 구별하는가?
+3. **책임의 경계:** 업무 의미가 Port에 남고 실행 수단이 adapter 뒤에 남는가?
+4. **필수성:** 모든 적합 구현에 요구할 기본 책임인가, 명시적으로 선택할 추가 보장인가?
+5. **실증과 반례:** 다른 구현 방식에서 의미가 보존되는가? 보완·분리·제거 중 무엇이 필요한가?
 
-### 기준 적용 기록
+현재 SDK가 제공하는 기능 목록을 목적의 정의로 사용하지 않는다. 검증할 수 없는 설계는 미검증으로 표시하고 공개 지원으로 확정하기 전에 실제 구현 증거를 확보한다. 모든 구현의 교집합으로 줄이거나 기능의 합집합을 하나의 거대한 옵션 객체로 만들지 않는다.
 
-| 개념 | provider-neutral | core | 구현 증명 | 관찰 | 거절 | 결정 |
-|---|---|---|---|---|---|---|
-| `ExecutionPolicy` | 예 | 예 | Codex | 예 | Gemini 거절 | 포트 |
-| session runtime release (`AgentSession.release`) | 예 | 예 | 양쪽 host | 예 | 해당 없음 | 포트 |
-| `StopReason`, `FailureKind` | 예 | 예 | 양쪽 | 예 | 해당 없음 | 포트 |
-| caller approval (`CALLER_DECIDES`, interaction) | 예 | 예 | Codex 저수준 client spike 필요 | 예 | Gemini 거절 | spike 성공 시 포트 |
-| caller-selected context token ceiling | 예 | 예 | **없음** | — | — | 제외. [capability-candidates.md](capability-candidates.md) |
-| host-defined custom tool | 예 | 아니오 (embedding 확장) | Gemini | 예 | Codex 거절 가능 | capability |
-| structured output | 예 | 경계선 | Codex | 예 | Gemini 거절 가능 | capability, 다음 minor 재검토 |
-| steering | 예 | 필수 lifecycle 아님 | Codex | 예 | Gemini 거절 가능 | capability |
-| session history 조회 | 예 | 필수 lifecycle 아님 | 확인 필요 | 예 | 거절 가능 | capability 후보 |
+## 기본 책임
 
-## 기본 포트가 보장하는 목적
+| 개념 | 요구할 책임 |
+|---|---|
+| `AgentHarness` | 작업 위임의 진입점, 요구 의미의 검증, 소유한 handle의 정리 |
+| `AgentSession` | 여러 작업 사이의 문맥 연속성, 다른 session과의 논리적 격리, 문맥을 훼손하는 중첩 작업 방지 |
+| `AgentTask` | 작업 식별, 상태와 진행 관찰, 지원하는 interaction의 전달, 취소 요청, 종결 판정 회수 |
+| `TaskOutcome` | 확인한 완료·실패·취소와 종료 미확정을 구별하여 후속 판단 가능하게 전달 |
+| `TaskOutput` | 업무 산출물을 실행의 종결 상태와 구별하여 전달 |
+| 호환성 검증 | 필수 요구를 지키거나 실행 전에 명시적으로 거절; 조용한 의미 축소 금지 |
 
-### AgentHarness
+필수 계약은 모든 적합 adapter가 실제로 충족해야 한다. 모든 작업을 거절하거나 필수 검사를 skip하는 구현을 적합하다고 판정하지 않는다. `Unresolved`는 원래 지원할 수 없는 정상 작업을 받아들이기 위한 우회 수단이 아니다.
 
-- agent의 지속적인 실행 환경을 연다.
-- 원하는 구성 의미를 어댑터가 보존할 수 있는지 `validate`로 확인한다.
-- 새 대화를 시작하거나 기존 대화를 다시 연다.
+## 문맥 연속성과 영속성
 
-### AgentSession
+Session은 문맥을 공유하는 범위다. 실제 보관 수단이 provider thread, 메모리, 데이터베이스, 파일인지 소비자가 알 필요는 없다.
 
-- 여러 실행 사이에서 대화 문맥을 유지한다.
-- 하나의 입력으로 완결된 agent loop를 시작한다. 이전 loop가 끝나기 전의 시작은 거절한다.
-- 같은 세션에서 다음 입력을 실행해 이전 결과를 이어간다.
-- runtime handle을 해제한다. durable conversation은 남는다.
+기본 session의 존재와 ID만으로 영속성을 보장하지 않는다. 영속 보관을 요구했다면 지원하는 제공 경계가 보관 범위와 재개 조건을 지켜야 한다. `reopenSession`은 그 문맥에 대한 새 handle을 얻는 연산이다. 중단된 Task의 실행 위치 복구, 원격 작업에 다시 연결하기, 외부 효과의 rollback·중복 방지는 서로 별개의 목적이다.
 
-### AgentExecution
+## 개입과 제약
 
-- 실행 상태를 관찰한다.
-- 텍스트, 추론 요약, 도구 작업, 명령/파일/검색 효과, 문맥 관리, 사용량을 event로 관찰한다.
-- caller의 결정이 필요할 때 멈추고(`WAITING`) 응답을 받는다.
-- 실행을 중단한다.
-- 최종 메시지, 종료 사유, 사용량을 결과로 받는다. 실패는 분류된 종류와 함께 받는다.
+Interaction은 외부 판단·정보를 받아 작업을 계속하는 계약이다. 요청 ID, pending snapshot, 응답 검증, 일회 처리와 정리 규칙은 공통이며 승인과 질문의 답변 의미는 각각 유지한다.
 
-### AgentSpec
+승인·질문 지원, 영속성, 작업 자원, filesystem/network 집행, 구조화 산출물은 명시적으로 요구하고 지원을 확인한다. 선택 계약은 약한 보장이 아니다. 지원을 선언한 구현은 전체 의미를 충족해야 한다. 도구 하나의 승인 gate가 전체 실행 환경의 권한 집행을 뜻하지 않는다.
 
-- instructions, model, working directory, skills를 선언한다.
-- filesystem/network/approval의 **의도**를 선언한다.
-- 어댑터가 그 의도를 구현할 수 없으면 `CompatibilityReport`로 거절한다. provider 기본값으로 몰래 낮추는 것은 계약 위반이다. `PROVIDER_DEFAULT`는 provider/runtime에 이미 설정된 기본값이지 adapter SDK의 convenience default가 아니다.
+지시·모델 선택·문맥 설정·작업별 요구·실행 환경 제약은 각 적용 범위를 정의한 뒤 공개 모델에 배치한다. 기존 `AgentSpec`/`ExecutionPolicy`를 이름만 바꾸어 그대로 유지하지 않는다. 공개 field 구성은 [전환 계획](port-revision-plan.md)의 계약 확정 항목이다.
 
-## 이벤트의 의미
+## 관찰과 결과
 
-`ToolCallChanged`는 agent가 수행하는 이름 있는 작업의 lifecycle이다. `EffectChanged`는 호출자가 특별히 관심을 갖는 외부 효과(command, file change, web search 등)다. 하나의 provider 이벤트가 둘 중 하나 또는 둘 모두가 될 수 있다.
+상태와 종결 판정은 event collector의 유무나 속도에 의존하지 않는다. pending snapshot은 응답해야 할 요청을 복구하는 기준이며 진행 이벤트는 영속 업무 기록이 아니다.
 
-공통 이벤트로 손실 없이 번역할 수 없는 새 vendor 이벤트는 `ProviderEventObserved`에도 실어 보낸다. 이것은 관찰과 진단을 위한 탈출구이지 portable business logic을 작성하는 API가 아니다.
+도구 수행과 외부 효과는 구별한다. 내부 그래프 노드를 무조건 공통 도구 이벤트로 노출하지 않는다. 공급자 원본은 선택적인 `ProviderDiagnostic`으로 분리하고 업무 결과·오류 해석의 필수 경로로 삼지 않는다. 측정하지 않은 사용량과 context 정보는 unknown으로 남긴다.
 
-이벤트 mapper는 vendor의 delta를 가능한 그대로 전달하고, 완료 이벤트를 최종 상태로 취급한다. 실행은 `ExecutionCompleted`, `ExecutionFailed`, `ExecutionCancelled` 중 하나로 끝난다. 이벤트 전달은 관찰 통로이고 lifecycle의 전제가 아니다. 느린 collector는 `ObservationGap`을 받지만 `state`와 `awaitResult()`는 영향을 받지 않는다.
+작업 완료는 목표 달성이나 산출물 schema 검증의 증명이 아니다. 취소 확인도 이미 일어난 효과의 rollback을 뜻하지 않는다. 종료를 확인하지 못한 handle을 정리할 때에는 `Unresolved`를 회수할 수 있어야 한다.
 
-## capability와의 경계
+## 증거와 수정
 
-다음은 기본 포트의 목적이 아니다. 근거와 재검토 조건은 [capability-candidates.md](capability-candidates.md)에 있다.
+[Koog 실험](koog-abstraction-validation-results.md)은 그래프 실행을 기존 Port에 연결하고 승인·문맥 보관·취소의 차이를 재현했다. 실험이 지지하는 목적은 남기고, 기본 영속성·강제 취소·bridge 필수화 등 잘못 묶인 책임은 분리한다.
 
-- Codex 전용 thread list/archive/fork/name/goal/review/steer
-- 구조화 출력, vendor 고유 입력 및 UI 요청
-- 특정 provider의 MCP/app/extension 관리
-- SDK가 한쪽에만 제공하는 host callback 도구 등록
-- 사용자 질문 interaction, caller-selected context token ceiling
-
-이들은 향후 별도 capability 인터페이스로 추가할 수 있다. capability는 `AgentHarness`를 쪼갠 대체물이 아니라, 공통 계약 위에 선택적으로 얹는 확장이다.
-
-중요한 구분은 “도구를 사용해 일을 수행한다”와 “Kotlin 함수를 SDK의 custom tool로 등록한다”가 같지 않다는 점이다. 전자는 두 agent의 기본 목적이며 `ToolCallChanged`/`EffectChanged`로 포트화했다. 후자는 embedding 확장 메커니즘이고, 현재 공개 SDK에서는 Gemini CLI만 직접 지원하므로 기본 계약에 포함하지 않았다. Codex App Server의 실험적 `dynamicTools`를 사용하는 별도 capability가 안정화되면 두 구현을 같은 확장 포트 아래 둘 수 있다.
-
-## 호환성 원칙
-
-- `validate`는 의미 보존 가능성을 실행 전에 판정한다.
-- `createSession`과 `resumeSession`은 내부적으로 다시 검증한다.
-- 거절은 기능 부재를 숨기는 fallback보다 낫다.
-- provider가 새 기능을 지원하게 되면 포트를 바꾸기보다 어댑터의 검증과 번역을 넓힌다.
+기존 구현의 회귀 검사는 버리지 않지만, 기존 추상을 옳다고 전제하는 기대값은 새 계약에 맞춘다. 이름·문서·테스트만 바꾸어 실제 의미 차이를 숨기지 않는다.

@@ -1,109 +1,75 @@
 # Provider mapping
 
-조사 기준일은 2026-09-03이다. Codex는 공식 [SDK 문서](https://developers.openai.com/codex/sdk)와 [App Server 문서](https://developers.openai.com/codex/app-server), 그리고 저장소에 고정된 `openai-codex==0.147.0` 설치본을, Gemini CLI는 공식 저장소의 [SDK 설계](https://github.com/google-gemini/gemini-cli/blob/main/packages/sdk/SDK_DESIGN.md)와 [SDK 구현](https://github.com/google-gemini/gemini-cli/tree/main/packages/sdk/src)을 기준으로 삼았다.
+이 문서는 [개정 계약](protocol-reference.md)의 목적을 Codex·Gemini CLI·Koog의 서로 다른 수단에 대응시키고 구현 전환 상태를 기록한다. SDK 기능이 공통 목적을 결정하지 않는다.
 
-## Codex host의 SDK 경계
+현재 Codex/Gemini 코드는 이전 공개 API를 사용하고 Koog는 격리 실험이다. 아래의 native 대응은 새 계약 적합성 인증이 아니다. 기존 SDK 조사는 2026-09-03, Koog 실행 근거는 2026-09-04 기준이며 이번 문서 개편에서 외부 release를 재조사하지 않았다.
 
-Codex host(`bridges/codex_sdk_bridge.py`)는 고수준 `Codex`/`AsyncCodex`가 아니라 **`openai_codex.client.CodexClient`** 를 직접 사용한다. 이유는 [spike 8a](spikes/2026-09-03-codex-low-level-client.md)에 있다.
+## 목적별 대응과 전환
 
-- 고수준 API는 `approval_mode` 기본값을 `auto_review`로 강제하고 approval handler를 주입할 수 없다.
-- `CodexClient`는 공개 모듈이지만 `__all__`에 재수출되지 않는다. 그래서 `requirements-codex.txt`의 버전 고정은 계약의 일부다.
-- host는 App Server wire vocabulary(`approvalPolicy`, `approvalsReviewer`, `sandbox`, `developerInstructions`, `cwd`, `model`, `config`)를 직접 만든다.
-
-## 공통 목적 대응
-
-| 공통 목적 | Kotlin port | Codex 구현 | Gemini CLI 구현 |
+| 공통 목적 | Codex의 현재 수단 | Gemini CLI의 현재 수단 | Koog 실험 / 필요한 전환 |
 |---|---|---|---|
-| 실행 환경 식별 | `AgentHarness.provider` | `codex` | `gemini-cli` |
-| 구성 의미 검증 | `validate(AgentSpec)` | workspace-write 외 sandbox의 network 의도 거절 | SDK가 노출하지 않는 모든 policy 거절 |
-| 새 대화 시작 | `createSession` | `thread/start` | `GeminiCliAgent.session` + `initialize` |
-| 기존 대화 계속 | `resumeSession` | `thread/resume` (응답의 thread id 사용) | `GeminiCliAgent.resumeSession` + `initialize` (응답의 session id 사용) |
-| session 해제 | `AgentSession.release` | host `release_session`: 진행 중 turn interrupt, 항목 제거 | host `release_session`: abort, 항목 제거 |
-| 지속 문맥 | `AgentSession` | Codex thread id | Gemini CLI session id |
-| 완결된 agent loop | `execute` | `turn/start` + turn notification queue | `session.sendStream` |
-| 사용자 지시 | `AgentInput.Text` | text input item | `sendStream(prompt)` |
-| system/developer 지시 | `AgentSpec.instructions` | `developerInstructions` (`null`이면 생략) | agent `instructions` (`null`이면 생략) |
-| 모델 선택 | `AgentSpec.model` | thread model | agent model |
-| 작업 위치 | `AgentSpec.workingDirectory` | thread cwd | agent cwd |
-| skill 사용 | `AgentSpec.skills` | `$name` mention + skill input item (activation envelope) | `skillDir`로 로드 + `$name` mention |
-| 진행 텍스트 | `MessageDelta` | agent-message delta | content event |
-| 최종 응답 | `MessageCompleted`, `AgentResult` | `final_answer` phase의 completed agent message; 없으면 delta 누적 | 누적 content + execution completion |
-| 추론 과정 관찰 | `ReasoningDelta` | reasoning summary/text delta | thought event |
-| 도구 작업 관찰 | `ToolCallChanged` | MCP/dynamic tool item lifecycle | tool-call request/response lifecycle |
-| 외부 효과 관찰 | `EffectChanged` | command/file/search item lifecycle | tool-call lifecycle에서 공통 효과로 번역 가능한 항목 |
-| 문맥 관리 관찰 | `ContextManaged` | context-compaction item | chat-compressed event |
-| 사용량 관찰 | `UsageChanged`, `AgentResult.usage/sessionUsage` | `thread/tokenUsage/updated`: `total`(session) − baseline = execution | `finished.usageMetadata`를 field별 합산 = execution; session 없음 |
-| caller 승인 | `CALLER_DECIDES`, `InteractionRequested`, `respond` | host approval handler → `interaction_requested` / `respond_interaction` | SDK approval wiring 없음 → validate 거절 |
-| 중단 | `AgentExecution.cancel` | 열린 approval을 `cancel`로 닫고 `turn/interrupt` | `AbortController.abort` |
-| 성공/실패/취소 종결 | terminal `AgentEvent` | turn completion/error/status | finished/error/cancel/synthetic terminal event |
-| 종료 사유 | `AgentResult.stopReason` | 항상 `FINISHED` (Codex가 step 한도 상태를 노출하면 추가) | `max_session_turns`→`TURN_LIMIT`, `loop_detected`→`LOOP_DETECTED`, `agent_execution_stopped`→`PROVIDER_STOPPED` |
-| 알 수 없는 vendor 이벤트 보존 | `ProviderEventObserved` | 원본 method/payload | 원본 type/value |
+| AgentHarness | Python CodexClient와 App Server 연결 | Node SDK host | Kotlin graph runtime 직접 연결. bridge 공통화 불필요 |
+| Session 문맥 | thread ID | SDK session ID | 완료 이력을 adapter가 보관하면 후속 입력 연결 가능. 기본 session과 영속성 분리 |
+| 영속 보관·reopen | thread/resume | resumeSession + initialize | 실험 파일 저장소. 보관 범위·오류·재생성 조건을 선택 계약으로 검증 |
+| Task 시작 | turn/start와 notification | sendStream | graph run. 여러 LLM/tool 호출을 하나의 업무 위임으로 묶음 |
+| Caller 승인 | handler → pending decision → 응답 | 현 adapter는 CALLER_DECIDES 거절 | tool 실행 전 승인 gate. 실제 효과와 승인 순서 검증 |
+| 질문·답변 | 기존 공개 AHP 경로 없음 | 기존 공개 AHP 경로 없음 | native callback은 가능. 새 Question/Answer 전달 계약 필요 |
+| 취소 요청 | pending handler 해제 후 turn/interrupt | AbortController.abort | coroutine 취소. 비협조적 도구의 실제 종료 여부는 별도 확인 |
+| Outcome | 현재 turn completion/error를 이전 결과·예외로 변환 | finished/error 및 host 알림 | 결과·예외 관찰. 세 경로 모두 새 TaskOutcome/Unresolved 의미로 개정 |
+| 산출물 | final-answer 메시지, 부족하면 관찰한 delta | 누적 content | String 결과. TaskOutput과 schema 보장 분리 필요 |
+| Tool/effect | tool·command·file·search item lifecycle | tool request/response | 실제 registry 호출 hooks. 내부 node는 자동으로 tool이 되지 않음 |
+| Usage/context | token usage, compaction 알림 | usageMetadata, chat-compressed | 메타데이터가 없으면 unknown. 전체 측정·compaction 미검증 |
+| 진단 | 원본 method/payload | 원본 type/value | hooks/internal 객체. ProviderDiagnostic 선택 경로로 분리 |
 
-## 정책 의미
+같은 purpose를 서로 다른 수단으로 이행할 수 있다. provider thread를 그대로 노출하거나 Koog graph에 맞춰 Port를 바꾸지 않는다. TaskId·SessionId·WorkId의 외부 의미는 native ID 형식과 분리한다.
 
-| 정책 | Codex host | Gemini CLI SDK adapter |
+## 현재 Codex 경로의 구현 정보
+
+Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`를 사용하며 requirements는 0.147.0을 고정한다. 근거는 [client 조사](spikes/2026-09-03-codex-low-level-client.md)다.
+
+- thread/start·resume의 developerInstructions, model, cwd와 정책 wire 필드를 구성한다.
+- PROVIDER_DEFAULT는 approval 필드를 생략한다. SDK convenience default로 의미를 바꾸지 않는다.
+- CALLER_DECIDES는 caller 응답을 기다린다. reader thread를 막는 handler의 pending 대기를 먼저 풀고 interrupt/close한다.
+- 현재 handler는 DENY_ALL에서 decline하며, PROVIDER_DEFAULT/AGENT_REVIEWED 경로에 예상 밖 요청이 오면 decline과 경고를 사용한다.
+- APPROVE_FOR_SESSION 같은 선택의 지원 여부는 실제 요청이 제시한 결정과 scope로 검증한다. 일반적인 세션 권한 확대를 추론하지 않는다.
+
+실제 App Server 승인 payload와 결정 문자열 fixture는 기존 검증에서 미확보였다. stub server 통과를 실제 provider 검증으로 바꾸어 서술하지 않는다. 제3자 Kotlin 기반 교체는 [별도 검토](codex-agent-adoption-review.md)의 대상이다.
+
+## 현재 정책·자원 제약
+
+아래는 기존 구현의 지원 상태다. 새 core의 보편적 필드 목록이 아니다.
+
+| 요구 | Codex 현재 경로 | Gemini 현재 경로 |
 |---|---|---|
-| filesystem read-only/workspace-write/full-access | `sandbox`: `read-only` / `workspace-write` / `danger-full-access` | 공개 SDK option 부재, 명시적 거절 |
-| network deny/allow | `config.sandbox_workspace_write.network_access`. **workspace-write에서만** 적용되므로 다른 sandbox와의 조합은 validate가 거절 | 공개 SDK option 부재, 명시적 거절 |
-| approval `PROVIDER_DEFAULT` | `approvalPolicy`/`approvalsReviewer` **생략** → 사용자의 Codex 설정(`config.toml`)이 적용됨 | SDK minimal config (tool policy ALLOW) |
-| approval `DENY_ALL` | `approvalPolicy: never` | 거절 |
-| approval `AGENT_REVIEWED` | `approvalPolicy: on-request` + `approvalsReviewer: auto_review` | 거절 |
-| approval `CALLER_DECIDES` | `approvalPolicy: on-request`, host handler가 caller에게 전달 | 거절 |
+| FS 범위 | read-only/workspace-write/full-access를 sandbox로 대응 | 명시적 정책을 거절 |
+| Network | workspace-write의 network 설정을 대응. 다른 조합은 거절 | 명시적 정책을 거절 |
+| Caller 승인 | handler 중재 | 명시적 요구 거절 |
+| 지시·모델 | developerInstructions/model | agent instructions/model |
+| 작업 위치·skills | cwd, skill 입력과 activation envelope | cwd, skillDir와 activation |
 
-### Codex host의 approval handler
+개정에서는 문맥 설정·작업 요구·승인 중재·실행 환경 집행을 분리한다. 지원하지 않는 요구를 생략해 기본값으로 실행하지 않는다. 지시를 user prompt 앞에 붙이는 것과 지속 지시를 전달하는 것은 같은 보장이 아니다. skill 자료 제공과 실행별 활성화도 구별한다.
 
-`CodexClient`의 기본 handler는 command/file approval에 **무조건 `accept`** 를 돌려준다. host는 어떤 정책에서도 자체 handler를 등록하고 다음을 따른다.
+## 상태·결과 매핑 원칙
 
-| policy | request 도착 시 |
-|---|---|
-| `DENY_ALL` | `decline` |
-| `AGENT_REVIEWED` | 정상이면 도착하지 않는다. 도착하면 `decline` + `Warning(CONFIGURATION)` |
-| `PROVIDER_DEFAULT` | `decline` + `Warning(CONFIGURATION)`. 승인 흐름을 원하면 `CALLER_DECIDES`를 명시한다 |
-| `CALLER_DECIDES` | `interaction_requested` → caller 응답 |
+현재 host death → TRANSPORT 실패, close 유예 → CANCELLED 경로는 개정 대상이다. 먼저 확인한 사실을 판정한다.
 
-handler는 SDK reader thread에서 동기 호출된다. 그래서 cancel/release/close는 **먼저 pending decision queue에 `cancel`을 넣어 handler를 풀고, handler가 결정을 반환했음을 확인한 뒤** `turn/interrupt`나 close를 호출한다. 결정 응답의 write는 SDK reader thread가 하므로 interrupt와의 wire 순서는 best-effort지만, deadlock은 구조적으로 배제된다. `bridges/tests/test_codex_bridge.py`가 stub App Server로 검증한다.
+- 작업 실패를 provider가 확인했다면 Failed로 분류한다.
+- 실제 취소 종료를 확인했다면 Cancelled로 분류한다.
+- 관찰·제어만 상실했다면 Unresolved를 전달한다.
+- 정상 실행 종료라도 목표 달성·schema 검증을 자동 인정하지 않는다.
 
-`availableDecisions`는 App Server 문서의 `accept`, `acceptForSession`, `decline`, `cancel`을 그대로 노출한다. pinned SDK의 generated 타입에는 approval request/response 모델이 없어 실제 App Server fixture로 재확인이 필요하다.
+기존 인증·정책·예산·문맥·일시적 오류 매핑의 유용한 구분은 보존한다. provider의 unknown 오류는 공통 설명과 알려진 사실로 전달하고 raw 이벤트 해석을 소비자의 필수 책임으로 두지 않는다.
 
-## 실패 분류 (`FailureKind`)
+분류 근거는 구조화된 provider 정보·의미가 확인된 native 예외·직접 확인한 runtime 사실이다. 자연어 문구만으로 인증 실패나 재시도 가능성을 추정하지 않는다. 시작 응답이나 interaction 응답 확인을 잃은 경우에는 미수행으로 단정하지 않고 수락 미확정을 보존한다.
 
-| Codex `codexErrorInfo` | kind |
-|---|---|
-| `contextWindowExceeded` | `CONTEXT_OVERFLOW` |
-| `sessionBudgetExceeded`, `usageLimitExceeded` | `BUDGET_EXCEEDED` |
-| `serverOverloaded`, `internalServerError` | `TRANSIENT` |
-| `httpConnectionFailed`, `responseStreamDisconnected`, `responseStreamConnectionFailed`, `responseTooManyFailedAttempts` | HTTP 401/403이면 `AUTHENTICATION`, 그 외 `TRANSIENT` |
-| `unauthorized` | `AUTHENTICATION` |
-| `cyberPolicy`, `sandboxError` | `POLICY_BLOCKED` |
-| `badRequest`, `threadRollbackFailed`, `activeTurnNotSteerable`, `other`, 없음 | `PROVIDER` |
-| 알 수 없는 값 | `UNKNOWN` |
-| `error` with `willRetry: true` | terminal 아님 → `Warning(RECOVERABLE)` |
+Codex의 session 누적 usage에서 baseline을 빼는 방식과 Gemini의 필드별 누적은 현재 구현 수단이다. reset·누락·scope를 검증해 Task/Session 측정을 섞지 않는다. 음수나 unknown을 임의의 0으로 보정해 정확한 측정처럼 보고하지 않는다.
 
-| Gemini 이벤트 | kind |
-|---|---|
-| `agent_execution_blocked` | `POLICY_BLOCKED` |
-| `invalid_stream` | `PROVIDER` |
-| `error` 직전에 `context_window_will_overflow` 또는 메시지에 context window 언급 | `CONTEXT_OVERFLOW` |
-| 그 외 `error`, `execution_failed` | `PROVIDER` |
+공통 UsageChanged는 두 경로 모두 Task 누적 snapshot으로 제공한다. consumer가 provider에 따라 더하거나 교체하도록 분기하게 만들지 않는다. 반복 누적값을 두 번 더하지 않으며 실제 제공 가능한 Session 누적은 별도로 유지한다.
 
-host process 종료·stream 실패는 provider와 무관하게 `TRANSPORT`다.
+Tool/effect의 이름·인자 key 매핑은 버전별 fixture로 검증한다. identity fallback 충돌을 막고 효과 근거가 없으면 도구 관찰만 전달한다. 실제 변경 경로를 아는 경우에만 경로 정보를 제공한다.
 
-## 의도적으로 capability로 남긴 것
+## 검증 상태
 
-| 기능 | 이유 |
-|---|---|
-| host-defined custom tool 등록 | embedding 확장이며 core lifecycle이 아니다. |
-| active execution steering | Codex에는 있으나 Gemini SDK의 동일 의미 계약이 없다. |
-| fork/archive/list/name/goal/review | Codex의 conversation 관리 기능이며 공통 agent 실행 목적은 아니다. |
-| structured output 및 multimodal input | Codex SDK는 지원하지만 현재 Gemini CLI SDK `sendStream` 입력은 string이다. |
-| 사용자 질문 interaction | 0.147.0 generated 타입에 `requestUserInput`이 없고 Gemini SDK도 노출하지 않는다. |
-| caller-selected context token ceiling | 어느 쪽도 보장하지 않는다. |
+[Koog 결과](koog-abstraction-validation-results.md)의 18개 실험은 실제 Koog runtime과 통제된 모델 경계를 사용했다. 기존 회귀 71개는 Codex/Gemini mapper·bridge fixture 등을 검사했다. 세 구현의 동일 업무·동일 새 계약·실모델 검증은 아직 완료되지 않았다.
 
-## SDK 배포 상태
-
-- Codex host는 `openai-codex==0.147.0`을 고정했다. 패키지가 Codex 바이너리(`openai-codex-cli-bin`)를 포함한다.
-- Gemini CLI SDK는 공식 monorepo `packages/sdk`에 구현되어 있지만 조사 시점에 `@google/gemini-cli-sdk`가 npm registry에 공개되어 있지 않았다. 그래서 host는 `GEMINI_CLI_SDK_MODULE`로 빌드 산출물 경로를 받는다. `GeminiCliAgent`가 `instructions`를 필수로 요구하는지는 SDK build로 확인하지 못했다. 필수라면 `instructions = null`에 대해 validate ERROR를 추가한다.
-
-Python host를 Kotlin Multiplatform App Server host인 `codex-agent`로 교체하는 안은 현재 보류 상태다. 검토 기준, 차단 조건, 재검토 트리거와 승인 기준은 [codex-agent-adoption-review.md](codex-agent-adoption-review.md)에서 관리한다.
-
-이 상태 차이는 port의 의미를 바꾸지 않는다. 배포가 안정화되면 host의 module resolution만 단순화하면 된다.
+Gemini SDK build entrypoint와 지시 옵션의 실제 요구 조건, Codex 승인 실제 payload, Koog production 저장·정리 및 선택 계약은 후속 연동에서 확인한다. [Testing](testing.md)의 공통 행동과 구현별 검사를 구분하여 결과를 갱신한다.

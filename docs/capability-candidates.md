@@ -1,13 +1,40 @@
-# Capability 후보
+# 선택 계약과 검토 항목
 
-기본 포트에 넣지 않기로 한 목적과 그 이유, 재검토 조건을 기록한다. 기준은 [semantic-contract.md](semantic-contract.md)의 다섯 질문이다.
+[Semantic contract](semantic-contract.md)의 기본 책임에 추가로 요청할 보장을 정의한다. 선택 여부는 업무 목적과 보장의 독립성으로 판단한다. 특정 SDK의 기능 유무만으로 공통 목적을 채택·배제하지 않는다.
 
-| 후보 | 제외 이유 | 재검토 조건 |
+**선택 계약은 지원을 선언한 순간 강한 계약이다.** 필수 요구를 지원하지 않으면 작업 전에 명시적으로 거절한다. 모든 필수 동작을 선택 사항으로 돌리거나 모든 요청을 거절하는 구현을 적합하다고 판정하지 않는다.
+
+## 개정에서 분리하는 계약
+
+| 목적 | 지원할 때 지켜야 할 보장 | 분리 이유 / 검증 상태 |
 |---|---|---|
-| caller-selected context token ceiling (`ContextPolicy.KeepWithinTokens`) | 어느 어댑터도 공개 SDK로 상한을 보장하지 못한다 (기준 3). `ProviderManaged` 하나만 남는 sealed type은 소비자 의미가 없어 `ContextPolicy` 필드 자체를 제거했다. | provider가 caller-selected ceiling을 보장하는 API를 공개하면 두 번째 실제 정책과 함께 재도입 |
-| 사용자 질문 interaction (`InteractionRequest.Questions`) | `openai-codex` 0.147.0 generated 타입에 `requestUserInput` 계열이 없고 Gemini SDK도 노출하지 않는다 (기준 3). | 어느 한 SDK가 공개 API로 question request를 노출하면 `InteractionRequest` sealed 확장으로 추가 |
-| host-defined custom tool 등록 | embedding 확장이며 core lifecycle이 아니다 (기준 2). | 별도 capability 인터페이스 |
-| structured output | 결과 shape 확장으로 경계선. | 다음 minor에서 재검토 |
-| active execution steering | 필수 lifecycle 아님. Codex만 제공. | 별도 capability |
-| session history 조회 | 필수 lifecycle 아님. 두 SDK 지원 여부 미확인. | 지원 확인 후 capability |
-| execution/session metadata (correlation) | 두 host 어디에도 전달되지 않는 opaque map이었다. trace 의미가 세 가지(로컬 로그 / provider 전달 / event 반환)로 갈리므로 하나의 map으로 재도입하지 않는다. | 구체적 요구가 생기면 세 의미 중 하나를 명시한 설계로 |
+| 영속 문맥 보관·재개 | 보관 범위·수명·성공 여부, release/재생성 후 `reopenSession`, 모르는 ID 거절, desired configuration 적용 | 기본 문맥 연속성과 다른 목적. Koog의 완료 이력 저장 사례가 있으나 production 저장·복구는 미검증이다. |
+| Caller 승인 | 대상 행위·허용 범위·decision, 승인 전 효과 없음, 거절·취소·중복 응답 처리 | Interaction 공통 구조 위의 구체적 판단. 도구별 중재를 전체 OS 권한 집행으로 해석하지 않는다. |
+| 질문·정보 응답 | 질문/답변 타입, 현재 요청, 일회 응답·철회, 같은 작업 계속 | 승인 enum으로 보존할 수 없다. Koog native callback으로 목적을 재현했고 새 공개 계약은 구현 전이다. |
+| 구조화 산출물 | 요구한 schema, 검증 책임, 유효/불완전/검증 실패의 구별 | 텍스트 전달과 schema 보증은 다르다. JSON 문자열 실험은 native schema 집행 검증이 아니다. |
+| 작업 공간·자료·지침 제공 | 제공 범위·참조의 해석 위치·적용 수명. skill 제공과 활성화의 구별 | 로컬 workingDirectory와 skill path를 모든 하네스의 기본 어휘로 만들지 않는다. 범용 Resource 모델은 아직 근거가 없다. |
+| Filesystem/network 집행 | 제한의 범위와 실제 집행 또는 사전 거절. provider default의 정확한 의미 | 로컬 도구 환경의 제약을 공통 실행 그 자체와 분리한다. 승인 기능과도 구별한다. |
+| Provider 진단 | 선언한 원본 관찰 범위와 전달·유실 정책 | `ProviderDiagnostic`으로 분리. 모든 내부 객체·wire 알림 보존을 core 조건으로 삼지 않는다. |
+
+위 목적의 분리는 설계 방향이며 capability 조회·요구 전달을 위한 최종 interface와 필드 목록은 [전환 계획](port-revision-plan.md)에서 확정한다. 외부 판단을 위한 공통 interaction lifecycle은 Port에 남는다.
+
+## 추가 실증이 필요한 목적
+
+| 목적 | 확정 전 확인할 것 |
+|---|---|
+| 중단된 작업 복구 / 원격 작업 재접속 | 보관된 문맥 reopen과 구별되는 identity·실행 위치·중복 효과·오류·재접속 범위 |
+| 작업 이력 조회 | live event와 다른 보관·조회·누락 범위. 영속 session이 있다고 전체 이벤트 이력을 가정하지 않음 |
+| Host-defined tool 등록 | 앱이 소유하는 업무 기능과 실행 책임의 경계, 등록·호출·취소·오류·권한의 의미 |
+| Multimodal input | 전달할 자료와 접근 수단, provider별 입력 형태를 숨길 수 있는 공통 목적 |
+| 작업 예산 / context ceiling | 측정이 아니라 집행할 한도와 단위, 초과 시 의미, 사전 호환성 판단 |
+| Active task steering | 미처리 입력의 순서, 현재 작업 수정과 새 작업의 차이, 응답·취소와의 경쟁 |
+| 문맥 분기·관리 | fork/archive/list 등 이름보다 필요한 업무 목적과 보관·독립성 보장 |
+| 상관관계 metadata | 애플리케이션 식별, provider 전달, 이벤트 반환 중 정확히 어느 목적을 제공하는지 |
+
+기능 목록을 전부 추가하는 계획은 아니다. 구체적인 소비 요구와 실행 근거가 없는 추상은 공개 계약으로 확정하지 않는다. 특정 SDK에서 아직 구현할 수 없다는 사실은 미지원·미검증으로 기록하며 목적 자체가 불필요하다는 증거로 사용하지 않는다.
+
+## 구현 전환 규칙
+
+기존 소비자가 영속성·권한·skill 활성화 등을 요구했다면 새 계약에서도 그 요구를 명시하고 보존해야 한다. 선택 계약으로 옮겼다는 이유로 기존 기능을 조용히 제거하지 않는다.
+
+지원하지 않는 요구는 처음부터 거절한다. 정상 지원한다고 선언하고 매번 `Unresolved`나 provider 오류로 끝내지 않는다. 실행 중 환경 변화로 보장을 이행하지 못하면 알려진 실패와 종료 미확정을 구별한다. [Testing](testing.md)은 지원 동작과 거절 동작을 각각 검사한다.

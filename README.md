@@ -1,128 +1,73 @@
-# Harness Protocol
+# Agent Harness Protocol
 
-Codex와 Gemini CLI를 같은 모양으로 감싸는 라이브러리가 아니라, 두 agent harness가 공통으로 수행하는 **목적**을 Kotlin 포트로 정의하고 각 SDK를 어댑터로 연결하는 프로젝트다.
+AHP는 비즈니스 애플리케이션이 에이전트 하네스에 **작업을 위임하고, 필요한 조건을 요구하고, 진행 중 판단에 참여하며, 결과와 종료 상태를 받아 후속 행동을 결정하는 Port**다.
 
-핵심 모델은 다음과 같다.
+하네스는 adapter를 통해 비즈니스 경계 밖에 둔다. 로컬 라이브러리, 임베딩한 agent process, 외부 서버, 클라우드 서비스는 같은 목적을 제공하는 서로 다른 구현 방식이다. 내부 모델 호출, 실행 그래프, 도구 구성, 저장소와 transport는 하네스 제공 경계가 책임진다.
+
+최상위 기준은 [AHP 설계 선언](AHP_CHARTER.md)이다. 기존 구현과 API를 이 기준에 맞춘다. 구현의 편의나 SDK 기능의 교집합이 추상의 기준이 되지 않는다.
+
+## 작업과 문맥, 결과
 
 ```text
-AgentHarness ── creates/resumes ──> AgentSession ── release
-                                      │
-                                      └── executes ──> AgentExecution
-                                                           │
-                                                           ├── events
-                                                           ├── pendingInteractions / respond
-                                                           ├── cancel
-                                                           └── result (stopReason, usage)
+비즈니스 애플리케이션
+    │ 작업 위임과 요구 조건
+    ▼
+AgentHarness                   하네스 제공 경계
+    └─ AgentSession            여러 작업이 문맥을 공유하는 범위
+          └─ startTask → AgentTask
+                            ├─ state / events
+                            ├─ pendingInteractions / respond
+                            ├─ requestCancellation
+                            └─ awaitOutcome → TaskOutcome
+                                               └─ TaskOutput: 전달된 산출물
 ```
 
-포트는 vendor의 `thread`, `turn`, `sendStream` 같은 수단을 노출하지 않는다. 대신 “대화를 이어간다”, “한 번의 agent loop를 수행한다”, “그 과정과 외부 효과를 관찰한다”, “승인에 답한다”, “중단한다”라는 목적을 드러낸다.
+- `AgentTask`는 한 번 위임한 작업이다. provider의 turn, 모델 호출, graph node와 일대일 대응하지 않는다.
+- `AgentSession`은 문맥 연속성을 제공한다. 영속 보관과 `reopenSession`은 별도로 요구하는 선택 계약이며 checkpoint 복구와 구별한다.
+- 승인과 질문은 외부 응답을 기다리는 interaction이다. 승인 결정과 정보 답변의 의미를 각각 유지한다.
+- `TaskOutcome`은 `Completed`, `Failed`, `Cancelled`, `Unresolved`라는 종결 판정을 구별한다. 실행 완료는 업무 목표 달성을 증명하지 않는다.
+- `TaskOutput`은 산출물이다. 텍스트 전달과 구조화된 산출물의 schema 보장은 구별한다.
+- 취소 요청이나 handle 정리만으로 실제 중단을 확정하지 않는다. 종료 결과를 확인하지 못하면 `Unresolved`를 전달한다.
 
-## 모듈
+## 문서와 구현 상태
 
-- `harness-protocol`: provider-neutral 포트, 값 타입, 이벤트, 호환성 계약
-- `harness-process-bridge`: Kotlin과 SDK host process 사이의 NDJSON transport와 공통 실행 lifecycle
-- `harness-codex`: `openai-codex` Python SDK 어댑터
-- `harness-gemini-cli`: Gemini CLI TypeScript SDK 어댑터
-- `harness-bundle`: 소비 프로젝트가 받는 단일 Maven 의존성과 provider factory
-- `harness-adapter-testkit`: adapter가 상속하는 공유 contract test (배포하지 않음)
-- `bridges`: SDK를 실제로 호출하는 얇은 Python/Node host와 그 테스트
+**README와 `docs/`의 계약 설명은 개정된 설계 기준이다. 코드와 KDoc은 아직 기존 API를 사용하며 후속 구현에서 함께 전환한다.** 새 명칭을 사용하는 예시는 설계 예시다. 현재 artifact에서 그대로 컴파일되는 사용 예로 제시하지 않는다.
 
-## 문서
+| 읽는 순서 | 문서 |
+|---|---|
+| 목적과 판단 기준 | [설계 선언](AHP_CHARTER.md), [Semantic contract](docs/semantic-contract.md) |
+| 개념과 이름 | [추상 개정과 용어](docs/abstraction-and-terminology.md) |
+| 동작 계약 | [Protocol reference](docs/protocol-reference.md), [Lifecycle](docs/lifecycle-and-concurrency.md), [Event contract](docs/event-contract.md) |
+| 추가로 요구할 보장 | [선택 계약과 검토 항목](docs/capability-candidates.md) |
+| 구현 전환 | [Port revision plan](docs/port-revision-plan.md), [Provider mapping](docs/provider-mapping.md), [Testing](docs/testing.md) |
+| 배포와 구현 세부 | [Distribution](docs/distribution.md), [Bridge protocol](docs/bridge-protocol.md) |
+| 실증 근거 | [Koog 검증 계획](docs/koog-abstraction-validation-plan.md), [검증 결과](docs/koog-abstraction-validation-results.md) |
+| 회귀 검토 | [문서 개편 후 회귀 검토](docs/regression-review.md): 복원한 보장, 새 설계의 경계 조건, 기존 suite 재실행 결과 |
+| Codex 기반 선택 | [codex-agent 검토](docs/codex-agent-adoption-review.md), [저수준 client 조사](docs/spikes/2026-09-03-codex-low-level-client.md) |
 
-처음 사용하는 소비자는 다음 순서로 읽는 것을 권장한다.
+확정된 의미와 아직 정해야 할 공개 필드·선택 계약 API는 문서에서 구분한다. 기존 버전의 설계 이력은 Git에서 확인한다.
 
-1. [Protocol reference](docs/protocol-reference.md): 공개 interface와 모델, 필드, validation 및 오류 계약
-2. [Event contract](docs/event-contract.md): 이벤트 순서, 메시지 조립, tool/effect, usage 및 terminal 규칙
-3. [Lifecycle and concurrency](docs/lifecycle-and-concurrency.md): 소유권, session 순차성, 취소, close 및 coroutine 패턴
+## 구현 구성
 
-설계 판단과 구현 정보는 다음 문서에서 이어진다.
+| 위치 | 역할과 전환 상태 |
+|---|---|
+| `harness-protocol` | 공개 Port와 값 타입. 기존 이름과 결과 모델을 개정해야 한다. |
+| `harness-codex`, `harness-gemini-cli` | 기존 provider adapter. 새 필수 계약과 지원하는 선택 계약에 맞춰 수정한다. |
+| `harness-process-bridge`, `bridges` | 두 process adapter의 내부 transport와 host. 모든 하네스의 필수 기반이 아니다. |
+| `harness-adapter-testkit` | 기존 bridge 기반 검사. 공개 Port의 행동 검사와 구현별 투영 검사를 분리한다. |
+| `harness-bundle` | 현재 adapter 선택·배포 편의 모듈. Koog 실험은 아직 포함하지 않는다. |
+| `experiments/koog-validation` | 실제 Koog 런타임과 통제된 모델 응답을 사용한 격리 실험. 새 계약에 적합한 production adapter는 아니다. |
 
-- [Semantic contract](docs/semantic-contract.md): 공통 목적을 기본 port에 넣는 기준
-- [Capability candidates](docs/capability-candidates.md): 포트에 넣지 않은 목적과 재검토 조건
-- [Provider mapping](docs/provider-mapping.md): Codex와 Gemini CLI의 의미 대응, 정책·실패 분류
-- [Bridge protocol](docs/bridge-protocol.md): Kotlin과 SDK host 사이의 NDJSON 계약
-- [Testing](docs/testing.md): contract test 상속과 host test 실행
-- [Distribution](docs/distribution.md): Maven 발행과 SDK runtime 경계
-- [Port revision plan](docs/port-revision-plan.md): 0.1.0 전 포트 개정 계획과 구현 기록
-- [`codex-agent` adoption review](docs/codex-agent-adoption-review.md): Kotlin App Server host의 향후 채택 조건과 재검토 절차
+Koog 실험 18개와 기존 회귀 71개가 통과한 [기록](experiments/koog-validation/evidence/verification.json)은 기존 계약을 대상으로 한 증거다. 개정 계약의 세 adapter 통합 통과나 실모델 검증을 뜻하지 않는다.
 
-## 다른 프로젝트에서 사용
+## 현재 구현을 빌드·검증하기
 
-```kotlin
-dependencies {
-    implementation("io.github.joohyung-park:harness-bundle:0.1.0")
-}
-```
-
-소비 코드는 SDK 대신 factory에서 공통 port만 받는다.
-
-```kotlin
-val harness: AgentHarness = Harnesses.create(configuration.provider)
-```
-
-독립 소비 프로젝트 예제는 [samples/basic](samples/basic)에 있다.
-
-## Kotlin 사용 예
-
-```kotlin
-val harness: AgentHarness = Harnesses.codex()
-
-harness.use {
-    val spec = AgentSpec(
-        instructions = "Work carefully and keep tests green.",
-        workingDirectory = Path.of(".").toAbsolutePath().toString(),
-        executionPolicy = ExecutionPolicy(
-            filesystem = FilesystemAccess.WorkspaceWrite(),
-            network = NetworkAccess.DENIED,
-            approval = ApprovalPolicy.AGENT_REVIEWED,
-        ),
-    )
-
-    // 지원하지 않는 의미를 조용히 무시하지 않는다.
-    harness.validate(spec).requireCompatible()
-
-    val session = harness.createSession(spec)
-    val execution = session.execute(AgentInput.Text("Run the tests and fix failures."))
-
-    val observer = launch { execution.events.collect { event -> println(event) } }
-    val result = try {
-        execution.awaitResult()
-    } finally {
-        observer.cancel()
-    }
-    println("${result.stopReason}: ${result.finalMessage}")
-}
-```
-
-같은 호출 코드는 `GeminiCliHarness`에도 적용된다. 다만 현재 Gemini CLI SDK가 policy/approval 구성을 노출하지 않으므로 해당 의미를 요청하면 `validate`가 명시적으로 거절한다.
-
-승인을 caller가 직접 결정하려면 `ApprovalPolicy.CALLER_DECIDES`를 요청하고 `execution.pendingInteractions`를 관찰해 `execution.respond(...)`로 답한다. 실행은 그동안 `ExecutionState.WAITING`이다.
-
-## SDK host 준비
-
-Codex bridge:
+저장소의 JDK 설정에 맞춰 `JAVA_HOME`을 지정한 뒤 실행한다. 다음 명령은 현재 구현용이다.
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\python -m pip install -r bridges\requirements-codex.txt
+./gradlew.bat test
+./gradlew.bat hostTests
+./gradlew.bat check -PstrictHostTests
 ```
 
-Gemini CLI SDK는 2026-09-03 기준 공식 저장소에는 구현되어 있으나 npm의 공개 안정 패키지로 배포되지 않았다. 공식 저장소를 빌드한 뒤 SDK 진입점 경로를 지정한다.
-
-```kotlin
-Harnesses.geminiCli(
-    GeminiCliSdkOptions(
-        sdkModule = "C:/src/gemini-cli/packages/sdk/dist/index.js",
-    ),
-)
-```
-
-## 검증
-
-```powershell
-.\gradlew.bat test                      # Kotlin contract/mapper/lifecycle tests
-.\gradlew.bat hostTests                 # Python(pytest) + Node(--test) host tests
-.\gradlew.bat check -PstrictHostTests   # 릴리스 검증: interpreter 부재를 실패로
-```
-
-host test는 `.venv\Scripts\python -m pip install -r bridges\requirements-codex.txt pytest`가 선행되어야 한다. 자세한 구성은 [docs/testing.md](docs/testing.md)에 있다.
+Host 준비와 검증 범위는 [Testing](docs/testing.md), 현재 artifact와 실행 환경 요구는 [Distribution](docs/distribution.md)에 있다. [samples/basic](samples/basic)은 기존 API의 소비 예제이며 구현 전환 때 함께 갱신한다.

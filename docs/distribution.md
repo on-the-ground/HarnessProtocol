@@ -1,97 +1,59 @@
 # Distribution
 
-## 소비자 계약
+배포는 [개정된 Port](protocol-reference.md)를 제공하는 구현 수단이다. 비즈니스 코드는 vendor SDK나 transport에 의존하지 않고, 구성 경계가 adapter와 필요한 선택 계약을 고른다.
 
-소비 프로젝트는 vendor SDK에 의존하지 않고 하나의 Maven artifact만 받는다.
+## 배포와 계약의 관계
+
+애플리케이션은 AgentHarness/AgentSession/AgentTask와 그 요구·outcome·output을 사용한다. SDK·provider thread·process 경로는 adapter 구성에 둔다. SDK API를 숨기는 것이 실행 환경의 설치·인증을 없앤다는 뜻은 아니다.
+
+단일 bundle은 현재 제공하는 배포 편의다. 모든 하네스가 process host를 포함하거나 같은 언어·artifact 구조를 가져야 한다는 AHP의 필수 계약은 아니다. 직접 연결하는 라이브러리와 원격 서비스도 같은 Port의 구현 대상이다.
+
+영속 저장소, 작업 자원, 권한 집행, 진단 등 선택 계약의 제공 범위는 artifact 이름만으로 추론하지 않는다. 지원 선언·필수 요구 검증·운영 구성이 일치해야 한다.
+
+## 현재 구현의 좌표와 factory
+
+아래 정보는 전환 전 구현에 관한 것이다. `0.1.0` 좌표에서 새 AgentTask API를 제공한다고 주장하지 않는다.
 
 ```kotlin
-repositories {
-    mavenLocal()
-}
-
+repositories { mavenLocal() }
 dependencies {
     implementation("io.github.joohyung-park:harness-bundle:0.1.0")
 }
 ```
 
-provider 선택은 composition root 한 곳에서 끝난다.
+현재 factory는 `Harnesses.create(configuration.provider)`이며 Codex/Gemini adapter를 제공한다. Koog 실험은 bundle에 포함되지 않는다. 개별 protocol/codex/gemini-cli artifact도 있고 process-bridge는 해당 adapter의 내부 의존성이다. adapter-testkit은 test-only이며 발행 대상이 아니다.
 
-```kotlin
-val harness: AgentHarness = Harnesses.create(configuration.provider)
-```
+## 현재 runtime 준비
 
-그 아래 application code는 `AgentHarness`, `AgentSession`, `AgentExecution`, `AgentEvent`만 사용한다. Codex/Gemini SDK 타입, SDK의 session/turn 명칭, bridge script 경로는 노출되지 않는다.
+| 경로 | 현재 필요한 환경 |
+|---|---|
+| Codex | Python 3.10+, requirements에 고정된 openai-codex 0.147.0 및 포함된 runtime. client 세부는 [Provider mapping](provider-mapping.md) |
+| Gemini CLI | Node와 SDK build entrypoint. 기존 조사에서는 외부 build 경로를 사용했으며 현재 설치 가능한 release는 후속 연동 때 재확인 |
+| Koog 실험 | [독립 빌드](../experiments/koog-validation/README.md)의 JDK·Kotlin·lockfile. 모델 경계는 fixture이며 실모델 인증 불필요 |
 
-## 발행
+현재 JAR은 bridge script와 requirements를 포함하고 factory가 script를 추출한다. Python/Node 실행 파일과 provider 인증은 운영 환경이 제공한다. 현재 실행 파일 override는 HARNESS_CODEX_PYTHON, HARNESS_GEMINI_NODE이고 Gemini SDK 경로는 GEMINI_CLI_SDK_MODULE로 지정할 수 있다.
 
-모든 모듈은 `maven-publish` publication과 sources JAR를 가진다.
+모델 인증 정보를 artifact에 포함하지 않는다. 운영 환경을 self-contained하게 제공하려면 별도의 runner image·sidecar·runtime packaging 등 배포 구성이 필요하다. 이것은 각 adapter의 제공 방식이다.
 
-로컬 개발용:
+## 현재 발행 명령
 
-```powershell
-.\gradlew.bat publishToMavenLocal
-```
-
-빌드 전용 Maven repository로 발행:
+다음은 기존 build의 명령 안내이며 이번 문서 정리에서 발행을 실행한 것은 아니다.
 
 ```powershell
-.\gradlew.bat publishAllPublicationsToBuildRepository
+./gradlew.bat publishToMavenLocal
+./gradlew.bat publishAllPublicationsToBuildRepository
+./gradlew.bat bundleForMavenCentral -PpublicationVersion=1.0.0
 ```
 
-기본 좌표는 다음과 같다.
+publicationGroup/publicationVersion을 지정할 수 있다. 공개 발행에는 해당 repository의 namespace·서명·POM·의존성·라이선스·인증 구성을 확인한다. bundle 생성 성공과 실제 public repository 발행 성공을 구별한다. 생성 경로는 Gradle task의 실제 출력 위치를 따른다.
 
-```text
-io.github.joohyung-park:harness-bundle:0.1.0
-```
+## 개정 계약의 배포 전환
 
-좌표는 발행 시 바꿀 수 있다.
+1. 실제 공개 타입과 KDoc을 새 의미로 전환하고 버전·소스 호환성과 의미 변경을 기록한다.
+2. 기본 영속 Session을 사용하던 소비자가 새 영속성 요구를 명시하도록 migration 예제를 제공한다.
+3. 예외 중심 결과 회수를 TaskOutcome으로, finalMessage 사용을 TaskOutput으로 옮기는 소비 예제를 제공한다.
+4. 선택 기능의 지원·거절과 runtime 준비를 provider별로 명시한다. 새 provider를 포함했다면 factory와 의존성에 실제 반영한다.
+5. [samples/basic](../samples/basic)을 새 artifact만으로 빌드하여 transitive dependency와 공개 API를 검증한다.
+6. README·문서의 구현 상태를 실연동 결과와 일치시킨다.
 
-```powershell
-.\gradlew.bat publishToMavenLocal `
-  -PpublicationGroup=com.example.agent `
-  -PpublicationVersion=1.0.0
-```
-
-Maven Central(Central Portal) 공개용 bundle은 다음으로 만든다.
-
-```powershell
-.\gradlew.bat bundleForMavenCentral -PpublicationVersion=1.0.0
-```
-
-각 모듈을 `build/staging-deploy`에 서명된 상태로 publish한 뒤 `build/bundle/bundle.zip`으로 묶는다. `publicationVersion`을 지정하지 않으면 기본값(`0.1.0`)이 쓰이지만, SNAPSHOT 버전은 Central Portal이 bundle 업로드를 거부하므로 릴리즈할 땐 항상 release 버전을 명시해야 한다. POM의 URL/SCM/라이선스(Apache-2.0)/개발자 정보와 GPG 서명은 이미 구성되어 있다 — namespace(`io.github.joohyung-park`)는 Central Portal 계정에서 GitHub 소유권으로 인증된 상태여야 한다.
-
-## JAR에 포함되는 것
-
-- 공통 Kotlin port와 값 타입
-- Codex 및 Gemini CLI adapter
-- SDK process transport
-- Codex Python bridge와 고정 requirements
-- Gemini CLI Node bridge
-
-기본 factory는 JAR에 포함된 bridge를 임시 경로로 추출하므로 소비자가 script 경로를 전달할 필요가 없다.
-
-## JAR에 포함할 수 없는 것
-
-SDK API를 감추는 것과 provider runtime을 없애는 것은 다른 문제다.
-
-- Codex adapter를 실행하는 머신에는 Python 3.10 이상과 `openai-codex==0.147.0`이 필요하다. 패키지가 고정된 Codex runtime(`openai-codex-cli-bin`)을 포함하므로 Codex CLI를 별도로 고를 필요는 없다. host는 `openai_codex.client.CodexClient`를 직접 사용하므로 버전 고정은 계약의 일부다([provider-mapping.md](provider-mapping.md)).
-- Gemini CLI adapter를 실행하는 머신에는 Node.js와 Gemini CLI SDK build가 필요하다. 조사 시점에는 SDK 구현이 공식 monorepo에만 있고 npm package가 공개되지 않았으므로 `GEMINI_CLI_SDK_MODULE` 환경 변수로 build entrypoint를 지정한다.
-- 인증 정보는 library가 소유하거나 artifact에 포함하지 않는다. 각 실행 환경의 provider 인증을 사용한다.
-
-기본 실행 파일 이름은 `python`과 `node`다. 배포 이미지의 경로가 다르면 각각 `HARNESS_CODEX_PYTHON`, `HARNESS_GEMINI_NODE` 환경 변수로 실행 파일의 절대 경로를 지정할 수 있다.
-
-즉, 소비 프로젝트의 **코드와 Gradle dependency**에서는 SDK를 제거했다. 운영 환경까지 완전히 self-contained하게 만들려면 OS/architecture별 runner image 또는 별도 sidecar 배포물이 추가로 필요하다.
-
-## 개별 artifact
-
-하나의 provider만 필요하면 bundle 대신 다음을 직접 사용할 수 있다.
-
-```text
-io.github.joohyung-park:harness-protocol
-io.github.joohyung-park:harness-codex
-io.github.joohyung-park:harness-gemini-cli
-```
-
-`harness-process-bridge`는 adapter의 내부 runtime dependency이므로 소비자가 직접 참조하지 않는다. `harness-adapter-testkit`은 test-only 모듈이며 발행되지 않는다.
-
-독립 Gradle build가 실제 발행 artifact만 받아 사용하는 예제는 `samples/basic`에 있다. 이 예제는 root project module에 의존하지 않으므로 transitive POM과 공개 API를 함께 검증한다.
+새 문서의 존재나 기존 테스트 통과만으로 새 계약을 발행하지 않는다. 전체 완료 조건은 [전환 계획](port-revision-plan.md)을 따른다.
