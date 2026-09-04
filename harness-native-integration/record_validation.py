@@ -9,12 +9,15 @@ import xml.etree.ElementTree as ET
 parser = argparse.ArgumentParser()
 parser.add_argument("stage")
 parser.add_argument("--command", required=True)
+parser.add_argument("--suite-contains")
 args = parser.parse_args()
 repo = Path(__file__).resolve().parent.parent
 results = Path(os.environ["TEMP"]) / "harness-protocol-build/harness-native-integration/test-results/test"
 rows = []
 for path in sorted(results.glob("TEST-*.xml")):
     suite = ET.parse(path).getroot()
+    if args.suite_contains and args.suite_contains not in suite.get("name", ""):
+        continue
     for case in suite.findall("testcase"):
         failure = case.find("failure")
         error = case.find("error")

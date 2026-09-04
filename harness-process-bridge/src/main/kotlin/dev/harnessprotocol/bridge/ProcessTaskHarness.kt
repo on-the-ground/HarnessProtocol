@@ -51,6 +51,10 @@ abstract class ProcessTaskHarness(
         return existing.mutex.withLock {
             if (isBlocked(existing)) throw SessionBlockedException(existing.id, "Prior work on this context is unresolved")
             check(existing.active?.isTerminal != false) { "Context has an active task" }
+            if (existing.handles.get() > 0 && existing.spec != spec) {
+                CompatibilityReport(listOf(CompatibilityIssue("spec",
+                    "Release existing handles before changing the shared native context configuration"))).requireCompatible()
+            }
             val result = call("resume_session", buildJsonObject { put("sessionId", ref.id); put("spec", sessionPayload(spec)) })
             open(result, spec, true)
         }
@@ -60,6 +64,7 @@ abstract class ProcessTaskHarness(
         val id = SessionId(result.getValue("sessionId").jsonPrimitive.content)
         sessionOpened(id, spec, resumed)
         val context = contexts.computeIfAbsent(id) { Context(id) }
+        context.spec = spec
         context.handles.incrementAndGet()
         val ref = if (spec.requirements.persistence is PersistenceRequirement.Required)
             PersistentSessionRef(provider, requireNotNull(storageNamespace), id.value) else null
@@ -70,6 +75,7 @@ abstract class ProcessTaskHarness(
         val mutex = Mutex()
         val blocked = AtomicBoolean(false)
         val handles = AtomicInteger()
+        @Volatile var spec: SessionSpec? = null
         @Volatile var active: ManagedTask? = null
     }
 

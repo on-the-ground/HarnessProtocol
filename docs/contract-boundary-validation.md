@@ -57,3 +57,11 @@ Codex에 연결한 공통 [3개 검사](../harness-native-integration/evidence/g
 현재 세 production 구성은 schema를 집행하는 실행 경로를 제공하지 않는다. 따라서 이 단계의 적합성 조건은 JSON처럼 보이는 텍스트를 Structured로 포장하는 것이 아니라, 구조화 산출물 요구를 작업 시작 전에 거절하는 것이다. `validatedByHarness=false`도 산출물 형태 요구를 제거하지 않는다.
 
 [G01 실행 증거](../harness-native-integration/evidence/requirement-admission.json)의 세 native 구성 × 검증 책임 두 종류 × preflight/direct = 12개 요구 검사가 이 조건을 검증한다. 다섯 profile의 지원 표 검사도 미지원을 확인한다. 기존 91개 실행에 포함된 검사이며 신규 12개로 더하지 않는다. 선택 기능을 새로 구현하거나, 미지원 선택 보장을 기본 계약으로 강제하지 않았다. 향후 schema 실행 경로를 추가하면 VALID/INVALID/NOT_VALIDATED와 부분 산출물의 실제 의미를 별도 실증해야 한다.
+
+## G12 — 영속 저장 장애와 설정 보존
+
+공통 3개 정의 × 두 영속 runtime = 6개와 G04 회귀 6개가 [모두 통과](../harness-native-integration/evidence/g12-persistence.json)했다. 모르는 참조를 새 session으로 바꾸지 않고 거절한다. 실제 임시 저장소의 이력 파일을 잠시 다른 이름으로 옮기면 reopen은 명시적으로 실패하며, 파일을 복원하면 원래 입력 문맥과 같은 영속 참조를 회수한다. fixture 밖의 파일은 변경하지 않는다.
+
+[최초 실패](../harness-native-integration/evidence/g12-persistence-first-run.json)에서 Gemini의 reopen이 살아 있는 다른 핸들의 선언된 설정을 조용히 덮어쓰는 결함을 발견했다. 공통 process runtime은 살아 있는 핸들의 spec과 다른 설정의 reopen을 거절한다. 기존 핸들을 해제하면 Gemini는 새 설정을 적용할 수 있고 Codex의 구성 변경 미지원은 유지된다. 다른 실패는 Gemini 저장 형식이 `.jsonl`인데 fixture가 `.json`만 찾은 것이어서 실제 저장 파일 선택을 수정했다.
+
+범위는 명시된 동일 애플리케이션 프로세스다. G04에서 미확정 문맥 차단의 하네스 재생성 후 보존, G01에서 프로세스 재시작·동시 writer 요구의 사전 거절을 검증한다. 영속 지원을 외부 저장소의 항상 가용함으로 해석하지 않으며, 저장 접근 실패를 정상 재개로 숨기지 않는다. 별도의 동적 capability 변경 통로가 없는 구성에 지원 철회 알림을 합성하지 않았다.
