@@ -104,7 +104,7 @@ legacy 이전과 임시 참조 구현 제거 뒤 `test :harness-conformance:test
 | Python host | 15 | 실패 0, 기존 Pydantic 경고 4 |
 | Node host | 5 | 0 / 0 |
 
-현재 루트 JVM 결과는 총 **105개**, host 결과는 **20개**다. 이전한 adapter·mapper·process 검사와 native 검사를 재실행해 통과했다. 마지막 확인에서는 현재 소스와 일치하는 Gradle up-to-date JVM 결과를 재사용하고 host 20개를 재실행했으며 sourcesJar를 갱신했다. 참조 하네스가 포함됐던 153개 집계는 [제거 전 기록](../harness-native-integration/evidence/before-reference-removal.json)에 분리했으며 현재 통과 수로 사용하지 않는다. 독립 Koog 실험도 현재 Port로 이전해 **18개**를 별도로 실행·통과했다. [현재 실험 기록](../experiments/koog-validation/evidence/current-port-migration.json)은 과거 18개 기록과 구별하며 루트 105개에 합산하지 않는다.
+legacy 전환 검증의 루트 JVM 결과는 총 **105개**, host 결과는 **20개**다. 이전한 adapter·mapper·process 검사와 native 검사를 재실행해 통과했다. 마지막 확인에서는 현재 소스와 일치하는 Gradle up-to-date JVM 결과를 재사용하고 host 20개를 재실행했으며 sourcesJar를 갱신했다. 참조 하네스가 포함됐던 153개 집계는 [제거 전 기록](../harness-native-integration/evidence/before-reference-removal.json)에 분리했으며 현재 통과 수로 사용하지 않는다. 독립 Koog 실험도 현재 Port로 이전해 **18개**를 별도로 실행·통과했다. [현재 실험 기록](../experiments/koog-validation/evidence/current-port-migration.json)은 과거 18개 기록과 구별하며 루트 105개에 합산하지 않는다.
 
 `./gradlew.bat --offline -p samples/basic -PuseProjectSource compileKotlin`도 통과했다. 미발행 소스를 composite build로 소비한 결과이며 artifact 발행은 수행하지 않았다. README와 docs의 상대 파일 링크 검사에서 누락은 0개였다.
 
@@ -118,4 +118,10 @@ legacy 이전과 임시 참조 구현 제거 뒤 `test :harness-conformance:test
 
 [요구 사례 검증](requirement-admission-validation.md)을 세 실제 adapter의 다섯 구성에 연결했다. 지원 선언 검사 5개와 요구 사례 43개의 preflight/direct 호출 86개, 총 91개가 통과했다. 기존 C20/C21의 고정 거절·미확인 전제를 제거해 이 판정으로 대체했으며 나머지 미연결 정의는 46개다. 수락·거절 검사를 승인 효과·sandbox·자원 접근 등의 전체 의미 검증으로 해석하지 않는다. 실제 미확인 요구 사례가 없는 범위도 별도로 남겼다.
 
-현재 합산 JVM 결과는 기존 105개와 요구 검사 91개를 합한 **196개**, 실패·오류·건너뜀 0개다. 두 실행의 범위와 소스 일치 확인은 [G01 실행 결과](requirement-admission-validation.md#실행-결과), 개별 suite는 [현재 검증 기록](../harness-native-integration/evidence/verification.json)에 있다. 위 legacy 이전·단계 1의 105개 집계는 당시 결과로 보존한다.
+G01 시점의 합산 JVM 결과는 기존 105개와 요구 검사 91개를 합한 **196개**, 실패·오류·건너뜀 0개다. 두 실행의 범위와 소스 일치 확인은 [G01 실행 결과](requirement-admission-validation.md#실행-결과), 개별 suite는 [현재 검증 기록](../harness-native-integration/evidence/verification.json)에 있다. 위 legacy 이전·단계 1의 105개 집계는 당시 결과로 보존한다.
+
+## 실제 수락 확인 유실 연결
+
+[G02 검증](acceptance-loss-validation.md)은 실제 수락과 caller가 가진 확인 정보의 차이를 검사한다. Codex 시작 4개·응답 3개, Gemini 시작 4개, Koog 정상/비중단 handoff 2개를 연결했다. 없는 통신 단계나 미지원 승인 채널을 가짜 Port로 만들지 않는다. 기존 K13/K14는 이 검사로 대체했으며 미연결 정의는 44개다.
+
+G02 이후 최신 고유 JVM 결과는 **209개**, 실패·오류·건너뜀 0개다. 기존 196개에 G02 13개를 더한 결과이며 native 모듈은 129개다. 마지막 요청 identity 판정 보강은 G02만 재검증하고 동일 검사의 결과를 교체했다. 실행별 범위는 [G02 결과](acceptance-loss-validation.md#검증-결과)를 따른다.

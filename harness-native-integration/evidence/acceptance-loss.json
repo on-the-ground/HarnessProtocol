@@ -1,0 +1,212 @@
+{
+  "stage": "2b: native acceptance loss",
+  "command": "./gradlew.bat --offline :harness-native-integration:test -PnativeHarnessTests --tests '*AcceptanceTest' --tests '*AcceptedStartTest' --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "tests": 13,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "sharedDefinitionExecutions": 12,
+  "localHandoffRegressionExecutions": 1,
+  "matrix": [
+    {
+      "provider": "codex",
+      "profile": "caller-approval-read-only",
+      "scenario": "confirmed response nondelivery leaves the native request retryable()",
+      "boundary": "real SDK host with delivery fault decoration",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.CodexNativeResponseAcceptanceTest",
+      "suiteTimestamp": "2026-09-04T13:18:55.863Z"
+    },
+    {
+      "provider": "codex",
+      "profile": "caller-approval-read-only",
+      "scenario": "response acceptance loss after native acceptance prevents duplicate effects()",
+      "boundary": "real SDK host with delivery fault decoration",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.CodexNativeResponseAcceptanceTest",
+      "suiteTimestamp": "2026-09-04T13:18:55.863Z"
+    },
+    {
+      "provider": "codex",
+      "profile": "caller-approval-read-only",
+      "scenario": "response acceptance loss before native acceptance prevents duplicate submission()",
+      "boundary": "real SDK host with delivery fault decoration",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.CodexNativeResponseAcceptanceTest",
+      "suiteTimestamp": "2026-09-04T13:18:55.863Z"
+    },
+    {
+      "provider": "codex",
+      "profile": "sdk-delivery",
+      "scenario": "accepted start yields a usable identity while real work is held()",
+      "boundary": "real SDK host with delivery fault decoration",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.CodexNativeStartAcceptanceTest",
+      "suiteTimestamp": "2026-09-04T13:19:11.110Z"
+    },
+    {
+      "provider": "codex",
+      "profile": "sdk-delivery",
+      "scenario": "lost acknowledgement after native acceptance blocks resubmission()",
+      "boundary": "real SDK host with delivery fault decoration",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.CodexNativeStartAcceptanceTest",
+      "suiteTimestamp": "2026-09-04T13:19:11.110Z"
+    },
+    {
+      "provider": "codex",
+      "profile": "sdk-delivery",
+      "scenario": "confirmed nondelivery permits retry without a native start()",
+      "boundary": "real SDK host with delivery fault decoration",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.CodexNativeStartAcceptanceTest",
+      "suiteTimestamp": "2026-09-04T13:19:11.110Z"
+    },
+    {
+      "provider": "codex",
+      "profile": "sdk-delivery",
+      "scenario": "lost acknowledgement without native acceptance still blocks resubmission()",
+      "boundary": "real SDK host with delivery fault decoration",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.CodexNativeStartAcceptanceTest",
+      "suiteTimestamp": "2026-09-04T13:19:11.110Z"
+    },
+    {
+      "provider": "gemini-cli",
+      "profile": "sdk-delivery",
+      "scenario": "accepted start yields a usable identity while real work is held()",
+      "boundary": "real SDK host with delivery fault decoration",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.GeminiNativeStartAcceptanceTest",
+      "suiteTimestamp": "2026-09-04T13:19:23.480Z"
+    },
+    {
+      "provider": "gemini-cli",
+      "profile": "sdk-delivery",
+      "scenario": "lost acknowledgement after native acceptance blocks resubmission()",
+      "boundary": "real SDK host with delivery fault decoration",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.GeminiNativeStartAcceptanceTest",
+      "suiteTimestamp": "2026-09-04T13:19:23.480Z"
+    },
+    {
+      "provider": "gemini-cli",
+      "profile": "sdk-delivery",
+      "scenario": "confirmed nondelivery permits retry without a native start()",
+      "boundary": "real SDK host with delivery fault decoration",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.GeminiNativeStartAcceptanceTest",
+      "suiteTimestamp": "2026-09-04T13:19:23.480Z"
+    },
+    {
+      "provider": "gemini-cli",
+      "profile": "sdk-delivery",
+      "scenario": "lost acknowledgement without native acceptance still blocks resubmission()",
+      "boundary": "real SDK host with delivery fault decoration",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.GeminiNativeStartAcceptanceTest",
+      "suiteTimestamp": "2026-09-04T13:19:23.480Z"
+    },
+    {
+      "provider": "koog",
+      "profile": "local-graph",
+      "scenario": "accepted start yields a usable identity while real work is held()",
+      "boundary": "real graph handoff",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.KoogNativeAcceptedStartTest",
+      "suiteTimestamp": "2026-09-04T13:19:36.028Z"
+    },
+    {
+      "provider": "koog",
+      "profile": "local-graph",
+      "scenario": "local start hands back its handle without an acknowledgement suspension()",
+      "boundary": "real graph handoff",
+      "result": "passed",
+      "suite": "dev.harnessprotocol.integration.KoogNativeAcceptedStartTest",
+      "suiteTimestamp": "2026-09-04T13:19:36.028Z"
+    }
+  ],
+  "suites": [
+    {
+      "name": "dev.harnessprotocol.integration.CodexNativeResponseAcceptanceTest",
+      "timestamp": "2026-09-04T13:18:55.863Z",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testNames": [
+        "confirmed response nondelivery leaves the native request retryable()",
+        "response acceptance loss after native acceptance prevents duplicate effects()",
+        "response acceptance loss before native acceptance prevents duplicate submission()"
+      ]
+    },
+    {
+      "name": "dev.harnessprotocol.integration.CodexNativeStartAcceptanceTest",
+      "timestamp": "2026-09-04T13:19:11.110Z",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testNames": [
+        "accepted start yields a usable identity while real work is held()",
+        "lost acknowledgement after native acceptance blocks resubmission()",
+        "confirmed nondelivery permits retry without a native start()",
+        "lost acknowledgement without native acceptance still blocks resubmission()"
+      ]
+    },
+    {
+      "name": "dev.harnessprotocol.integration.GeminiNativeStartAcceptanceTest",
+      "timestamp": "2026-09-04T13:19:23.480Z",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testNames": [
+        "accepted start yields a usable identity while real work is held()",
+        "lost acknowledgement after native acceptance blocks resubmission()",
+        "confirmed nondelivery permits retry without a native start()",
+        "lost acknowledgement without native acceptance still blocks resubmission()"
+      ]
+    },
+    {
+      "name": "dev.harnessprotocol.integration.KoogNativeAcceptedStartTest",
+      "timestamp": "2026-09-04T13:19:36.028Z",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testNames": [
+        "accepted start yields a usable identity while real work is held()",
+        "local start hands back its handle without an acknowledgement suspension()"
+      ]
+    }
+  ],
+  "sourceSha256": {
+    "harness-conformance/src/main/kotlin/dev/harnessprotocol/conformance/AcceptanceFixture.kt": "e30bbf512a9fbd6b72d648dbafdfe8949225c622efdb742370f0d1d412879e63",
+    "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessAcceptanceConformanceTest.kt": "ffe9ebfc23d7d063afd4731270c9ecf2be9fc3f323d6d5dce0127cb0dc07ba1c",
+    "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeAcceptanceTest.kt": "5c73c644c4597d27b23b55e12859dccc18a8f7e1f6c9ea69152ae2a867d3a7f7",
+    "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeHarnessTest.kt": "2a798fc84658471765f760e8326347034597ea23bcafadbdc76e31903537a021"
+  },
+  "fullRegression": "acceptance-loss-full-regression.json",
+  "combinedJvm": {
+    "tests": 209,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "counting": "Latest 13 G02 results replace the same 13 identities in the full 209; they are not added again. The targeted run verifies the strengthened native request correlation assertion.",
+  "fixtureBringUpFailure": "acceptance-loss-first-run.json",
+  "observedCodexCommandTool": "shell_command",
+  "replacedOriginalDefinitions": [
+    "K13",
+    "K14"
+  ],
+  "remainingUnboundDefinitions": 44,
+  "limits": [
+    "SDK delivery fault decoration, not physical packet or process transport failure.",
+    "No separate acknowledgement suspension in the current Koog start handoff; immediate return is independently tested.",
+    "Gemini and Koog have no caller approval channel; required approval rejection is exercised in G01, not a fabricated response test.",
+    "Concurrent response withdrawal, cancellation and terminal races belong to G03."
+  ]
+}

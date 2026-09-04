@@ -56,7 +56,9 @@ class KoogNativeHarnessTest : NativeHarnessTest() {
 
 object CodexNativeFactory : NativeHarnessFactory {
     override val provider = ProviderId("codex")
-    override fun create(model: ModelBoundary, directory: Path, persistent: Boolean): AgentHarness {
+    override fun create(model: ModelBoundary, directory: Path, persistent: Boolean): AgentHarness =
+        CodexHarness.launch(options(model, directory), storageNamespace = if (persistent) StorageNamespace(directory.toString()) else null)
+    fun options(model: ModelBoundary, directory: Path): CodexSdkOptions {
         val repo = Path.of(System.getProperty("ahp.repository"))
         val home = Files.createDirectories(directory.resolve("codex-home"))
         Files.writeString(home.resolve("config.toml"), """
@@ -69,21 +71,22 @@ object CodexNativeFactory : NativeHarnessFactory {
             requires_openai_auth = false
         """.trimIndent())
         val python = System.getenv("HARNESS_CODEX_PYTHON") ?: repo.resolve(".venv/Scripts/python.exe").toString()
-        return CodexHarness.launch(CodexSdkOptions(pythonCommand = listOf(python), processWorkingDirectory = directory,
-            environment = mapOf("CODEX_HOME" to home.toString())), storageNamespace = if (persistent) StorageNamespace(directory.toString()) else null)
+        return CodexSdkOptions(pythonCommand = listOf(python), processWorkingDirectory = directory,
+            environment = mapOf("CODEX_HOME" to home.toString()))
     }
 }
 object GeminiNativeFactory : NativeHarnessFactory {
     override val provider = ProviderId("gemini-cli")
     override fun spec() = SessionSpec(instructions = "AHP_NATIVE_INSTRUCTION", model = "gemini-2.5-flash")
-    override fun create(model: ModelBoundary, directory: Path, persistent: Boolean): AgentHarness {
+    override fun create(model: ModelBoundary, directory: Path, persistent: Boolean): AgentHarness =
+        GeminiCliHarness.launch(options(model, directory), storageNamespace = if (persistent) StorageNamespace(directory.toString()) else null)
+    fun options(model: ModelBoundary, directory: Path): GeminiCliSdkOptions {
         val repo = Path.of(System.getProperty("ahp.repository"))
         val module = System.getenv("GEMINI_CLI_SDK_MODULE") ?: repo.resolve("_stage/gemini-cli-runtime/packages/sdk/dist/index.js").toString()
         check(Files.exists(Path.of(module))) { "Build the official Gemini SDK and set GEMINI_CLI_SDK_MODULE" }
-        return GeminiCliHarness.launch(GeminiCliSdkOptions(sdkModule = module, processWorkingDirectory = directory,
+        return GeminiCliSdkOptions(sdkModule = module, processWorkingDirectory = directory,
             environment = mapOf("GOOGLE_GEMINI_BASE_URL" to model.url, "GEMINI_API_KEY" to "local-fixture-key", "GEMINI_TELEMETRY_ENABLED" to "false",
-                "USERPROFILE" to Files.createDirectories(directory.resolve("gemini-home")).toString(), "HOME" to directory.resolve("gemini-home").toString())),
-            storageNamespace = if (persistent) StorageNamespace(directory.toString()) else null)
+                "USERPROFILE" to Files.createDirectories(directory.resolve("gemini-home")).toString(), "HOME" to directory.resolve("gemini-home").toString()))
     }
 }
 object KoogNativeFactory : NativeHarnessFactory {
@@ -101,7 +104,7 @@ object KoogNativeFactory : NativeHarnessFactory {
 }
 
 /** Model protocol server, never a harness or Port implementation. No external model calls. */
-class ModelBoundary : dev.harnessprotocol.conformance.RuntimeObservation {
+class ModelBoundary(val overrideResponse: ((String) -> String?)? = null) : dev.harnessprotocol.conformance.RuntimeObservation {
     override val observedContexts: List<String> get() = requests
     val requests = CopyOnWriteArrayList<String>()
     private val workers = Executors.newCachedThreadPool()
@@ -118,7 +121,7 @@ class ModelBoundary : dev.harnessprotocol.conformance.RuntimeObservation {
                 val body = exchange.requestBody.bufferedReader().readText()
                 requests += body
                 gate?.await(75, TimeUnit.SECONDS)
-                val response = if (exchange.requestURI.path.contains("responses")) codexResponse() else geminiResponse()
+                val response = overrideResponse?.invoke(body) ?: if (exchange.requestURI.path.contains("responses")) codexResponse() else geminiResponse()
                 exchange.responseHeaders.set("Content-Type", "text/event-stream")
                 exchange.sendResponseHeaders(200, 0)
                 exchange.responseBody.use { it.write(response.toByteArray()) }

@@ -1,6 +1,6 @@
 # 공통 시나리오 통합과 남은 검증
 
-현재 요구 사례 연결은 [단계 2 G01 기록](requirement-admission-validation.md)을 따른다. C20/C21은 독립 요구 사례 판정으로 대체했고, 남은 미연결 정의는 46개다. 아래 단계 1 실행 수는 당시의 검증 기록이다.
+현재 연결은 [G01 요구 판정](requirement-admission-validation.md)과 [G02 수락 확인 유실](acceptance-loss-validation.md)을 따른다. C20/C21과 K13/K14를 실제 판정으로 대체했고, 남은 미연결 정의는 44개다. 아래 단계 1 실행 수는 당시의 검증 기록이다.
 
 2026-09-04. 단계 1은 검사 위치·목적·실행 증거를 통합하는 작업이다. 공개 Port의 의미를 변경하지 않는다. [기계 판독 목록](../harness-conformance/scenario-catalog.json)에 기존 48개 정의, SDK 공통/전용 20개, native 8개를 모두 대응시켰다. 76개 항목은 고유 업무 목적의 수나 통과 수가 아니다.
 
@@ -10,8 +10,9 @@
 - HarnessRuntimeConformanceTest: 필수 runtime 5개. 실제 입력·지시·문맥, 중첩/독립 waiter, 정리, 확인된 취소를 검사한다.
 - HarnessRuntimeProfileConformanceTest: 현재 선택한 세 구성의 진단 지원·구조화 요구 거절 2개. 모든 adapter에 이 지원 조합을 강제하는 기본 계약이 아니다.
 - HarnessRuntimePersistenceConformanceTest: Codex/Gemini에 연결된 실제 영속 문맥 재개 1개.
+- HarnessAcceptanceConformanceTest.kt: 시작·응답의 미전달/확인 유실 공통 판정 7개. 실제 경계별 적용과 Koog의 로컬 handoff 검증은 G02 문서를 따른다.
 - HarnessRequirementsConformanceTest: 독립 profile별 지원·preflight·직접 호출을 실제 세 adapter에서 검사하는 동적 factory. 5개 profile·43개 요구 사례의 실행 기록은 G01 문서를 따른다.
-- HarnessConformanceCoreTest/CleanupTest: 기존 29+19개 중 C20/C21을 요구 사례 판정으로 대체했다. 남은 27+19개는 아직 전체 HarnessFixture에 연결되지 않은 정의다. 아래 가정을 고치고 실제 경계에 연결해야 한다.
+- HarnessConformanceCoreTest/CleanupTest: 기존 29+19개 중 C20/C21과 K13/K14를 실제 요구·수락 판정으로 대체했다. 남은 27+17개는 아직 전체 HarnessFixture에 연결되지 않은 정의다. 아래 가정을 고치고 실제 경계에 연결해야 한다.
 - SdkAdapterContractTest: 요청 전송·설정 투영·mailbox 해제·EOF·ID 정규화 등 SDK 경계 검사 11개와 lifecycle binding만 남겼다. 기존 AgentHarnessContractTest는 제거했다.
 
 공통 판정은 conformance의 testFixtures에 있고 provider 설정·SDK JSON·모델 서버는 외부 binding에 있다. TaskLifecycleControl은 기존 TaskControl의 lifecycle 부분을 공유한다. 어떤 binding도 AgentTask state/outcome을 직접 설정하지 않는다.
@@ -33,13 +34,13 @@
 
 ## 다음 실행 순서
 
-G01의 독립 profile/case 선택과 실제 수락 검사를 연결했다. 미확인 요구의 실제 사례와 나머지 기존 본문의 profile 전환은 남아 있다. 다음은 수락/응답 확인 유실(G02), interaction 경쟁(G03), 문맥 차단(G04), 부분 산출물·사용량(G05), 정리·후속 효과(G06)를 실제 세 adapter에서 검증한다. 이후 진단·권한·자원·구조화·usage·영속 조건(G07–G12)을 지원 시 이행/미지원 시 사전 거절로 검증한다.
+G01의 독립 profile/case 선택과 실제 수락 검사를 연결했다. 미확인 요구의 실제 사례와 나머지 기존 본문의 profile 전환은 남아 있다. G02의 실제 적용 가능한 경계를 검증했다. 다음은 interaction 경쟁(G03), 문맥 차단(G04), 부분 산출물·사용량(G05), 정리·후속 효과(G06)를 실제 세 adapter에서 검증한다. 이후 진단·권한·자원·구조화·usage·영속 조건(G07–G12)을 지원 시 이행/미지원 시 사전 거절로 검증한다.
 
 통과한 기본 목적을 반복 구현하지 않고 아래 related ID의 실행본을 재사용한다. 지원하지 않는 선택 기능의 성공 시나리오를 강제로 만들지 않으며, 필수 동작이나 지원한다고 선언한 기능을 skip하여 완료하지 않는다. 실행마다 provider × scenario × profile × 증거 경계 × 결과를 기록한다.
 
 ## 전체 대응표
 
-S는 이전 AgentHarnessContractTest의 원래 순번, R은 이전 NativeHarnessTest의 순번이다. C/K는 기존 Core/Cleanup 순번이다. related는 목적 중첩을 뜻하며 해당 C/K의 모든 조건을 이미 통과했다는 표시가 아니다. C20/C21은 요구 사례 factory로 대체했으며 나머지 C/K의 전체 fixture 연결 상태는 미연결이다. S는 Codex/Gemini SDK 경계에 연결돼 있고, R01–R07은 세 runtime, R08은 Codex/Gemini에 연결돼 있다.
+S는 이전 AgentHarnessContractTest의 원래 순번, R은 이전 NativeHarnessTest의 순번이다. C/K는 기존 Core/Cleanup 순번이다. related는 목적 중첩을 뜻하며 해당 C/K의 모든 조건을 이미 통과했다는 표시가 아니다. C20/C21은 요구 사례 factory로, K13/K14는 실제 시작 수락 검사로 대체했으며 나머지 C/K의 전체 fixture 연결 상태는 미연결이다. S는 Codex/Gemini SDK 경계에 연결돼 있고, R01–R07은 세 runtime, R08은 Codex/Gemini에 연결돼 있다.
 
 | ID | 검사 | 현재 경계 | 관련 목적 |
 |---|---|---|---|
@@ -84,8 +85,8 @@ S는 이전 AgentHarnessContractTest의 원래 순번, R은 이전 NativeHarness
 | K10 | pure observation loss without a terminal report settles Unresolved with an observation-lost reason | 미연결 정의 | — |
 | K11 | a runtime that owned the work reports a confirmed transport failure, not Unresolved | 미연결 정의 | — |
 | K12 | a runtime that did not own the work leaves it outstanding rather than fabricating a result | 미연결 정의 | — |
-| K13 | a start rejected before delivery does not block the session and can be retried | 미연결 정의 | — |
-| K14 | losing the start acceptance acknowledgement blocks the session, distinct from a clean rejection | 미연결 정의 | — |
+| K13 | a start rejected before delivery does not block the session and can be retried | 실제 시작 수락 검사로 대체 | G02 |
+| K14 | losing the start acceptance acknowledgement blocks the session, distinct from a clean rejection | 실제 수락/미수락 양쪽으로 대체 | G02 |
 | K15 | usage deltas accumulate and unknown fields stay unknown rather than becoming zero | 미연결 정의 | — |
 | K16 | a fresh usage snapshot resets the baseline instead of double-counting prior deltas | 미연결 정의 | — |
 | K17 | task and session usage are reported and preserved separately | 미연결 정의 | — |

@@ -4,11 +4,9 @@ package dev.harnessprotocol.conformance
 
 import dev.harnessprotocol.AgentUsage
 import dev.harnessprotocol.FailureKind
-import dev.harnessprotocol.HarnessTransportException
 import dev.harnessprotocol.PersistentSessionRef
 import dev.harnessprotocol.SessionBlockedException
 import dev.harnessprotocol.TaskOutcome
-import dev.harnessprotocol.TaskStartUnconfirmedException
 import dev.harnessprotocol.UnresolvedReason
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -248,41 +246,6 @@ abstract class HarnessConformanceCleanupTest : ConformanceTestSupport() {
             session.release()
             val outcome = withTimeout(3_000) { task.awaitOutcome() } as TaskOutcome.Unresolved
             assertEquals(UnresolvedReason.CANCELLATION_UNCONFIRMED, outcome.reason)
-        } finally {
-            h.close()
-        }
-    }
-
-    // ------------------------------------------------------------------ 시작 요청 acknowledgement 유실
-
-    @Test
-    fun `a start rejected before delivery does not block the session and can be retried`(): Unit = runBlocking {
-        val h = harnessFor()
-        try {
-            val session = h.session()
-            fixture().controlNextStart(session).rejectBeforeDelivery("refused before it reached the runtime")
-            assertFailsWith<HarnessTransportException> { session.start("first try") }
-            // a clean pre-delivery rejection is not ambiguous: the session must accept the retry.
-            val task = session.start("retry")
-            task.control().reportRunning()
-            task.control().reportCompletion()
-            val outcome = withTimeout(2_000) { task.awaitOutcome() }
-            assertTrue(outcome is TaskOutcome.Completed)
-        } finally {
-            h.close()
-        }
-    }
-
-    @Test
-    fun `losing the start acceptance acknowledgement blocks the session, distinct from a clean rejection`(): Unit = runBlocking {
-        val h = harnessFor()
-        try {
-            val session = h.session()
-            fixture().controlNextStart(session).loseAcceptanceAcknowledgement(acceptedByRuntime = true)
-            assertFailsWith<TaskStartUnconfirmedException> { session.start("ambiguous") }
-            // the caller never got a handle and must not start a new task on this context, because
-            // whether the runtime actually accepted it is unknown.
-            assertFailsWith<SessionBlockedException> { session.start("must not retry blindly") }
         } finally {
             h.close()
         }

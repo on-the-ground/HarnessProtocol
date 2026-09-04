@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "stage": "2a: independent requirement profiles and native admission",
-  "countingRule": "76 original inventory identities are retained. C20/C21 have been replaced by requirement cases; 46 original C/K definitions remain unattached. Dynamic cases and support checks are counted from JUnit, separately from definitions.",
+  "stage": "2b: native start and response acceptance loss",
+  "countingRule": "76 original inventory identities are retained. C20/C21 and K13/K14 were replaced by actual requirement/admission checks; 44 original C/K definitions remain unattached. Count consumer executions from JUnit; do not equate purpose overlap with full coverage.",
   "entries": [
     {
       "id": "C01",
@@ -431,23 +431,36 @@
     {
       "id": "K13",
       "title": "a start rejected before delivery does not block the session and can be retried",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
-      "bindings": [],
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessAcceptanceConformanceTest.kt",
+      "layer": "native-runtime-start-acceptance",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
       "relatedPurposeIds": [],
       "beforeBinding": [
-        "Assert native submission counts and preserved context after confirmed non-delivery."
+        "Replaced by native admission checks; the current local Koog handoff has no separate acknowledgement boundary and is verified independently."
+      ],
+      "replacementTests": [
+        "confirmed nondelivery permits retry without a native start"
       ]
     },
     {
       "id": "K14",
       "title": "losing the start acceptance acknowledgement blocks the session, distinct from a clean rejection",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
-      "bindings": [],
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessAcceptanceConformanceTest.kt",
+      "layer": "native-runtime-start-acceptance",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
       "relatedPurposeIds": [],
       "beforeBinding": [
-        "Cover accepted and unaccepted acknowledgement loss, request identity and no duplicate native submissions."
+        "Replaced by native admission checks; the current local Koog handoff has no separate acknowledgement boundary and is verified independently."
+      ],
+      "replacementTests": [
+        "lost acknowledgement after native acceptance blocks resubmission",
+        "lost acknowledgement without native acceptance still blocks resubmission"
       ]
     },
     {
@@ -925,7 +938,8 @@
     {
       "id": "G02",
       "purpose": "Response acknowledgement loss (accepted and unaccepted), confirmed non-delivery, identity, no duplicate native response",
-      "priority": 1
+      "priority": 1,
+      "progress": "Native start nondelivery and accepted/unaccepted acknowledgement loss bound to Codex/Gemini; usable local Koog handoff verified. Codex response nondelivery/loss bound to actual approval and file effect. Other unavailable channels are not fabricated; physical wire faults and response races are outside this result."
     },
     {
       "id": "G03",
@@ -990,5 +1004,17 @@
     "expectedExecutions": 91,
     "unconfirmedNativeCaseAvailable": false,
     "evidence": "../harness-native-integration/evidence/requirement-admission.json"
+  },
+  "acceptanceVerification": {
+    "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessAcceptanceConformanceTest.kt",
+    "nativeBinding": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeAcceptanceTest.kt",
+    "sharedDefinitions": 7,
+    "sharedExecutions": 12,
+    "localHandoffRegressionExecutions": 1,
+    "expectedExecutions": 13,
+    "evidence": "../harness-native-integration/evidence/acceptance-loss.json",
+    "physicalNetworkFailureInjected": false,
+    "koogAcknowledgementLoss": "No separate acknowledgement suspension in this configuration; direct handoff regression and usable-handle test apply.",
+    "geminiAndKoogResponseLoss": "No caller approval channel; actual requirement rejection is covered by G01."
   }
 }
