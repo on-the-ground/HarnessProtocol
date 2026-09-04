@@ -17,6 +17,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.nio.file.Path
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class CodexHarnessContractTest : SdkAdapterContractTest() {
@@ -90,6 +92,34 @@ class CodexHarnessContractTest : SdkAdapterContractTest() {
     }
 
     override fun compatibleSpec() = SessionSpec()
+}
+
+class CodexSdkOptionsTest {
+    @Test
+    fun `specific Codex executable is passed to the Python host`() {
+        val environment = codexHostEnvironment(
+            CodexSdkOptions(
+                environment = mapOf("EXISTING" to "value"),
+                codexExecutable = Path.of("runtime", "codex"),
+            ),
+        )
+
+        assertEquals("value", environment["EXISTING"])
+        assertEquals(
+            Path.of("runtime", "codex").toAbsolutePath().normalize().toString(),
+            environment[CODEX_EXECUTABLE_ENV],
+        )
+    }
+
+    @Test
+    fun `omitted Codex executable preserves the SDK pinned runtime`() {
+        val environment = codexHostEnvironment(
+            CodexSdkOptions(
+                environment = mapOf("EXISTING" to "value", CODEX_EXECUTABLE_ENV to "untrusted-override"),
+            ),
+        )
+        assertEquals(mapOf("EXISTING" to "value"), environment)
+    }
 }
 
 internal fun notification(method: String, payload: JsonObject = JsonObject(emptyMap())) =

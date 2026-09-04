@@ -35,7 +35,7 @@ dependencies {
 | Gemini CLI | Node와 공식 SDK build entrypoint. 고정 source revision과 내부 호환 코드·빌드 제한은 [계약 검증](contract-boundary-validation.md) 참조 |
 | Koog | `ai.koog:agents-core:1.2.0`, caller가 구성한 PromptExecutor·LLModel·ToolRegistry. root Kotlin 2.3.10, JVM target 21/JDK 25 |
 
-현재 JAR은 bridge script와 requirements를 포함하고 factory가 script를 추출한다. Python/Node 실행 파일과 provider 인증은 운영 환경이 제공한다. 현재 실행 파일 override는 HARNESS_CODEX_PYTHON, HARNESS_GEMINI_NODE이고 Gemini SDK 경로는 GEMINI_CLI_SDK_MODULE로 지정할 수 있다.
+현재 JAR은 bridge script와 requirements를 포함하고 factory가 script를 추출한다. Python/Node 실행 파일과 provider 인증은 운영 환경이 제공한다. host 실행 파일 override는 HARNESS_CODEX_PYTHON, HARNESS_GEMINI_NODE이고 Gemini SDK 경로는 GEMINI_CLI_SDK_MODULE로 지정할 수 있다. `CodexSdkOptions.codexExecutable`은 Python host와 별개로 Python SDK가 실행할 Codex binary를 지정하며, 생략하면 SDK에 고정된 runtime을 사용한다.
 
 모델 인증 정보를 artifact에 포함하지 않는다. 운영 환경을 self-contained하게 제공하려면 별도의 runner image·sidecar·runtime packaging 등 배포 구성이 필요하다. 이것은 각 adapter의 제공 방식이다.
 
