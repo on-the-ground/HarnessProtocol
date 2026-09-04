@@ -11,5 +11,7 @@ data class GeminiCliSdkOptions(
     ),
     val processWorkingDirectory: Path? = null,
     val environment: Map<String, String> = emptyMap(),
-)
-
+    val environmentMode: EnvironmentMode = EnvironmentMode.INHERIT,
+) {
+    enum class EnvironmentMode { INHERIT, REPLACE }
+}

@@ -51,7 +51,11 @@ open class GeminiCliHarness protected constructor(bridge: SdkBridge, scope: Coro
                 "/dev/harnessprotocol/gemini/gemini_cli_sdk_bridge.mjs", ".mjs")
             val environment = options.environment + (options.sdkModule?.let { mapOf("GEMINI_CLI_SDK_MODULE" to it) } ?: emptyMap())
             return usingBridge(JsonLineProcessBridge(options.nodeCommand + script.toAbsolutePath().toString(),
-                options.processWorkingDirectory, environment), storageNamespace = storageNamespace)
+                options.processWorkingDirectory, environment,
+                when (options.environmentMode) {
+                    GeminiCliSdkOptions.EnvironmentMode.INHERIT -> dev.harnessprotocol.bridge.ProcessEnvironmentMode.INHERIT
+                    GeminiCliSdkOptions.EnvironmentMode.REPLACE -> dev.harnessprotocol.bridge.ProcessEnvironmentMode.REPLACE
+                }), storageNamespace = storageNamespace)
         }
         fun usingBridge(bridge: SdkBridge, scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default), storageNamespace: StorageNamespace? = null): GeminiCliHarness =
             if (storageNamespace == null) GeminiCliHarness(bridge, scope, null) else Persistent(bridge, scope, storageNamespace)
