@@ -29,6 +29,16 @@ abstract class HarnessAccountingConformanceTest {
                 val messages = events.filterIsInstance<TaskEvent.MessageCompleted>()
                 assertTrue(messages.isNotEmpty())
                 assertTrue(messages.all { it.messageId.value.isNotBlank() })
+                assertEquals(f.completedMessageRoles, messages.map { it.role }.toSet())
+                assertEquals(messages.size, messages.map { it.messageId }.toSet().size,
+                    "A completed message snapshot must not be duplicated under the same identity")
+                val deltas = events.filterIsInstance<TaskEvent.MessageDelta>().groupBy { it.messageId }
+                deltas.forEach { (id, fragments) ->
+                    val completed = assertNotNull(messages.singleOrNull { it.messageId == id },
+                        "The controlled complete text stream must retain its message identity")
+                    assertEquals(fragments.joinToString("") { it.text }, completed.text,
+                        "A completion is a replacement snapshot, not text appended to its deltas")
+                }
                 assertEquals("measured-result", assertIs<TaskOutput.Text>(outcome.output).text)
             }
         }

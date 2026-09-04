@@ -19,7 +19,16 @@ abstract class HarnessAccountingSequenceConformanceTest {
             assertEquals(17L, outcome.usage.inputTokens)
             assertNull(outcome.usage.outputTokens)
             assertNull(outcome.usage.totalTokens)
-            val snapshots = withTimeout(5_000) { events.await() }.filterIsInstance<TaskEvent.UsageChanged>().map { it.task }
+            val observed = withTimeout(5_000) { events.await() }
+            val work = observed.filterIsInstance<TaskEvent.ToolCallChanged>()
+            val started = work.filter { it.status == WorkStatus.STARTED }
+            val completed = work.filter { it.status == WorkStatus.COMPLETED }
+            assertEquals(2, started.size, "Both actual inner tool calls must be observed")
+            assertEquals(2, started.map { it.workId }.toSet().size, "Distinct calls need distinct work identities")
+            assertEquals(started.map { it.workId }.toSet(), completed.map { it.workId }.toSet())
+            assertEquals(2, completed.size, "Completion must not duplicate or lose a tool call")
+            assertTrue(observed.all { it.taskId == task.id })
+            val snapshots = observed.filterIsInstance<TaskEvent.UsageChanged>().map { it.task }
             assertEquals(listOf(10L, 17L, 17L), snapshots.map { it.inputTokens })
             assertEquals(listOf(5L, null, null), snapshots.map { it.outputTokens })
             assertEquals(outcome.usage, snapshots.last())

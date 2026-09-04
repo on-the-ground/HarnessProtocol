@@ -74,6 +74,7 @@ abstract class HarnessInteractionConformanceTest {
     }
 
     @Test fun `completed approval rejects late duplicate responses without repeating the effect`() = scenario { f, task, request ->
+        val observed = async(start = CoroutineStart.UNDISPATCHED) { task.events.toList() }
         task.respond(request.interactionId, approve)
         f.observation.release()
         val outcome = withTimeout(60_000) { task.awaitOutcome() }
@@ -83,6 +84,11 @@ abstract class HarnessInteractionConformanceTest {
         assertEquals(outcome, task.awaitOutcome())
         assertEquals(1, f.response.observedSubmissions())
         assertEquals(1, f.effectCount())
+        val effects = withTimeout(5_000) { observed.await() }.filterIsInstance<TaskEvent.EffectChanged>()
+            .filter { it.status == WorkStatus.COMPLETED }
+        assertEquals(1, effects.size, "The approved native command completed once")
+        assertEquals(assertNotNull(request.workId), effects.single().workId,
+            "Approval and the observed actual effect must refer to the same work")
     }
 
     private fun scenario(block: suspend CoroutineScope.(InteractionRaceFixture, AgentTask, InteractionRequest.Approval) -> Unit) = runBlocking<Unit> {

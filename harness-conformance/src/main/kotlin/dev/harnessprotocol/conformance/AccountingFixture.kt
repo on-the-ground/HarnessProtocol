@@ -6,4 +6,6 @@ import dev.harnessprotocol.*
 interface AccountingFixture : AcceptanceFixture {
     val measurements: List<AgentUsage>
     val sessionMeasurements: List<AgentUsage?>
+    /** Roles the configured runtime can actually identify for the controlled text response. */
+    val completedMessageRoles: Set<MessageRole>
 }

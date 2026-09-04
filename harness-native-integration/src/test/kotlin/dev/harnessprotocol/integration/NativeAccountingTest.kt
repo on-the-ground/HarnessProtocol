@@ -24,6 +24,12 @@ abstract class NativeAccountingTest : HarnessAccountingConformanceTest() {
     @TempDir lateinit var directory: Path
     protected abstract val factory: NativeHarnessFactory
     override fun accountingFixture(): AccountingFixture = object : AccountingFixture {
+        override val completedMessageRoles = when (factory) {
+            CodexNativeFactory -> setOf(MessageRole.ANSWER)
+            GeminiNativeFactory -> setOf(MessageRole.UNKNOWN)
+            KoogNativeFactory -> setOf(MessageRole.UNKNOWN, MessageRole.ANSWER)
+            else -> error("Unspecified native message roles")
+        }
         override val measurements = listOf(AgentUsage(inputTokens = 10, outputTokens = 3, totalTokens = 13),
             AgentUsage(inputTokens = 7, outputTokens = 2, totalTokens = 9), AgentUsage(inputTokens = 0, outputTokens = 0, totalTokens = 0))
         override val sessionMeasurements = if (factory == CodexNativeFactory) listOf(measurements[0],
