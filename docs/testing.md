@@ -4,7 +4,7 @@
 
 세 adapter의 새 Port 실행 검증은 `harness-native-integration`에서 수행한다. 실제 Codex App Server·Gemini SDK/core·Koog graph에 통제된 모델 경계를 연결하며, 실제 입력·지시·이력과 도구 효과를 확인한다. 준비·실행 결과·기존 시나리오에서 보완할 판정은 [실제 adapter 검증](native-port-validation.md)에 기록했다. factory·adapter·기존 회귀 suite·독립 Koog 실험 모두 현재 Port를 사용하며 구 실행 경로는 제거했다.
 
-임시 `ReferenceFixture`·참조 하네스·실행 subclass는 제거했다. `harness-conformance/src/testFixtures`에는 48개 시나리오 정의만 보존한다. 현재 실제 runtime 검사는 25개이며, 이 정의들의 개수를 실행·통과 수에 더하지 않는다. profile별 선택 기능, 실제 문맥 관찰, 정리 시간, 효과와 종결의 구별을 보완하면서 남은 시나리오를 실제 adapter에 적용한다.
+임시 `ReferenceFixture`·참조 하네스·실행 subclass는 제거했다. `harness-conformance/src/testFixtures`에는 공통 lifecycle 9개·runtime 8개와 미연결 정의 48개가 있다. 공통 판정의 이동 위치·중복 목적·연결 전 보완 조건은 [시나리오 대응표](conformance-scenarios.md)에 기록한다. 현재 실제 runtime 검사는 25개이며, 미연결 정의 48개를 실행·통과 수에 더하지 않는다. profile별 선택 기능, 실제 문맥 관찰, 정리 시간, 효과와 종결의 구별을 보완하면서 남은 시나리오를 실제 adapter에 적용한다.
 
 검증 기준은 [Semantic contract](semantic-contract.md)와 [개정 계약](protocol-reference.md)이다. 기본 동작의 실행 주체는 실제 세 adapter이며 모델 경계만 통제한다. 별도로 adapter suite는 현재 구현의 SDK 변환·transport 회귀를, PublicModelTest는 값 타입을 검사한다. 아래 목록은 계약상 검사해야 할 범위로서 이미 실행한 항목과 미검증 항목을 모두 포함한다. 항목이 코드나 목록에 존재하는 것과 실제 검증을 통과한 것은 구별한다.
 
@@ -80,12 +80,12 @@ TaskDiagnostics가 지원되면 진단 observer만 느리게 하거나 진단을
 
 | 위치 | 현재 내용 / 전환 |
 |---|---|
-| harness-adapter-testkit | RecordingBridge, AgentHarnessContractTest, SpecSpace/IntentProjection. 현재 process adapter의 공통 회귀와 독립적 intent 투영 검사. TaskMappingProbe는 production ManagedTask의 mapper 출력을 관찰한다 |
+| harness-adapter-testkit | RecordingBridge, SdkAdapterContractTest, SpecSpace/IntentProjection. SDK 경계 검사 11개와 공통 lifecycle binding. TaskMappingProbe는 production ManagedTask의 mapper 출력을 관찰한다 |
 | harness-protocol/src/test | PublicModelTest: 미확인·부재·unknown 합산·독립 제약·명시 승인 범위의 값 타입 회귀 |
-| harness-conformance | main의 HarnessFixture seam, testFixtures의 Core 29개·Cleanup 19개 시나리오 정의. `testImplementation(testFixtures(project(":harness-conformance")))`로 소비한다. check에서 컴파일하며 독립 실행·통과 수는 0 |
+| harness-conformance | main의 evidence-control seam, testFixtures의 lifecycle 9개·runtime 8개 및 미연결 Core 29개·Cleanup 19개. testFixtures 의존으로 소비한다. concrete 검사 실행은 consumer 모듈에서 집계하며 conformance 단독 실행은 0 |
 | harness-codex/src/test, harness-gemini-cli/src/test | 현재 Port 공통 suite, mapper·정책·interaction 검사. Gemini에는 실제 process를 구동하는 ProcessLifecycleTest도 포함 |
 | harness-process-bridge/src/test | BridgeProtocolTest |
-| harness-native-integration/src/test | 실제 세 adapter의 새 Port 동작. native 입력·문맥·취소·재개·관찰 및 Koog 실제 도구 효과 검사 |
+| harness-native-integration/src/test | 세 실제 runtime의 구성·모델 경계와 공통 suite binding, Koog 실제 도구 효과 검사. 공통 판정 본문은 conformance에 있다 |
 | bridges/tests | Python CodexClient + stub App Server, Node host 검사 |
 | experiments/koog-validation | Koog native/Port 실험. [재현 안내](../experiments/koog-validation/README.md) |
 

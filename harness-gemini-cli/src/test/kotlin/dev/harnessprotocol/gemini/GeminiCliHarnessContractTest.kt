@@ -3,7 +3,7 @@ package dev.harnessprotocol.gemini
 import dev.harnessprotocol.*
 import kotlin.test.assertNull
 
-import dev.harnessprotocol.testkit.AgentHarnessContractTest
+import dev.harnessprotocol.testkit.SdkAdapterContractTest
 import dev.harnessprotocol.testkit.Envelope.assertAbsent
 import dev.harnessprotocol.testkit.Envelope.assertNullableString
 import dev.harnessprotocol.testkit.Envelope.objects
@@ -17,7 +17,7 @@ import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class GeminiCliHarnessContractTest : AgentHarnessContractTest() {
+class GeminiCliHarnessContractTest : SdkAdapterContractTest() {
     override fun harness(bridge: RecordingBridge, scope: CoroutineScope): AgentHarness =
         GeminiCliHarness.usingBridge(bridge, scope, StorageNamespace("contract-${java.util.UUID.randomUUID()}"))
 

@@ -95,9 +95,7 @@ data class PermissionScenario(
  * 명령은 native 경계에 도달한 뒤 반환하며 승인 응답이나 Task 종결까지 기다리지 않는다.
  * 결과는 public Port에서 관찰한다. 입력·효과 observation은 그 Port의 값에서 역산하지 않는다.
  */
-interface TaskControl {
-    suspend fun reportRunning()
-    suspend fun reportMessageDelta(messageKey: String, text: String, role: MessageKind? = null)
+interface TaskControl : TaskLifecycleControl {
     suspend fun reportMessageCompleted(messageKey: String, text: String, role: MessageKind? = null)
 
     /** Runtime이 실제로 받은 이번 작업의 입력. caller의 TaskRequest를 그대로 되돌려주면 안 된다. */
@@ -157,16 +155,6 @@ interface TaskControl {
 
     /** 종결 전에 확보한 업무 산출물. 이후 실패·취소·미확정에서도 회수되는지 검사한다. */
     suspend fun reportOutput(output: OutputObservation)
-
-    /** null은 추가 산출물 없음이다. 앞서 확보한 output을 지우지 않는다. */
-    suspend fun reportCompletion(
-        output: OutputObservation? = null,
-        stopReason: StopReason = StopReason.FINISHED,
-    )
-
-    /** kind가 null이면 분류 근거 없이 설명만 있는 실패다. 자연어로 종류를 추측하면 안 된다. */
-    suspend fun reportFailure(message: String, kind: FailureKind? = null)
-    suspend fun reportCancelledTermination()
 
     /** 내부 단위만 종료하며 Task는 계속 실행한다. */
     suspend fun endInnerTurnOnly()

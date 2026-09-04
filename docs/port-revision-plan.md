@@ -60,9 +60,11 @@
 | Gemini CLI | 새 Task/outcome, native SDK 지시 보완, 실제 문맥·취소·재개와 desired 지시 반영 | SDK 버전 호환, skills·사용량·관찰 경계. 미지원 선택 요구는 계속 사전 거절 |
 | Koog | production 모듈·bundle 연결, 실제 graph 문맥·취소·비협조적 효과·실패 후 부분 결과 | 선택 저장소·승인·질문·출력 등 구성 확장과 전체 계약 검증 |
 
-실험용 Koog 코드와 검증 로그는 당시 증거다. 현재 production 코드와 native 검사는 별도 모듈에 있으며, 이전 실험의 선택 기능 통과를 새 구현의 통과로 가져오지 않는다.
+독립 Koog 실험도 현재 Port로 이전됐지만 production 기본 구성과 구별한다. 과거 로그는 당시 증거이며 실험의 선택 기능 통과를 production 구성의 통과로 가져오지 않는다.
 
 ## 4. 공통 적합성과 회귀
+
+시나리오 통합 단계에서 순수 lifecycle 9개와 native 공통/선택 8개를 conformance로 모으고 SDK 경계 검사 11개를 분리했다. [전체 대응표](conformance-scenarios.md)는 기존 48개 정의의 중복 목적·잘못된 고정 가정·미검증 조건과 실제 binding을 구별한다. 다음 단계는 독립 profile/RequirementCase 선택과 남은 실제 adapter binding이다.
 
 공통 7개 시나리오는 이미 세 adapter에 적용했고 구현별 4개를 더해 25개가 통과했다. [Testing](testing.md)의 나머지 조건을 이 실제 경계에 추가한다. testFixtures에 보존한 48개 정의는 profile의 고정 가정 등을 보완하여 재사용한다. 준비·입력 유도·효과 관찰은 provider별 fixture가 맡으며 공통 판정은 provider wire·Koog node ID를 알지 않는다.
 

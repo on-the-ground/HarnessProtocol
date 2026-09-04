@@ -10,7 +10,6 @@ dependencies {
     // 둘을 같이 선언하면 kotlin-test-framework-impl capability 충돌로 해석이 실패한다.
     testFixturesApi(kotlin("test-junit5"))
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
-    testFixturesApi("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
 }
 
 kotlin {
@@ -27,5 +26,5 @@ tasks.test {
     useJUnitPlatform()
 }
 
-// Keep unattached scenarios type-checked; compiling them is not a conformance pass.
+// Compile all shared suites; actual executions are recorded in their consumer modules.
 tasks.named("check") { dependsOn(tasks.named("testFixturesClasses")) }

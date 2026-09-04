@@ -3,7 +3,7 @@ package dev.harnessprotocol.codex
 import dev.harnessprotocol.*
 import kotlin.test.assertNull
 
-import dev.harnessprotocol.testkit.AgentHarnessContractTest
+import dev.harnessprotocol.testkit.SdkAdapterContractTest
 import dev.harnessprotocol.testkit.Envelope.assertAbsent
 import dev.harnessprotocol.testkit.Envelope.assertNullableString
 import dev.harnessprotocol.testkit.Envelope.assertString
@@ -19,7 +19,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.test.assertEquals
 
-class CodexHarnessContractTest : AgentHarnessContractTest() {
+class CodexHarnessContractTest : SdkAdapterContractTest() {
     override fun harness(bridge: RecordingBridge, scope: CoroutineScope): AgentHarness =
         CodexHarness.usingBridge(bridge, scope, StorageNamespace("contract-${java.util.UUID.randomUUID()}"))
 

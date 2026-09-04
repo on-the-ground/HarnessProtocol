@@ -23,7 +23,7 @@
 
 구체적 규칙은 [Protocol reference](protocol-reference.md), [Lifecycle](lifecycle-and-concurrency.md), [Event contract](event-contract.md)에 반영했다. [Provider mapping](provider-mapping.md)과 [Bridge protocol](bridge-protocol.md)에 전달·매핑 책임을 연결하고, [Testing](testing.md)과 [전환 계획](port-revision-plan.md)에 판정·구현 항목을 추가했다.
 
-기존 [공통 테스트](../harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/AgentHarnessContractTest.kt)의 `state is terminal before awaitResult returns`, 정규화된 resume ID, observer 독립성, terminal 유일성 등을 대조했다. 기존 usage·interaction 문서와 ID/입력 모델도 기준선과 비교했다. 기존 내부 타입을 새 계약의 필수 구현 방식으로 복원하지 않았다.
+기존 공통 테스트(현재 [lifecycle 판정](../harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessLifecycleConformanceTest.kt)과 [SDK 회귀](../harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/SdkAdapterContractTest.kt)로 분리)의 `state is terminal before awaitResult returns`, 정규화된 resume ID, observer 독립성, terminal 유일성 등을 대조했다. 기존 usage·interaction 문서와 ID/입력 모델도 기준선과 비교했다. 기존 내부 타입을 새 계약의 필수 구현 방식으로 복원하지 않았다.
 
 ## 의도한 변경과 유지할 보장의 구별
 

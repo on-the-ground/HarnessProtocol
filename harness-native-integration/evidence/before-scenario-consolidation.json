@@ -1,6 +1,6 @@
 {
   "date": "2026-09-04",
-  "command": "./gradlew.bat --offline test :harness-conformance:testFixturesClasses -PnativeHarnessTests --console=plain",
+  "command": "./gradlew.bat --offline test :harness-conformance:testFixturesClasses sourcesJar hostTests -PnativeHarnessTests -PstrictHostTests --console=plain",
   "result": "BUILD SUCCESSFUL",
   "nativeBoundary": "Real Codex App Server, official Gemini SDK/core and Koog graph; controlled model responses; no external model calls",
   "codex": "openai-codex 0.147.0",
@@ -13,7 +13,7 @@
       "suites": [
         {
           "name": "dev.harnessprotocol.HarnessesTest",
-          "timestamp": "2026-09-04T12:36:03.954Z",
+          "timestamp": "2026-09-04T08:59:14.801Z",
           "tests": 1,
           "failures": 0,
           "errors": 0,
@@ -26,7 +26,7 @@
       "suites": [
         {
           "name": "dev.harnessprotocol.codex.CodexHarnessContractTest",
-          "timestamp": "2026-09-04T12:36:06.442Z",
+          "timestamp": "2026-09-04T08:59:26.972Z",
           "tests": 20,
           "failures": 0,
           "errors": 0,
@@ -34,7 +34,7 @@
         },
         {
           "name": "dev.harnessprotocol.codex.CodexInteractionTest",
-          "timestamp": "2026-09-04T12:36:13.730Z",
+          "timestamp": "2026-09-04T08:59:33.711Z",
           "tests": 6,
           "failures": 0,
           "errors": 0,
@@ -42,7 +42,7 @@
         },
         {
           "name": "dev.harnessprotocol.codex.CodexTaskMapperTest",
-          "timestamp": "2026-09-04T12:36:19.854Z",
+          "timestamp": "2026-09-04T08:59:39.829Z",
           "tests": 9,
           "failures": 0,
           "errors": 0,
@@ -55,7 +55,7 @@
       "suites": [
         {
           "name": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
-          "timestamp": "2026-09-04T12:36:23.095Z",
+          "timestamp": "2026-09-04T08:59:41.375Z",
           "tests": 20,
           "failures": 0,
           "errors": 0,
@@ -63,7 +63,7 @@
         },
         {
           "name": "dev.harnessprotocol.gemini.GeminiCliPolicyTest",
-          "timestamp": "2026-09-04T12:36:30.652Z",
+          "timestamp": "2026-09-04T08:59:48.089Z",
           "tests": 1,
           "failures": 0,
           "errors": 0,
@@ -71,7 +71,7 @@
         },
         {
           "name": "dev.harnessprotocol.gemini.GeminiTaskMapperTest",
-          "timestamp": "2026-09-04T12:36:30.672Z",
+          "timestamp": "2026-09-04T08:59:48.102Z",
           "tests": 8,
           "failures": 0,
           "errors": 0,
@@ -79,7 +79,7 @@
         },
         {
           "name": "dev.harnessprotocol.gemini.ProcessLifecycleTest",
-          "timestamp": "2026-09-04T12:36:30.766Z",
+          "timestamp": "2026-09-04T08:59:48.175Z",
           "tests": 5,
           "failures": 0,
           "errors": 0,
@@ -92,7 +92,7 @@
       "suites": [
         {
           "name": "dev.harnessprotocol.integration.CodexNativeHarnessTest",
-          "timestamp": "2026-09-04T12:36:41.164Z",
+          "timestamp": "2026-09-04T09:00:08.743Z",
           "tests": 8,
           "failures": 0,
           "errors": 0,
@@ -100,7 +100,7 @@
         },
         {
           "name": "dev.harnessprotocol.integration.GeminiNativeHarnessTest",
-          "timestamp": "2026-09-04T12:37:33.801Z",
+          "timestamp": "2026-09-04T09:00:36.167Z",
           "tests": 8,
           "failures": 0,
           "errors": 0,
@@ -108,7 +108,7 @@
         },
         {
           "name": "dev.harnessprotocol.integration.KoogNativeHarnessTest",
-          "timestamp": "2026-09-04T12:38:33.222Z",
+          "timestamp": "2026-09-04T09:01:06.228Z",
           "tests": 7,
           "failures": 0,
           "errors": 0,
@@ -116,7 +116,7 @@
         },
         {
           "name": "dev.harnessprotocol.integration.KoogNativeToolTest",
-          "timestamp": "2026-09-04T12:38:34.022Z",
+          "timestamp": "2026-09-04T09:01:06.887Z",
           "tests": 2,
           "failures": 0,
           "errors": 0,
@@ -129,7 +129,7 @@
       "suites": [
         {
           "name": "dev.harnessprotocol.bridge.BridgeProtocolTest",
-          "timestamp": "2026-09-04T12:38:36.477Z",
+          "timestamp": "2026-09-04T08:54:57.892Z",
           "tests": 1,
           "failures": 0,
           "errors": 0,
@@ -163,7 +163,7 @@
       "skipped": 0
     }
   },
-  "scope": "105 JVM checks including 25 native checks. Shared scenario definitions execute 41 times in consumer modules; 48 original definitions remain unbound. No publication.",
+  "scope": "25 real native runtime checks, 71 current-port adapter/mapper/bridge/bundle regressions and 9 public model checks. Independent current-port Koog research suite: 18 additional checks. The 48 unattached conformance definitions compile and are not counted as passes. No publication.",
   "sample": {
     "command": "./gradlew.bat --offline -p samples/basic -PuseProjectSource compileKotlin",
     "result": "BUILD SUCCESSFUL",
@@ -171,19 +171,14 @@
   },
   "conformanceScenarioLibrary": {
     "source": "harness-conformance/src/testFixtures",
-    "definitions": 65,
-    "boundDefinitions": 17,
-    "consumerExecutions": 41,
-    "standaloneExecuted": 0,
-    "unboundDefinitions": 48,
-    "unboundExecuted": 0,
+    "definitions": 48,
+    "executed": 0,
     "compiled": true,
     "temporaryHarnessRemoved": true,
-    "removedFiles": 8,
-    "evidence": "scenario-consolidation.json"
+    "removedFiles": 8
   },
-  "verificationMode": "Scenario consolidation and native process cleanup verification. Changed consumer suites executed; unchanged suites may reuse matching Gradle up-to-date results.",
-  "previousEvidence": "before-scenario-consolidation.json",
+  "verificationMode": "Migration JVM suites executed successfully; final verification reused matching Gradle up-to-date JVM results. Host 20 checks rerun; source JARs rebuilt after legacy removal.",
+  "previousEvidence": "before-legacy-removal.json",
   "legacyMigration": {
     "activeSourceAndBuildReferences": 0,
     "binaryAndSourceJarsWithRemovedTypes": 0,
@@ -192,14 +187,5 @@
     "independentKoogChecks": 18,
     "independentKoogEvidence": "../../experiments/koog-validation/evidence/current-port-migration.json",
     "historicalSourceExtractionRemoved": true
-  },
-  "priorVerificationOnly": {
-    "notRerunInThisStage": [
-      "host",
-      "sample",
-      "independent Koog experiment",
-      "legacy JAR audit"
-    ],
-    "evidence": "before-scenario-consolidation.json"
   }
 }

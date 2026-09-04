@@ -6,6 +6,7 @@ plugins {
 }
 
 dependencies {
+    api(testFixtures(project(":harness-conformance")))
     api(project(":harness-protocol"))
     api(project(":harness-process-bridge"))
     // kotlin("test")를 별도로 더하지 않는다: kotlin-test-junit5가 이미 kotlin-test를 함께 끌어오며,

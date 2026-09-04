@@ -20,20 +20,20 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
- * Lifecycle and intent contract every SDK adapter must satisfy.
+ * SDK projection, transport calls and resource routing regressions for process adapters.
  *
  * Subclasses provide the harness factory, the intent projection, and a
- * provider event fixture. Everything else is shared.
+ * provider event fixture. Pure lifecycle assertions live in harness-conformance.
  */
-abstract class AgentHarnessContractTest {
+abstract class SdkAdapterContractTest : dev.harnessprotocol.conformance.HarnessLifecycleConformanceTest() {
     protected abstract fun harness(bridge: RecordingBridge, scope: CoroutineScope): AgentHarness
     protected abstract fun projection(): IntentProjection
     protected abstract fun fixture(): ProviderFixture
 
     /** A spec every adapter accepts; used for lifecycle tests. */
-    protected open fun compatibleSpec(): SessionSpec = SessionSpec()
+    override fun compatibleSpec(): SessionSpec = SessionSpec()
 
-    protected val terminalStates = TaskState.entries.filter { it.isTerminal }.toSet()
+    private val terminalStates = TaskState.entries.filter { it.isTerminal }.toSet()
 
     private fun newScope() = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -72,7 +72,7 @@ abstract class AgentHarnessContractTest {
 
     @Test
     fun `creates a session and completes an execution`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
+        withSdkHarness { bridge, h ->
             val session = h.createSession(compatibleSpec())
             val execution = session.startTask(TaskRequest(TaskInput.Text("hello")))
             bridge.emitAll(fixture().started())
@@ -86,60 +86,8 @@ abstract class AgentHarnessContractTest {
     }
 
     @Test
-    fun `state is terminal before awaitOutcome returns`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
-            val execution = h.createSession(compatibleSpec()).startTask(TaskRequest(TaskInput.Text("x")))
-            bridge.emitAll(fixture().started())
-            bridge.emitAll(fixture().completed("done"))
-            withTimeout(5_000) { execution.awaitOutcome() }
-            assertTrue(execution.state.value in terminalStates)
-        }
-    }
-
-    @Test
-    fun `completes without an event collector`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
-            val execution = h.createSession(compatibleSpec()).startTask(TaskRequest(TaskInput.Text("x")))
-            bridge.emitAll(fixture().started())
-            repeat(500) { bridge.emitAll(fixture().messageDelta("chunk$it ")) }
-            bridge.emitAll(fixture().completed("done"))
-            withTimeout(5_000) { execution.awaitOutcome() }
-        }
-    }
-
-    @Test
-    fun `slow collector does not block lifecycle`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
-            val execution = h.createSession(compatibleSpec()).startTask(TaskRequest(TaskInput.Text("x")))
-            val gate = CompletableDeferred<Unit>()
-            val collector = launch(start = CoroutineStart.UNDISPATCHED) {
-                execution.events.collect { gate.await() }   // subscribed, but never makes progress
-            }
-            bridge.emitAll(fixture().started())
-            repeat(2_000) { bridge.emitAll(fixture().messageDelta("chunk$it ")) }
-            bridge.emitAll(fixture().completed("done"))
-            withTimeout(5_000) { execution.awaitOutcome() }
-            assertEquals(TaskState.COMPLETED, execution.state.value)
-            gate.complete(Unit)
-            collector.cancel()
-        }
-    }
-
-    @Test
-    fun `failure is reported through state and awaitOutcome`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
-            val execution = h.createSession(compatibleSpec()).startTask(TaskRequest(TaskInput.Text("x")))
-            bridge.emitAll(fixture().started())
-            bridge.emitAll(fixture().failed("boom"))
-            val failure = assertIs<TaskOutcome.Failed>(withTimeout(5_000) { execution.awaitOutcome() })
-            assertEquals("boom", failure.message)
-            assertEquals(TaskState.FAILED, execution.state.value)
-        }
-    }
-
-    @Test
     fun `cancellation is reported through state and awaitOutcome`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
+        withSdkHarness { bridge, h ->
             val execution = h.createSession(compatibleSpec()).startTask(TaskRequest(TaskInput.Text("x")))
             bridge.emitAll(fixture().started())
             execution.requestCancellation()
@@ -152,7 +100,7 @@ abstract class AgentHarnessContractTest {
 
     @Test
     fun `cancel after terminal is a no-op`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
+        withSdkHarness { bridge, h ->
             val execution = h.createSession(compatibleSpec()).startTask(TaskRequest(TaskInput.Text("x")))
             bridge.emitAll(fixture().started())
             bridge.emitAll(fixture().completed("done"))
@@ -163,39 +111,8 @@ abstract class AgentHarnessContractTest {
     }
 
     @Test
-    fun `completion wins the race against cancel`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
-            val execution = h.createSession(compatibleSpec()).startTask(TaskRequest(TaskInput.Text("x")))
-            bridge.emitAll(fixture().started())
-            execution.requestCancellation()
-            bridge.emitAll(fixture().completed("done"))
-            assertEquals("done", assertIs<TaskOutput.Text>(withTimeout(5_000) { execution.awaitOutcome() }.output).text)
-            assertEquals(TaskState.COMPLETED, execution.state.value)
-        }
-    }
-
-    @Test
-    fun `terminal is exactly once and last`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
-            val execution = h.createSession(compatibleSpec()).startTask(TaskRequest(TaskInput.Text("x")))
-            val seen = java.util.concurrent.CopyOnWriteArrayList<TaskEvent>()
-            val collector = launch(start = CoroutineStart.UNDISPATCHED) { execution.events.collect { seen += it } }
-            bridge.emitAll(fixture().started())
-            bridge.emitAll(fixture().completed("done"))
-            bridge.emitAll(fixture().failed("late"))     // duplicate terminal must be ignored
-            withTimeout(5_000) { execution.awaitOutcome() }
-            waitUntil { seen.any { it is TaskEvent.TaskCompleted } }
-            collector.cancel()
-            val terminalIndex = seen.indexOfFirst { it.isTerminal() }
-            assertEquals(1, seen.count { it.isTerminal() }, "exactly one terminal event: $seen")
-            assertEquals(seen.lastIndex, terminalIndex, "terminal must be the last event: $seen")
-            assertEquals(TaskState.COMPLETED, execution.state.value)
-        }
-    }
-
-    @Test
     fun `stream ending without a terminal leaves outcome unresolved`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
+        withSdkHarness { bridge, h ->
             val session = h.createSession(compatibleSpec())
             val execution = session.startTask(TaskRequest(TaskInput.Text("x")))
             bridge.emitAll(fixture().started())
@@ -210,7 +127,7 @@ abstract class AgentHarnessContractTest {
 
     @Test
     fun `stream failure leaves outcome unresolved`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
+        withSdkHarness { bridge, h ->
             val session = h.createSession(compatibleSpec())
             val execution = session.startTask(TaskRequest(TaskInput.Text("x")))
             bridge.emitAll(fixture().started())
@@ -225,7 +142,7 @@ abstract class AgentHarnessContractTest {
 
     @Test
     fun `release is called after terminal`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
+        withSdkHarness { bridge, h ->
             val execution = h.createSession(compatibleSpec()).startTask(TaskRequest(TaskInput.Text("x")))
             bridge.emitAll(fixture().started())
             bridge.emitAll(fixture().completed("done"))
@@ -237,7 +154,7 @@ abstract class AgentHarnessContractTest {
 
     @Test
     fun `rejects overlapping tasks on one session`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
+        withSdkHarness { bridge, h ->
             val session = h.createSession(compatibleSpec())
             val first = session.startTask(TaskRequest(TaskInput.Text("a")))
             bridge.emitAll(fixture().started())
@@ -253,66 +170,8 @@ abstract class AgentHarnessContractTest {
     }
 
     @Test
-    fun `different sessions execute concurrently`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
-            val a = h.createSession(compatibleSpec())
-            val b = h.createSession(compatibleSpec())
-            val ea = a.startTask(TaskRequest(TaskInput.Text("a")))
-            val idA = bridge.lastExecutionId!!
-            val eb = b.startTask(TaskRequest(TaskInput.Text("b")))
-            val idB = bridge.lastExecutionId!!
-            fixture().started().forEach { bridge.emit(idA, it); bridge.emit(idB, it) }
-            fixture().completed("A").forEach { bridge.emit(idA, it) }
-            fixture().completed("B").forEach { bridge.emit(idB, it) }
-            assertEquals("A", assertIs<TaskOutput.Text>(withTimeout(5_000) { ea.awaitOutcome() }.output).text)
-            assertEquals("B", assertIs<TaskOutput.Text>(withTimeout(5_000) { eb.awaitOutcome() }.output).text)
-        }
-    }
-
-    @Test
-    fun `harness close without native termination evidence settles unresolved`() = runBlocking<Unit> {
-        val bridge = RecordingBridge()
-        val scope = newScope()
-        val h = harness(bridge, scope)
-        val execution = h.createSession(compatibleSpec()).startTask(TaskRequest(TaskInput.Text("x")))
-        bridge.emitAll(fixture().started())
-        h.close()
-        assertIs<TaskOutcome.Unresolved>(withTimeout(5_000) { execution.awaitOutcome() })
-        assertEquals(TaskState.UNRESOLVED, execution.state.value)
-        scope.cancel()
-    }
-
-    @Test
-    fun `overflow is explicit and terminal survives`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
-            val execution = h.createSession(compatibleSpec()).startTask(TaskRequest(TaskInput.Text("x")))
-            val gate = CompletableDeferred<Unit>()
-            val seen = java.util.concurrent.CopyOnWriteArrayList<TaskEvent>()
-            val collector = launch(start = CoroutineStart.UNDISPATCHED) {
-                execution.events.collect { event ->
-                    seen += event
-                    if (seen.size == 1) gate.await()   // stall after the first event so the queue overflows
-                }
-            }
-            bridge.emitAll(fixture().started())
-            val total = 5_000
-            repeat(total) { bridge.emitAll(fixture().messageDelta("chunk$it ")) }
-            bridge.emitAll(fixture().completed("done"))
-            withTimeout(5_000) { execution.awaitOutcome() }
-            gate.complete(Unit)
-            waitUntil { seen.lastOrNull()?.isTerminal() == true }
-            collector.cancel()
-
-            val gaps = seen.filterIsInstance<TaskEvent.ObservationGap>()
-            assertTrue(gaps.isNotEmpty(), "a stalled collector must see an ObservationGap")
-            assertTrue(seen.last().isTerminal(), "terminal must be delivered last after the gap")
-            assertEquals(1, seen.count { it.isTerminal() })
-        }
-    }
-
-    @Test
     fun `session release is idempotent and rejects further tasks`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
+        withSdkHarness { bridge, h ->
             val session = h.createSession(compatibleSpec())
             session.release()
             session.release()
@@ -324,7 +183,7 @@ abstract class AgentHarnessContractTest {
 
     @Test
     fun `session release settles an active execution`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
+        withSdkHarness { bridge, h ->
             val session = h.createSession(compatibleSpec())
             val execution = session.startTask(TaskRequest(TaskInput.Text("x")))
             bridge.emitAll(fixture().started())
@@ -337,7 +196,7 @@ abstract class AgentHarnessContractTest {
 
     @Test
     fun `reopen uses the session id returned by the host`() = runBlocking<Unit> {
-        withHarness { bridge, h ->
+        withSdkHarness { bridge, h ->
             val spec = compatibleSpec().copy(requirements = SessionRequirements(persistence = PersistenceRequirement.Required()))
             val original = h.createSession(spec)
             val ref = requireNotNull(original.persistentRef)
@@ -351,21 +210,43 @@ abstract class AgentHarnessContractTest {
         }
     }
 
+    final override fun lifecycleFixture(): dev.harnessprotocol.conformance.LifecycleFixture {
+        val bridge = RecordingBridge()
+        val scope = newScope()
+        val h = try { harness(bridge, scope) } catch (failure: Throwable) { scope.cancel(); throw failure }
+        return object : dev.harnessprotocol.conformance.LifecycleFixture {
+            override val harness: AgentHarness = h
+            override fun control(task: AgentTask) = object : dev.harnessprotocol.conformance.TaskLifecycleControl {
+                private suspend fun emit(events: List<JsonObject>) { events.forEach { bridge.emit(task.id.value, it) } }
+                override suspend fun reportRunning() { emit(fixture().started()) }
+                override suspend fun reportMessageDelta(messageKey: String, text: String, role: dev.harnessprotocol.conformance.MessageKind?) {
+                    require(role == null) { "This lifecycle binding does not control message roles" }
+                    emit(fixture().messageDelta(text))
+                }
+                override suspend fun reportCompletion(output: dev.harnessprotocol.conformance.OutputObservation?, stopReason: StopReason) {
+                    require(output is dev.harnessprotocol.conformance.OutputObservation.Text && output.complete)
+                    require(stopReason == StopReason.FINISHED)
+                    emit(fixture().completed(output.text))
+                }
+                override suspend fun reportFailure(message: String, kind: FailureKind?) {
+                    require(kind == null) { "Use the SDK mapper suite to supply structured failure codes" }
+                    emit(fixture().failed(message))
+                }
+                override suspend fun reportCancelledTermination() { emit(fixture().cancelled()) }
+            }
+            override fun close() { try { h.close() } finally { scope.cancel() } }
+        }
+    }
+
     // --------------------------------------------------------------- helpers
 
-    protected suspend fun withHarness(block: suspend (RecordingBridge, AgentHarness) -> Unit) {
+    protected suspend fun withSdkHarness(block: suspend (RecordingBridge, AgentHarness) -> Unit) {
         val bridge = RecordingBridge()
         val scope = newScope()
         try {
             harness(bridge, scope).use { block(bridge, it) }
         } finally {
             scope.cancel()
-        }
-    }
-
-    protected suspend fun waitUntil(timeoutMillis: Long = 5_000, condition: () -> Boolean) {
-        withTimeout(timeoutMillis) {
-            while (!condition()) kotlinx.coroutines.delay(5)
         }
     }
 

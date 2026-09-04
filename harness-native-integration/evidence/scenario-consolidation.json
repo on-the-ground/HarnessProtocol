@@ -1,0 +1,795 @@
+{
+  "stage": "1: consolidate existing assertions and identify gaps",
+  "command": "./gradlew.bat --offline test :harness-conformance:testFixturesClasses -PnativeHarnessTests --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "jvm": {
+    "tests": 105,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "catalog": "../../harness-conformance/scenario-catalog.json",
+  "counting": {
+    "originalInventoryEntries": 76,
+    "sharedDefinitions": 65,
+    "boundSharedDefinitions": 17,
+    "sharedConsumerExecutions": 41,
+    "sdkSpecificExecutions": 22,
+    "unboundDefinitions": 48,
+    "standaloneConformanceExecutions": 0,
+    "nativeModuleExecutions": 25
+  },
+  "matrix": [
+    {
+      "id": "S01",
+      "provider": "codex",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "compatible specs reach the bridge with their intent intact()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S01",
+      "provider": "gemini-cli",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "compatible specs reach the bridge with their intent intact()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S02",
+      "provider": "codex",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "creates a session and completes an execution()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S02",
+      "provider": "gemini-cli",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "creates a session and completes an execution()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S03",
+      "provider": "codex",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "state is terminal before awaitOutcome returns()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S03",
+      "provider": "gemini-cli",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "state is terminal before awaitOutcome returns()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S04",
+      "provider": "codex",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "completes without an event collector()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S04",
+      "provider": "gemini-cli",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "completes without an event collector()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S05",
+      "provider": "codex",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "slow collector does not block lifecycle()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S05",
+      "provider": "gemini-cli",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "slow collector does not block lifecycle()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S06",
+      "provider": "codex",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "failure is reported through state and awaitOutcome()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S06",
+      "provider": "gemini-cli",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "failure is reported through state and awaitOutcome()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S07",
+      "provider": "codex",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "cancellation is reported through state and awaitOutcome()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S07",
+      "provider": "gemini-cli",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "cancellation is reported through state and awaitOutcome()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S08",
+      "provider": "codex",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "cancel after terminal is a no-op()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S08",
+      "provider": "gemini-cli",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "cancel after terminal is a no-op()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S09",
+      "provider": "codex",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "completion wins the race against cancel()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S09",
+      "provider": "gemini-cli",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "completion wins the race against cancel()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S10",
+      "provider": "codex",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "terminal is exactly once and last()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S10",
+      "provider": "gemini-cli",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "terminal is exactly once and last()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S11",
+      "provider": "codex",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "stream ending without a terminal leaves outcome unresolved()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S11",
+      "provider": "gemini-cli",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "stream ending without a terminal leaves outcome unresolved()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S12",
+      "provider": "codex",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "stream failure leaves outcome unresolved()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S12",
+      "provider": "gemini-cli",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "stream failure leaves outcome unresolved()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S13",
+      "provider": "codex",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "release is called after terminal()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S13",
+      "provider": "gemini-cli",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "release is called after terminal()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S14",
+      "provider": "codex",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "rejects overlapping tasks on one session()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S14",
+      "provider": "gemini-cli",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "rejects overlapping tasks on one session()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S15",
+      "provider": "codex",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "different sessions execute concurrently()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S15",
+      "provider": "gemini-cli",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "different sessions execute concurrently()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S16",
+      "provider": "codex",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "harness close without native termination evidence settles unresolved()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S16",
+      "provider": "gemini-cli",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "harness close without native termination evidence settles unresolved()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S17",
+      "provider": "codex",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "overflow is explicit and terminal survives()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S17",
+      "provider": "gemini-cli",
+      "boundary": "sdk-boundary-common-lifecycle",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "overflow is explicit and terminal survives()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S18",
+      "provider": "codex",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "session release is idempotent and rejects further tasks()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S18",
+      "provider": "gemini-cli",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "session release is idempotent and rejects further tasks()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S19",
+      "provider": "codex",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "session release settles an active execution()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S19",
+      "provider": "gemini-cli",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "session release settles an active execution()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "S20",
+      "provider": "codex",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "test": "reopen uses the session id returned by the host()",
+      "suiteTimestamp": "2026-09-04T12:36:06.442Z",
+      "result": "passed"
+    },
+    {
+      "id": "S20",
+      "provider": "gemini-cli",
+      "boundary": "sdk-specific-regression",
+      "suite": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "test": "reopen uses the session id returned by the host()",
+      "suiteTimestamp": "2026-09-04T12:36:23.095Z",
+      "result": "passed"
+    },
+    {
+      "id": "R01",
+      "provider": "codex",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.CodexNativeHarnessTest",
+      "test": "native task completes without an observer and preserves state and output()",
+      "suiteTimestamp": "2026-09-04T12:36:41.164Z",
+      "result": "passed"
+    },
+    {
+      "id": "R01",
+      "provider": "gemini-cli",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.GeminiNativeHarnessTest",
+      "test": "native task completes without an observer and preserves state and output()",
+      "suiteTimestamp": "2026-09-04T12:37:33.801Z",
+      "result": "passed"
+    },
+    {
+      "id": "R01",
+      "provider": "koog",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.KoogNativeHarnessTest",
+      "test": "native task completes without an observer and preserves state and output()",
+      "suiteTimestamp": "2026-09-04T12:38:33.222Z",
+      "result": "passed"
+    },
+    {
+      "id": "R02",
+      "provider": "codex",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.CodexNativeHarnessTest",
+      "test": "same session carries prior native context while a new session stays isolated()",
+      "suiteTimestamp": "2026-09-04T12:36:41.164Z",
+      "result": "passed"
+    },
+    {
+      "id": "R02",
+      "provider": "gemini-cli",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.GeminiNativeHarnessTest",
+      "test": "same session carries prior native context while a new session stays isolated()",
+      "suiteTimestamp": "2026-09-04T12:37:33.801Z",
+      "result": "passed"
+    },
+    {
+      "id": "R02",
+      "provider": "koog",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.KoogNativeHarnessTest",
+      "test": "same session carries prior native context while a new session stays isolated()",
+      "suiteTimestamp": "2026-09-04T12:38:33.222Z",
+      "result": "passed"
+    },
+    {
+      "id": "R03",
+      "provider": "codex",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.CodexNativeHarnessTest",
+      "test": "unsupported task requirements are rejected before a native model call()",
+      "suiteTimestamp": "2026-09-04T12:36:41.164Z",
+      "result": "passed"
+    },
+    {
+      "id": "R03",
+      "provider": "gemini-cli",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.GeminiNativeHarnessTest",
+      "test": "unsupported task requirements are rejected before a native model call()",
+      "suiteTimestamp": "2026-09-04T12:37:33.801Z",
+      "result": "passed"
+    },
+    {
+      "id": "R03",
+      "provider": "koog",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.KoogNativeHarnessTest",
+      "test": "unsupported task requirements are rejected before a native model call()",
+      "suiteTimestamp": "2026-09-04T12:38:33.222Z",
+      "result": "passed"
+    },
+    {
+      "id": "R04",
+      "provider": "codex",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.CodexNativeHarnessTest",
+      "test": "overlap is rejected and cancelling one waiter does not cancel native work()",
+      "suiteTimestamp": "2026-09-04T12:36:41.164Z",
+      "result": "passed"
+    },
+    {
+      "id": "R04",
+      "provider": "gemini-cli",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.GeminiNativeHarnessTest",
+      "test": "overlap is rejected and cancelling one waiter does not cancel native work()",
+      "suiteTimestamp": "2026-09-04T12:37:33.801Z",
+      "result": "passed"
+    },
+    {
+      "id": "R04",
+      "provider": "koog",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.KoogNativeHarnessTest",
+      "test": "overlap is rejected and cancelling one waiter does not cancel native work()",
+      "suiteTimestamp": "2026-09-04T12:38:33.222Z",
+      "result": "passed"
+    },
+    {
+      "id": "R05",
+      "provider": "codex",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.CodexNativeHarnessTest",
+      "test": "close bounds active native work and settles the waiter()",
+      "suiteTimestamp": "2026-09-04T12:36:41.164Z",
+      "result": "passed"
+    },
+    {
+      "id": "R05",
+      "provider": "gemini-cli",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.GeminiNativeHarnessTest",
+      "test": "close bounds active native work and settles the waiter()",
+      "suiteTimestamp": "2026-09-04T12:37:33.801Z",
+      "result": "passed"
+    },
+    {
+      "id": "R05",
+      "provider": "koog",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.KoogNativeHarnessTest",
+      "test": "close bounds active native work and settles the waiter()",
+      "suiteTimestamp": "2026-09-04T12:38:33.222Z",
+      "result": "passed"
+    },
+    {
+      "id": "R06",
+      "provider": "codex",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.CodexNativeHarnessTest",
+      "test": "independent semantic and diagnostic observers finish and late subscription retains terminal()",
+      "suiteTimestamp": "2026-09-04T12:36:41.164Z",
+      "result": "passed"
+    },
+    {
+      "id": "R06",
+      "provider": "gemini-cli",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.GeminiNativeHarnessTest",
+      "test": "independent semantic and diagnostic observers finish and late subscription retains terminal()",
+      "suiteTimestamp": "2026-09-04T12:37:33.801Z",
+      "result": "passed"
+    },
+    {
+      "id": "R06",
+      "provider": "koog",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.KoogNativeHarnessTest",
+      "test": "independent semantic and diagnostic observers finish and late subscription retains terminal()",
+      "suiteTimestamp": "2026-09-04T12:38:33.222Z",
+      "result": "passed"
+    },
+    {
+      "id": "R07",
+      "provider": "codex",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.CodexNativeHarnessTest",
+      "test": "explicit cancellation waits for native termination and leaves the session reusable()",
+      "suiteTimestamp": "2026-09-04T12:36:41.164Z",
+      "result": "passed"
+    },
+    {
+      "id": "R07",
+      "provider": "gemini-cli",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.GeminiNativeHarnessTest",
+      "test": "explicit cancellation waits for native termination and leaves the session reusable()",
+      "suiteTimestamp": "2026-09-04T12:37:33.801Z",
+      "result": "passed"
+    },
+    {
+      "id": "R07",
+      "provider": "koog",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.KoogNativeHarnessTest",
+      "test": "explicit cancellation waits for native termination and leaves the session reusable()",
+      "suiteTimestamp": "2026-09-04T12:38:33.222Z",
+      "result": "passed"
+    },
+    {
+      "id": "R08",
+      "provider": "codex",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.CodexNativeHarnessTest",
+      "test": "persistent reopen preserves actual context and desired instructions across harness recreation()",
+      "suiteTimestamp": "2026-09-04T12:36:41.164Z",
+      "result": "passed"
+    },
+    {
+      "id": "R08",
+      "provider": "gemini-cli",
+      "boundary": "native-runtime",
+      "suite": "dev.harnessprotocol.integration.GeminiNativeHarnessTest",
+      "test": "persistent reopen preserves actual context and desired instructions across harness recreation()",
+      "suiteTimestamp": "2026-09-04T12:37:33.801Z",
+      "result": "passed"
+    }
+  ],
+  "unbound": [
+    {
+      "id": "C01",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C02",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C03",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C04",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C05",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C06",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C07",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C08",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C09",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C10",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C11",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C12",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C13",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C14",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C15",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C16",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C17",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C18",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C19",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C20",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C21",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C22",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C23",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C24",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C25",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C26",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C27",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C28",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "C29",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K01",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K02",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K03",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K04",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K05",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K06",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K07",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K08",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K09",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K10",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K11",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K12",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K13",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K14",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K15",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K16",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K17",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K18",
+      "result": "unbound; compiled only"
+    },
+    {
+      "id": "K19",
+      "result": "unbound; compiled only"
+    }
+  ],
+  "preservedRegressionIdentities": {
+    "sdkOriginalDefinitions": 20,
+    "nativeOriginalDefinitions": 8
+  },
+  "failedAttempts": [
+    "scenario-consolidation-first-run.json",
+    "scenario-consolidation-parent-wait-run.json"
+  ],
+  "cleanupDiagnosis": "scenario-consolidation-cleanup-diagnosis.json",
+  "limits": "Existing checks relocated, not 48 new native conformance passes. Host, sample and independent Koog suites were not rerun in this stage. Matching unchanged Gradle test results may be up-to-date."
+}

@@ -1,5 +1,6 @@
 plugins { kotlin("jvm"); kotlin("plugin.serialization") }
 dependencies {
+    testImplementation(testFixtures(project(":harness-conformance")))
     testImplementation(project(":harness-codex"))
     testImplementation(project(":harness-gemini-cli"))
     testImplementation(project(":harness-koog"))

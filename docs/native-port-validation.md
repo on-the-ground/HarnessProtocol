@@ -93,17 +93,23 @@ Native 검사는 `-PnativeHarnessTests`로 켠다. 켠 뒤 runtime이 없으면 
 
 ## 실행 결과
 
-legacy 이전과 임시 참조 구현 제거 뒤 `test :harness-conformance:testFixturesClasses hostTests -PnativeHarnessTests -PstrictHostTests`는 **BUILD SUCCESSFUL**이다. [기계 판독 기록](../harness-native-integration/evidence/verification.json)에 현재 suite별 수를 보관했다.
+legacy 이전과 임시 참조 구현 제거 뒤 `test :harness-conformance:testFixturesClasses sourcesJar hostTests -PnativeHarnessTests -PstrictHostTests`는 **BUILD SUCCESSFUL**이다. [기계 판독 기록](../harness-native-integration/evidence/verification.json)에 현재 suite별 수를 보관했다.
 
 | 검사 | 통과 | 실패 / skip |
 |---|---:|---|
 | 새 native 통합 | 25: Codex 8, Gemini 8, Koog 기본 7 + 도구 2 | 0 / 0 |
 | 현재 Port adapter·bridge·bundle 회귀 | 71 | 0 / 0 |
 | PublicModelTest | 9 | 0 / 0 |
-| 재사용 시나리오 정의 | 실행·통과 0, 정의 48개 컴파일 확인 | 임시 실행 subclass 제거 |
+| 미연결 Core/Cleanup 정의 | 실행·통과 0, 정의 48개 컴파일 확인 | 임시 실행 subclass 제거 |
 | Python host | 15 | 실패 0, 기존 Pydantic 경고 4 |
 | Node host | 5 | 0 / 0 |
 
-현재 JVM 결과는 총 **105개**, host 결과는 **20개**다. 변경되지 않은 native·기존 회귀·값 타입 suite는 Gradle up-to-date 결과를 재사용했고 host 20개는 재실행했다. 참조 하네스가 포함됐던 153개 집계는 [제거 전 기록](../harness-native-integration/evidence/before-reference-removal.json)에 분리했으며 현재 통과 수로 사용하지 않는다. 이전 Koog 독립 실험 18개도 현재 집계에서 제외한다.
+현재 루트 JVM 결과는 총 **105개**, host 결과는 **20개**다. 이전한 adapter·mapper·process 검사와 native 검사를 재실행해 통과했다. 마지막 확인에서는 현재 소스와 일치하는 Gradle up-to-date JVM 결과를 재사용하고 host 20개를 재실행했으며 sourcesJar를 갱신했다. 참조 하네스가 포함됐던 153개 집계는 [제거 전 기록](../harness-native-integration/evidence/before-reference-removal.json)에 분리했으며 현재 통과 수로 사용하지 않는다. 독립 Koog 실험도 현재 Port로 이전해 **18개**를 별도로 실행·통과했다. [현재 실험 기록](../experiments/koog-validation/evidence/current-port-migration.json)은 과거 18개 기록과 구별하며 루트 105개에 합산하지 않는다.
 
 `./gradlew.bat --offline -p samples/basic -PuseProjectSource compileKotlin`도 통과했다. 미발행 소스를 composite build로 소비한 결과이며 artifact 발행은 수행하지 않았다. README와 docs의 상대 파일 링크 검사에서 누락은 0개였다.
+
+## 공통 시나리오 통합 후 배치
+
+공통 runtime 판정 7개와 영속 재개 판정 1개는 conformance의 testFixtures로 이동했다. native 모듈은 실제 provider 구성·모델 경계·실행 subclass와 Koog 전용 도구 검사 2개를 소유한다. SDK testkit의 순수 lifecycle 9개도 conformance로 이동했고 SDK 전용 검사 11개는 남겼다. 상세 중복 관계와 연결 전 수정 사항은 [시나리오 대응표](conformance-scenarios.md)를 따른다. 이 이동으로 미연결 Core/Cleanup 48개를 새로 실행했다고 집계하지 않는다.
+
+통합 후 전체 JVM 검사도 105개(실제 runtime 25개 포함), 실패·오류·건너뜀 0개로 통과했다. 공통 정의 17개의 consumer 실행 41회는 이 105개에 포함되며 추가 합산하지 않는다. 정리 유예 중 새로 생긴 Codex의 git 하위 process가 최초 종료 목록에서 빠지는 문제를 실제 실행에서 찾아 보완했다. 실패 이력·원인 관찰·최종 실행 대응은 [단계 1 결과](conformance-scenarios.md#단계-1-검증-결과)를 따른다. 이 단계에서는 host·독립 실험·sample을 다시 실행하지 않았다.

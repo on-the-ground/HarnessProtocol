@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-04",
+  "result": "BUILD FAILED",
+  "nativeSuites": [
+    {
+      "name": "dev.harnessprotocol.integration.CodexNativeHarnessTest",
+      "tests": 8,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "failedCases": [
+        {
+          "name": "unsupported task requirements are rejected before a native model call()",
+          "message": "org.junit.platform.commons.JUnitException: Failed to close extension context",
+          "detail": "org.junit.platform.commons.JUnitException: Failed to close extension context\n\tat java.base@25.0.3/java.util.ArrayList.forEach(ArrayList.java:1604)\n\tat java.base@25.0.3/java.util.ArrayList.forEach(ArrayList.java:1604)\nCaused by: java.io.IOException: Failed to delete temp directory C:\\Users\\gcjoo\\AppData\\Local\\Temp\\junit-625325715446783185. The following paths could not be deleted (see suppressed exceptions for details): <root>\n\tat java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1604)\n\tat java.base/java.util.stream.SortedOps$RefSortingSink.end(SortedOps.java:395)\n\tat java.base/java.util.stream.Sink$ChainedReference.end(Sink.java:261)\n\tat java.base/java.util.stream.Sink$ChainedReference.end(Sink.java:261)\n\tat java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:571)\n\tat java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:560)\n\tat java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:153)\n\tat java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:176)\n\tat java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:265)\n\tat java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:632)\n\t... 2 more\n\tSuppressed: java.nio.file.FileSystemException: C:\\Users\\gcjoo\\AppData\\Local\\Temp\\junit-625325715446783185: 다른 프로세스가 파일을 사용 중이기 때문에 프로세스가 액세스 할 수 없습니다\n\t\tat java.base/sun.nio.fs.WindowsException.translateToIOException(WindowsException.java:92)\n\t\tat java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:103)\n\t\tat java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:108)\n\t\tat java.base/sun.nio.fs.WindowsFileSystemProvider.implDelete(WindowsFileSystemProvider.java:269)\n\t\tat java.base/sun.nio.fs.AbstractFileSystemProvider.delete(AbstractFileSystemProvider.java:105)\n\t\tat java.base/java.nio.file.Files.delete(Files.java:1052)\n\t\tat java.base/java.nio.file.Files.walkFileTree(Files.java:2560)\n\t\tat java.base/java.nio.file.Files.walkFileTree(Files.java:2609)\n\t\tat java.base/java.nio.file.Files.walkFileTree(Files.java:2560)\n\t\tat java.base/java.nio.file.Files.walkFileTree(Files.java:2609)\n\t\t... 13 more\n"
+        }
+      ]
+    },
+    {
+      "name": "dev.harnessprotocol.integration.GeminiNativeHarnessTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failedCases": []
+    },
+    {
+      "name": "dev.harnessprotocol.integration.KoogNativeHarnessTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failedCases": []
+    },
+    {
+      "name": "dev.harnessprotocol.integration.KoogNativeToolTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failedCases": []
+    }
+  ],
+  "finding": "One Codex test body completed but JUnit could not delete the process working-directory root. No policy/contract assertion failed in that case. Process close did not await the forcibly terminated parent host in its final exit wait."
+}

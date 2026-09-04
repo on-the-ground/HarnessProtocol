@@ -60,7 +60,7 @@ AgentHarness                   하네스 제공 경계
 | `harness-runtime` | adapter가 선택하여 사용하는 Task 수명·관찰 구현. 공개 Port의 필수 기반이 아니다. |
 | `harness-process-bridge`, `bridges` | 두 process adapter의 내부 transport와 host. 모든 하네스의 필수 기반이 아니다. |
 | `harness-adapter-testkit` | 현재 process adapter의 공통 회귀, 독립적인 설정 투영, SDK 이벤트 매핑 검사. |
-| `harness-conformance` | 실제 adapter를 제어할 fixture seam과 `testFixtures`의 재사용 시나리오 48개. 임시 하네스와 실행 subclass는 없으며 시나리오 정의 자체는 통과 수에 넣지 않는다. |
+| `harness-conformance` | 공통 lifecycle·runtime 판정과 fixture seam. 실행 binding이 있는 정의 17개와 미연결 정의 48개를 구별한다. [시나리오 대응표](docs/conformance-scenarios.md)를 따른다. |
 | `harness-bundle` | Codex·Gemini·Koog adapter 구성 편의. Koog의 executor·model을 명시적으로 받는다. |
 | `harness-native-integration` | 세 실제 runtime과 통제된 모델 경계로 공개 동작을 검증한다. `-PnativeHarnessTests`로 실행한다. |
 | `experiments/koog-validation` | 현재 Port를 사용하는 별도 Koog 승인·질문·파일 보관 구성의 격리 실험. production 기본 구성과 구별한다. |

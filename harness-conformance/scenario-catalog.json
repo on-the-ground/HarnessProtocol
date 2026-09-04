@@ -1,0 +1,974 @@
+{
+  "version": 1,
+  "stage": "1: scenario consolidation and gap inventory",
+  "countingRule": "Definitions and purpose overlap are not execution counts. An SDK boundary binding is not a native runtime binding. The 48 C/K definitions remain unattached.",
+  "entries": [
+    {
+      "id": "C01",
+      "title": "startTask accepts and returns a handle spanning several internal calls",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Verify several real internal calls; a single start/completion pair is not that evidence."
+      ]
+    },
+    {
+      "id": "C02",
+      "title": "completed outcome matches terminal state and settles exactly once",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C03",
+      "title": "failed outcome matches terminal state and carries its kind",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C04",
+      "title": "cancelled outcome matches terminal state",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C05",
+      "title": "natural language failure without a classified kind reports UNKNOWN, not a fabricated kind",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C06",
+      "title": "pending clears and terminal state is confirmed before awaitOutcome returns, on completion",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Choose accepted caller-approval cases rather than a mandatory profile named approval."
+      ]
+    },
+    {
+      "id": "C07",
+      "title": "pending clears and terminal state is confirmed before awaitOutcome returns, on failure",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Choose accepted caller-question cases rather than a mandatory profile named questions."
+      ]
+    },
+    {
+      "id": "C08",
+      "title": "completes without any event collector",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C09",
+      "title": "a slow collector observes a gap but still sees the terminal event last",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Synchronize subscription and overflow; always release stalled collector in finally."
+      ]
+    },
+    {
+      "id": "C10",
+      "title": "a late subscriber still receives the terminal event",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Require a retained terminal and finite flow, not terminal as the first replayed item."
+      ]
+    },
+    {
+      "id": "C11",
+      "title": "overlapping start on one session is rejected before it reaches the native boundary",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C12",
+      "title": "a session accepts its next task only once the previous one is terminal",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C13",
+      "title": "different sessions on one harness make progress concurrently without mixing context",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Observe actual runtime context; separately scripted answers do not establish isolation."
+      ]
+    },
+    {
+      "id": "C14",
+      "title": "natural completion wins the race against a cancellation request",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C15",
+      "title": "cancellation requested after terminal is a no-op",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C16",
+      "title": "a normal completion with no captured output is Completed with a null output",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C17",
+      "title": "an actual empty string output is distinct from no output",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C18",
+      "title": "completion's null output does not erase output already captured earlier",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C19",
+      "title": "completion does not imply schema-valid structured output",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Select a structured-output requirement case; distinguish invalid observed output from promised schema enforcement."
+      ]
+    },
+    {
+      "id": "C20",
+      "title": "an incompatible session requirement is rejected before any handle is issued",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Select a declared incompatible case; persistence is not universally unsupported."
+      ]
+    },
+    {
+      "id": "C21",
+      "title": "an unconfirmed session requirement is distinguished from a confirmed rejection",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Select a real unconfirmed case; network=ALLOWED is not universally unconfirmed."
+      ]
+    },
+    {
+      "id": "C22",
+      "title": "a request-level rejection is distinguished from a post-handle failure",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C23",
+      "title": "the same work key in two different tasks does not cross-contaminate effect counts",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Wait for native accepted response/effect; asynchronous approval is not complete when the effect request returns."
+      ]
+    },
+    {
+      "id": "C24",
+      "title": "whitespace-only input text is preserved verbatim, not trimmed",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C25",
+      "title": "null instructions and explicit empty instructions are distinguished",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Observe effective instructions; provider default may include non-null default system text."
+      ]
+    },
+    {
+      "id": "C26",
+      "title": "only activated skills are observed, even when more are provided",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Select a supported workspace case and verify native activation, not only envelope construction."
+      ]
+    },
+    {
+      "id": "C27",
+      "title": "output captured before a failure is still recovered in the Failed outcome",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C28",
+      "title": "output captured before a cancellation is still recovered in the Cancelled outcome",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "C29",
+      "title": "output captured before an Unresolved settlement is still recovered, not reported as final",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Explicitly induce missing cancellation evidence; release alone need not yield Unresolved."
+      ]
+    },
+    {
+      "id": "K01",
+      "title": "release settles an active task as cancelled when confirmation arrives within budget",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Synchronize cancellation confirmation with cleanup entry; current RUNNING wait can finish before release."
+      ]
+    },
+    {
+      "id": "K02",
+      "title": "release settles an unconfirmed task as Unresolved once the cleanup budget elapses",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Control missing termination evidence and measure release itself."
+      ]
+    },
+    {
+      "id": "K03",
+      "title": "a completion that arrives right after cleanup starts is still recovered within budget",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Derive timing from declared budget and synchronize cleanup entry; no fixed 200ms assumption."
+      ]
+    },
+    {
+      "id": "K04",
+      "title": "harness close settles active tasks across sessions within the total cleanup budget",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Measure close itself and assert state/pending for all tasks against total budget."
+      ]
+    },
+    {
+      "id": "K05",
+      "title": "uncooperative work yields Unresolved with a cancellation-unconfirmed reason, not a fabricated Cancelled",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Tie reason to actual missing evidence; cleanup expiry can be CLEANUP_BOUND_EXCEEDED.",
+        "Release noncooperative work in finally."
+      ]
+    },
+    {
+      "id": "K06",
+      "title": "false-cancel detection - work observed after Unresolved does not retroactively change the settled outcome",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Assert a real late effect and stable outcome after it; releasing a fixture gate alone proves neither."
+      ]
+    },
+    {
+      "id": "K07",
+      "title": "a session stays blocked for new tasks after its last task was Unresolved, even after release",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Test all same-context handles and reopen, not only a released handle.",
+        "Release noncooperative work in finally."
+      ]
+    },
+    {
+      "id": "K08",
+      "title": "a brand-new session on the same harness is unaffected by another session's block",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Observe new runtime context and clean up surviving old work."
+      ]
+    },
+    {
+      "id": "K09",
+      "title": "ending only the inner turn does not terminate the task",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "K10",
+      "title": "pure observation loss without a terminal report settles Unresolved with an observation-lost reason",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Observe loss outcome before release so cleanup does not substitute for loss detection."
+      ]
+    },
+    {
+      "id": "K11",
+      "title": "a runtime that owned the work reports a confirmed transport failure, not Unresolved",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Runtime ownership alone does not prove termination of all delegated effects; supply concrete termination evidence."
+      ]
+    },
+    {
+      "id": "K12",
+      "title": "a runtime that did not own the work leaves it outstanding rather than fabricating a result",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Do not require RUNNING after lost observation; immediate Unresolved is allowed."
+      ]
+    },
+    {
+      "id": "K13",
+      "title": "a start rejected before delivery does not block the session and can be retried",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Assert native submission counts and preserved context after confirmed non-delivery."
+      ]
+    },
+    {
+      "id": "K14",
+      "title": "losing the start acceptance acknowledgement blocks the session, distinct from a clean rejection",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Cover accepted and unaccepted acknowledgement loss, request identity and no duplicate native submissions."
+      ]
+    },
+    {
+      "id": "K15",
+      "title": "usage deltas accumulate and unknown fields stay unknown rather than becoming zero",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Use native usage representation; do not require every runtime to accept arbitrary accounting values."
+      ]
+    },
+    {
+      "id": "K16",
+      "title": "a fresh usage snapshot resets the baseline instead of double-counting prior deltas",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Preserve native cumulative/reset semantics; use mapper-level evidence where model boundary cannot produce the fact."
+      ]
+    },
+    {
+      "id": "K17",
+      "title": "task and session usage are reported and preserved separately",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "K18",
+      "title": "a late notification after the outcome is confirmed does not overwrite it",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "K19",
+      "title": "reopening a persistent session surfaces the storage's canonical id, not the caller's raw string",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "layer": "unbound-contract-definition",
+      "bindings": [],
+      "relatedPurposeIds": [],
+      "beforeBinding": [
+        "Use compatible persistence requirement cases including Conditional support; never silently return on a missing interface."
+      ]
+    },
+    {
+      "id": "S01",
+      "title": "compatible specs reach the bridge with their intent intact",
+      "source": "harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/SdkAdapterContractTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C20",
+        "C21",
+        "C25",
+        "C26"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S02",
+      "title": "creates a session and completes an execution",
+      "source": "harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/SdkAdapterContractTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C01",
+        "C02"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S03",
+      "title": "state is terminal before awaitOutcome returns",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessLifecycleConformanceTest.kt",
+      "layer": "sdk-boundary-common-lifecycle",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C02",
+        "C06"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S04",
+      "title": "completes without an event collector",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessLifecycleConformanceTest.kt",
+      "layer": "sdk-boundary-common-lifecycle",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C08"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S05",
+      "title": "slow collector does not block lifecycle",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessLifecycleConformanceTest.kt",
+      "layer": "sdk-boundary-common-lifecycle",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C09"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S06",
+      "title": "failure is reported through state and awaitOutcome",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessLifecycleConformanceTest.kt",
+      "layer": "sdk-boundary-common-lifecycle",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C03"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S07",
+      "title": "cancellation is reported through state and awaitOutcome",
+      "source": "harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/SdkAdapterContractTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C04"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S08",
+      "title": "cancel after terminal is a no-op",
+      "source": "harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/SdkAdapterContractTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C15"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S09",
+      "title": "completion wins the race against cancel",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessLifecycleConformanceTest.kt",
+      "layer": "sdk-boundary-common-lifecycle",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C14"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S10",
+      "title": "terminal is exactly once and last",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessLifecycleConformanceTest.kt",
+      "layer": "sdk-boundary-common-lifecycle",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C02",
+        "K18"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S11",
+      "title": "stream ending without a terminal leaves outcome unresolved",
+      "source": "harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/SdkAdapterContractTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "K10",
+        "K07"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S12",
+      "title": "stream failure leaves outcome unresolved",
+      "source": "harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/SdkAdapterContractTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "K10",
+        "K07"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S13",
+      "title": "release is called after terminal",
+      "source": "harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/SdkAdapterContractTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [],
+      "beforeBinding": []
+    },
+    {
+      "id": "S14",
+      "title": "rejects overlapping tasks on one session",
+      "source": "harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/SdkAdapterContractTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C11",
+        "C12"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S15",
+      "title": "different sessions execute concurrently",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessLifecycleConformanceTest.kt",
+      "layer": "sdk-boundary-common-lifecycle",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C13"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S16",
+      "title": "harness close without native termination evidence settles unresolved",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessLifecycleConformanceTest.kt",
+      "layer": "sdk-boundary-common-lifecycle",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "K04"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S17",
+      "title": "overflow is explicit and terminal survives",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessLifecycleConformanceTest.kt",
+      "layer": "sdk-boundary-common-lifecycle",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "C09"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S18",
+      "title": "session release is idempotent and rejects further tasks",
+      "source": "harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/SdkAdapterContractTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "K07"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S19",
+      "title": "session release settles an active execution",
+      "source": "harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/SdkAdapterContractTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "K02"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S20",
+      "title": "reopen uses the session id returned by the host",
+      "source": "harness-adapter-testkit/src/main/kotlin/dev/harnessprotocol/testkit/SdkAdapterContractTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "K19"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "R01",
+      "title": "native task completes without an observer and preserves state and output",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRuntimeConformanceTest.kt",
+      "layer": "native-runtime",
+      "bindings": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "relatedPurposeIds": [
+        "C01",
+        "C02",
+        "C06",
+        "C08"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "R02",
+      "title": "same session carries prior native context while a new session stays isolated",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRuntimeConformanceTest.kt",
+      "layer": "native-runtime",
+      "bindings": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "relatedPurposeIds": [
+        "C13"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "R03",
+      "title": "unsupported task requirements are rejected before a native model call",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRuntimeConformanceTest.kt",
+      "layer": "native-runtime",
+      "bindings": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "relatedPurposeIds": [
+        "C22"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "R04",
+      "title": "overlap is rejected and cancelling one waiter does not cancel native work",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRuntimeConformanceTest.kt",
+      "layer": "native-runtime",
+      "bindings": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "relatedPurposeIds": [
+        "C11",
+        "C12"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "R05",
+      "title": "close bounds active native work and settles the waiter",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRuntimeConformanceTest.kt",
+      "layer": "native-runtime",
+      "bindings": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "relatedPurposeIds": [
+        "K04"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "R06",
+      "title": "independent semantic and diagnostic observers finish and late subscription retains terminal",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRuntimeConformanceTest.kt",
+      "layer": "native-runtime",
+      "bindings": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "relatedPurposeIds": [
+        "C02",
+        "C10",
+        "C15"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "R07",
+      "title": "explicit cancellation waits for native termination and leaves the session reusable",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRuntimeConformanceTest.kt",
+      "layer": "native-runtime",
+      "bindings": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "relatedPurposeIds": [
+        "C04",
+        "C12"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "R08",
+      "title": "persistent reopen preserves actual context and desired instructions across harness recreation",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRuntimeConformanceTest.kt",
+      "layer": "native-runtime",
+      "bindings": [
+        "codex",
+        "gemini-cli"
+      ],
+      "relatedPurposeIds": [
+        "K19"
+      ],
+      "beforeBinding": []
+    }
+  ],
+  "gaps": [
+    {
+      "id": "G01",
+      "purpose": "Independent support/validate/call decisions across accepted, rejected and unconfirmed requirement cases; no baseline-name assumptions",
+      "priority": 1
+    },
+    {
+      "id": "G02",
+      "purpose": "Response acknowledgement loss (accepted and unaccepted), confirmed non-delivery, identity, no duplicate native response",
+      "priority": 1
+    },
+    {
+      "id": "G03",
+      "purpose": "Approval/question withdrawal, supersession, in-flight response/cancellation/terminal races",
+      "priority": 1
+    },
+    {
+      "id": "G04",
+      "purpose": "Multi-handle context blocking; release/reopen and configured harness/process boundaries",
+      "priority": 1
+    },
+    {
+      "id": "G05",
+      "purpose": "Partial output and usage for all four outcomes, missing versus empty, unknown versus zero",
+      "priority": 1
+    },
+    {
+      "id": "G06",
+      "purpose": "Cleanup entry/total timing, multiple resources, noncooperative work, actual late effects and retained outcome",
+      "priority": 1
+    },
+    {
+      "id": "G07",
+      "purpose": "Independent semantic/diagnostic overflow and gap counts under native load",
+      "priority": 2
+    },
+    {
+      "id": "G08",
+      "purpose": "Session grant covered/uncovered targets, no grant widening or cross-session propagation, native effect counts",
+      "priority": 2
+    },
+    {
+      "id": "G09",
+      "purpose": "Native workspace/skill activation and filesystem/network enforcement",
+      "priority": 2
+    },
+    {
+      "id": "G10",
+      "purpose": "Structured output enforcement/validation; currently unsupported profiles must reject before work",
+      "priority": 2
+    },
+    {
+      "id": "G11",
+      "purpose": "Usage duplicate snapshots/reset/missing segments; message roles/identity and tool/effect correlation",
+      "priority": 2
+    },
+    {
+      "id": "G12",
+      "purpose": "Persistence failures, desired configuration, runtime support revocation and declared restart coordination",
+      "priority": 2
+    }
+  ]
+}
