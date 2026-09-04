@@ -2,7 +2,7 @@
 
 기준일: 2026-09-04. [설계 선언](../AHP_CHARTER.md) → [Semantic contract](semantic-contract.md) → [추상과 용어](abstraction-and-terminology.md) 및 상세 계약을 구현의 기준으로 삼는다.
 
-공개 Port·KDoc·fixture 선언과 값 타입 회귀 검사를 정리했다. 실제 adapter와 factory는 legacy를 사용하며 배포 artifact 전환은 후속 작업이다. 이전 개정 이력은 Git에서 확인한다.
+공개 Port·KDoc·fixture 선언에 이어 실제 세 adapter와 factory를 새 Port에 연결했다. native 실행 검증과 기존 회귀를 병행하며, 기존 회귀와 독립 Koog 실험까지 현재 Port로 이전하고 legacy를 제거했다. 전체 적합성 gate와 발행은 남아 있다. 현재 증거는 [실제 adapter 검증](native-port-validation.md), 이전 개정 이력은 Git에서 확인한다.
 
 ## 목표
 
@@ -10,13 +10,15 @@
 
 | 상태 | 근거 / 범위 |
 |---|---|
-| 완료된 실증 | Koog native·부분 adapter 실험 18개, 기존 회귀 71개. [기록](../experiments/koog-validation/evidence/verification.json) |
+| 완료 | 새 공개 Port·KDoc, Codex/Gemini/Koog 연결, factory·bundle·소비 예제 컴파일, 실제 runtime 검사 25개 |
+| 이전 실증 | Koog native·부분 adapter 실험 18개. [당시 기록](../experiments/koog-validation/evidence/verification.json) |
 | 문서 기준 | README와 docs를 새 추상의 규범으로 갱신. 실험 사실과 현 구현 상태는 구분해 기록 |
-| 미완료 | 세 adapter 개편·fixture 구현, 새 공통 적합성 테스트, 실모델 연동, 소비 예제·배포 전환 |
+| 정리 완료 | 임시 ReferenceHarness 계열과 실행 subclass 제거. 48개 시나리오 정의는 testFixtures로 보존, 실행·통과 수에서 제외 |
+| 남은 작업 | 현재 native 검사에서 빠진 계약·경쟁 시나리오 추가, 선택 계약 구현·검증, 실모델 연동, artifact 발행 |
 
 ## 1. 확정할 공개 모델
 
-**상태: 공개 선언과 리뷰 수정 완료, 세 adapter 실행 검증 전.** 형태와 근거는 [공개 모델](public-model.md), 선언은 dev.harnessprotocol, 검증 seam은 harness-conformance에 있다. legacy는 실제 전환 후 제거한다. 아래 표의 의미를 바꾸지 않고 이행 수단을 검증한다.
+**상태: 공개 선언과 리뷰 수정 완료, 세 adapter의 기본 native 검증 완료.** 형태와 근거는 [공개 모델](public-model.md), 선언은 dev.harnessprotocol, 검증 seam과 재사용 시나리오는 harness-conformance에 있다. legacy 타입·실행 경로 제거와 회귀 검사 이전을 완료했다. 아래 표의 의미를 바꾸지 않고 미검증 보장을 추가 검증한다.
 
 목적과 의미는 아래 연결 문서를 따른다.
 
@@ -36,9 +38,11 @@
 
 시작 수락·응답 수락 확인 유실의 공개 예외와 identity는 선언됐다. public handle이 없다는 이유로 작업 미실행을 단정하지 않으며, 응답 미확정 요청을 재전송하지 않는다. 실제 native 경계의 이행과 별도의 복구 수단은 후속 검증 대상이다.
 
-다음은 공개 Port와 fixture를 기준으로 공통 검사를 작성하고 adapter를 전환하는 단계다. 문맥 연속성과 영속성의 목적 차이, 모든 outcome의 부분 결과 보존은 구현 편의로 낮추지 않는다. 초기 [총평 처리](review-disposition.md)와 최신 [공개 모델](public-model.md)에 결정 근거를 기록한다.
+다음 작업은 이미 연결된 실제 adapter에서 미검증 조건을 유도하고 계약 판정을 확장하는 것이다. 공통 7개 시나리오와 구현별 검사의 실증은 [현재 결과](native-port-validation.md)에 있다. 문맥 연속성과 영속성의 목적 차이, 모든 outcome의 부분 결과 보존을 구현 편의로 낮추지 않는다.
 
 ## 2. 공개 Port와 KDoc 전환
+
+새 공개 선언과 세 adapter의 기본 연결에 반영한 책임 분리는 다음과 같다. 이 목록을 구현체 연결 전의 대기 작업으로 취급하지 않는다.
 
 - [용어 전환표](abstraction-and-terminology.md)에 따라 Task 식별자·상태·이벤트·입력·연산 이름을 일치시킨다.
 - 성공 전용 AgentResult와 실행 실패/취소 예외의 역할을 재구성한다. 변경된 의미를 alias로 감추지 않는다.
@@ -50,17 +54,17 @@
 
 ## 3. 세 adapter 전환
 
-| 대상 | 주요 작업 |
-|---|---|
-| Codex | 새 Task/outcome 변환, 승인 계약 보존, 영속 thread를 선택 계약으로 제공, 정책·자원 요구의 분리, 종료 확인 근거 점검 |
-| Gemini CLI | 새 Task/outcome 변환, SDK의 실제 지원·거절, content·usage·tool/effect 매핑, abort와 실제 종료의 구별, session 보관 범위 확인 |
-| Koog | 실험을 production 구현으로 전환, session 설정과 선택 저장소, interaction 중재, 비협조적 작업의 정리·미확정 처리, 등록·배포 구성 |
+| 대상 | 연결·검증한 범위 | 남은 구현·검증 |
+|---|---|---|
+| Codex | 새 Task/outcome, 실제 지시·문맥·취소·정리·재개, 설정 변경 불가의 사전 거절 | 실제 승인 효과·수락 확인 유실, 권한·skills 집행, 사용량·관찰 경계 |
+| Gemini CLI | 새 Task/outcome, native SDK 지시 보완, 실제 문맥·취소·재개와 desired 지시 반영 | SDK 버전 호환, skills·사용량·관찰 경계. 미지원 선택 요구는 계속 사전 거절 |
+| Koog | production 모듈·bundle 연결, 실제 graph 문맥·취소·비협조적 효과·실패 후 부분 결과 | 선택 저장소·승인·질문·출력 등 구성 확장과 전체 계약 검증 |
 
-실험용 Koog 코드와 검증 로그는 당시 증거다. 이름을 소급 치환하여 새 계약이 이미 검증된 것처럼 만들지 않는다. production 구현에 재사용할 부분을 검토하고 새 계약으로 다시 검증한다.
+실험용 Koog 코드와 검증 로그는 당시 증거다. 현재 production 코드와 native 검사는 별도 모듈에 있으며, 이전 실험의 선택 기능 통과를 새 구현의 통과로 가져오지 않는다.
 
 ## 4. 공통 적합성과 회귀
 
-[Testing](testing.md)의 공개 Port 시나리오를 세 adapter에 적용한다. 준비·입력 유도·모의 효과 관찰은 provider별 fixture가 맡는다. 공통 판정은 SdkBridge, provider JSON, Koog node ID를 알지 않는다.
+공통 7개 시나리오는 이미 세 adapter에 적용했고 구현별 4개를 더해 25개가 통과했다. [Testing](testing.md)의 나머지 조건을 이 실제 경계에 추가한다. testFixtures에 보존한 48개 정의는 profile의 고정 가정 등을 보완하여 재사용한다. 준비·입력 유도·효과 관찰은 provider별 fixture가 맡으며 공통 판정은 provider wire·Koog node ID를 알지 않는다.
 
 필수 계약은 세 구현이 모두 통과해야 한다. 선택 계약은 지원하면 해당 의미를 검증하고 미지원이면 사전 거절을 검증한다. 기존 spec→SDK 투영, bridge EOF, mapper 같은 검사는 구현별 회귀로 보존한다. close 강제 취소 등 잘못된 기존 기대값은 변경한다.
 
@@ -68,7 +72,7 @@
 
 ## 5. 소비자와 배포 전환
 
-현재 samples/basic, factory, publication metadata와 bundle은 기존 구현을 가리킨다. 새 공개 타입에 맞춰 컴파일 예제를 바꾸고, 필요한 영속성·승인·권한·출력 계약을 소비자가 명시하는 migration 예제를 제공한다.
+samples/basic과 새 factory·bundle은 세 adapter의 새 Port 경로를 가리키며 source composite build 컴파일이 통과했다. 필요한 영속성·승인·권한·출력 계약을 소비자가 명시하는 migration 예제와 실제 artifact 발행 검증이 남아 있다.
 
 지원 표, 실제 runtime 준비, KDoc, README의 구현 상태를 최종 코드와 대조한다. source compatibility와 의미 변경을 따로 설명하고 같은 버전의 사용법으로 섞지 않는다. 배포·발행은 별도 실행 작업이다.
 

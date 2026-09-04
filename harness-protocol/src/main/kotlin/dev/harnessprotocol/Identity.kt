@@ -1,8 +1,7 @@
 package dev.harnessprotocol
 
 /**
- * 개정 AHP의 공개 Port. 기존 타입은 `dev.harnessprotocol.legacy`에 구현 전환 전까지 남아 있으며
- * 전환이 끝나면 제거한다. 두 패키지를 함께 사용하는 소비 코드는 지원 대상이 아니다.
+ * AHP의 공개 Port identity. provider 구성, 논리 문맥, 작업과 하위 작업의 식별을 구별한다.
  *
  * 의미의 규범은 docs/semantic-contract.md 의 규범 위치표를 따른다.
  */

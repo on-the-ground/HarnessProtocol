@@ -2,11 +2,13 @@
 
 검토일: 2026-09-04. 기준은 [설계 선언](../AHP_CHARTER.md), [추상과 용어](abstraction-and-terminology.md), 개편 전 Git revision `d5733031a2533dfd0d56821d912442a08552b0fd`의 문서·코드·테스트다.
 
+이 문서는 당시 문서 개편의 검토 기록이다. 이후 수행한 세 adapter의 새 Port 연결·실제 runtime 검증과 현재 회귀 결과는 [native 검증 기록](native-port-validation.md)을 따른다.
+
 ## 결과와 범위
 
 기존 실행 코드는 변경하지 않았고 기존 Kotlin 검사 71개와 Koog 실험 18개를 모두 재실행하여 통과했다. 문서 검토에서는 일부 유효한 보장이 압축 과정에서 약해진 점을 발견해 복원했다. 새 종료 미확정 개념이 시작·응답 전달 경계에서도 일관되도록 설계 요구와 후속 검증을 보강했다.
 
-이는 현재 문서와 기존 실행 코드에 대한 검토다. 새 공개 타입·세 adapter의 구현은 아직 전환 전이므로 **새 로직의 실행 회귀가 없다고 판정한 것은 아니다.** KDoc과 구현은 변경하지 않았다.
+이는 문서 개편 당시의 코드에 대한 검토였다. 그 시점에는 새 공개 타입·adapter 전환을 수행하지 않았으며 KDoc과 구현도 변경하지 않았다. 현재는 새 Port·세 adapter 연결과 native 검사가 존재하므로 최신 상태는 [native 검증 기록](native-port-validation.md)을 따른다.
 
 ## 발견하여 수정한 항목
 
@@ -16,7 +18,7 @@
 | 사용량 | 공통 누적 snapshot이었던 규칙을 누적/증분 및 합산 규칙의 미확정 사항으로 열어둠. consumer의 provider별 분기·이중 합산 위험 | UsageChanged는 Task 누적 snapshot으로 고정. provider 증분/누적 차이는 adapter가 번역, Session은 별도 범위, reset·unknown 보존 |
 | 입력·식별 | 입력 공백 보존, Task/Work/Interaction ID 범위와 reopen 응답의 정규화 ID 사용이 빠짐 | opaque·범위별 식별, Task 간 하위 ID 격리, 빈 텍스트 거절·공백 보존, 재개 응답 ID 사용을 명시 |
 | 실패 분류 | 유용한 분류를 유지한다는 설명만 남고 근거 요건이 빠짐. 오류 문자열 추측이 업무 재시도·권한 판단에 영향을 줄 수 있음 | 구조화 provider 정보·의미가 확인된 native 예외·runtime 사실로 분류. 자연어 추측만으로 구체적 실패 종류 확정 금지 |
-| 시작 수락 미확정 | handle 생성 전 오류를 모두 호출 실패로만 설명. 시작 요청 수락 뒤 응답 유실을 미실행으로 오해할 수 있음 | 사전 거절과 수락 여부 미확정을 구별. 확인 전 같은 문맥의 새 작업·무조건 재시도 차단. 구체적 표현과 identity 회수는 구현 전 결정 |
+| 시작 수락 미확정 | handle 생성 전 오류를 모두 호출 실패로만 설명. 시작 요청 수락 뒤 응답 유실을 미실행으로 오해할 수 있음 | 사전 거절과 수락 여부 미확정을 구별. TaskStartUnconfirmedException과 요청 identity를 선언하고 미확정 문맥의 새 작업·자동 재시도를 차단 |
 | 응답 전달 미확정 | respond의 일회 응답만 정의하고 성공 반환·acknowledgement 유실의 의미가 부족 | 성공은 전달·수락 확인이며 작업 재개 완료와 구별. 잘못된 응답은 전달 전 거절, 확인 유실을 미전달로 바꾸어 이중 응답하지 않음 |
 
 구체적 규칙은 [Protocol reference](protocol-reference.md), [Lifecycle](lifecycle-and-concurrency.md), [Event contract](event-contract.md)에 반영했다. [Provider mapping](provider-mapping.md)과 [Bridge protocol](bridge-protocol.md)에 전달·매핑 책임을 연결하고, [Testing](testing.md)과 [전환 계획](port-revision-plan.md)에 판정·구현 항목을 추가했다.
@@ -54,11 +56,11 @@ JUnit XML의 suite별 개수와 실행 시각을 확인했다. 기존 suite에�
 
 Git diff에서 tracked Kotlin·KDoc·host 코드·빌드 설정의 변경이 없음을 확인했고, [기존 실험 기록](../experiments/koog-validation/evidence/verification.json)의 소스·빌드 파일 SHA-256 11개와 현재 파일이 일치했다. 기존 실험 기록은 덮어쓰지 않았다. 재실행 결과는 각각 임시 build 경로의 test-results/test에 생성된다.
 
-## 후속 구현에서 남은 검증
+## 현재 남은 검증
 
-TaskOutcome의 필드와 호출 실패 모델, 수락 미확정·응답 확인 유실의 전달 상태, schema 검증 실패와 부분 산출물, 영속 문맥의 미확정 작업 차단·복구는 아직 구체화·구현해야 한다. 이들은 문서상의 판정 기준과 실행 검증을 구분해 관리한다.
+TaskOutcome의 필드·호출 실패 모델·수락 미확정 예외는 이미 선언했고 실제 adapter가 사용한다. 부분 산출물과 기본 문맥·취소·정리는 native 경계에서 검증했다. 남은 것은 시작·응답 확인 유실의 실제 주입, schema 집행, 영속 문맥의 경쟁·복구, 다중 자원·정확한 정리 상한 등의 조건이다.
 
-문서에서 복원·보강한 시나리오를 새 Port와 세 adapter에 실제 적용해야 최종 통합 회귀를 판정할 수 있다. 기존 89개 검사가 통과했다는 사실로 이 후속 검증을 대체하지 않는다.
+새 Port에 적용한 native 25개를 바탕으로 미검증 시나리오를 확대한다. 이전 실험·legacy 회귀의 통과 수나 실행하지 않는 시나리오 정의 수로 전체 적합성을 대체하지 않는다.
 
 ## 외부 총평 반영 후 추가 검토
 
@@ -74,12 +76,16 @@ TaskOutcome의 필드와 호출 실패 모델, 수락 미확정·응답 확인 �
 | 이벤트 제거가 공개 설명을 버리거나 final output으로 오인 | 공개 설명은 메시지의 역할·phase로 보존하고 ContextManaged만 내부 진단으로 이동. 같은 호출의 WorkId 근거와 이벤트 목적을 명시 |
 | 기존 핵심 보장 누락 | terminal 유일성, waiter 이전 state·pending 정리, observer 독립성·gap, 누적 usage, 입력 공백·지시, 승인 전 효과 차단·일회 응답, 정규화된 재개 ID를 유지 |
 
-문서의 로컬 링크·절 anchor·fence와 Git diff 공백 검사를 수행했다. 실험 소스·빌드 파일 SHA-256 11개는 기존 verification.json과 모두 일치했다. 실험 파일은 Git 누락을 정리하는 대상이며 그 코드나 검증 기록의 내용은 변경하지 않았다. 기존 tracked 구현·KDoc·host·빌드 설정의 수정은 없었다. 이번에 보강한 의미의 세 adapter 실행 적합성은 여전히 후속 작업이다.
+당시 문서의 로컬 링크·절 anchor·fence와 Git diff 공백 검사를 수행했다. 실험 소스·빌드 파일 SHA-256 11개는 기존 verification.json과 일치했다. 실험 파일의 Git 누락을 정리했으며 당시 코드·KDoc·host·빌드 설정은 수정하지 않았다. 이후 수행한 새 구현·실행 검증과 구분한 기록이다.
 
 ## 공개 Port 리뷰 수정의 후속 검증
 
 위 내용은 문서 개편 당시 기록이다. 이후 공개 Port를 선언한 d3f66d0을 리뷰하고 값 타입·KDoc·fixture를 수정한 결과는 [공개 모델과 실행 결과](public-model.md)에 있다. 이 후속 단계에서는 기존 Kotlin 71개와 새 공개 모델 검사 9개, Koog 실험 18개를 실행해 모두 통과했다.
 
-패키지 이동 후 Koog 실험의 컴파일 실패를 재현하고 현재 소스 의존을 고정 revision의 소스 추출로 바꿨다. 실험 Kotlin 소스·기존 verification.json은 유지했고 build.gradle.kts 변경 및 실행 기록은 [별도 재현 증거](../experiments/koog-validation/evidence/reproduction-after-port-revision.json)에 남겼다. 이전의 ‘해시 11개 일치’는 당시 기록이며 현재는 빌드 파일을 제외한 10개가 기존 해시와 일치한다.
+패키지 이동 후 Koog 실험의 컴파일 실패를 재현하고 현재 소스 의존을 고정 revision의 소스 추출로 바꿨다. 실험 Kotlin 소스·기존 verification.json은 유지했고 build.gradle.kts 변경 및 실행 기록은 [별도 재현 증거](../experiments/koog-validation/evidence/reproduction-after-port-revision.json)에 남겼다. ‘해시 11개 일치’와 빌드 파일을 제외한 10개 일치는 각 과거 단계의 기록이다. 이후 실험 코드를 현재 Port로 이전했으므로 현재 소스 해시는 [이전 기록](../experiments/koog-validation/evidence/current-port-migration.json)에서 확인한다.
 
 수락 미확정과 미지원, 산출물 부재와 빈 텍스트, 미측정 구간의 합산, 독립적인 network 요구, 명시적 세션 승인 범위, 별도 진단 경로를 공개 계약에서 구별했다. 값 타입 검사만으로 실제 응답 중복 방지·권한 집행·문맥 연속성·진단 queue 격리까지 검증됐다고 주장하지 않는다. 그 행동은 새 공통 suite와 실제 adapter fixture에서 검증해야 한다.
+
+## Legacy 의존 제거의 후속 검토
+
+기존 회귀와 독립 Koog 실험까지 현재 Port로 이전하고 구 타입·실행 경로·Git 소스 추출을 제거했다. 유효한 보장과 바꾼 판정, 실행 결과의 경계는 [legacy 이전 검토](legacy-port-migration.md)를 따른다. 위 0.1.0 검사 결과와 해시 일치는 과거 기록이다.

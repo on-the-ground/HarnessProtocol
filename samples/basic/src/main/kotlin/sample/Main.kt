@@ -1,6 +1,6 @@
 package sample
 
-import dev.harnessprotocol.legacy.Harnesses
+import dev.harnessprotocol.Harnesses
 
 fun main() {
     Harnesses.create(System.getProperty("agent.provider", "codex")).use { harness ->

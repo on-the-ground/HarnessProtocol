@@ -13,6 +13,7 @@ import java.util.UUID
  * Single process/writer experiment; cross-process locking and interrupted-turn recovery are not provided.
  */
 class ConversationStore(private val directory: Path) {
+    val namespace = dev.harnessprotocol.StorageNamespace(directory.toAbsolutePath().normalize().toString())
     init { Files.createDirectories(directory) }
     private fun path(id: SessionId): Path {
         val valid = runCatching { UUID.fromString(id.value).toString() == id.value }.getOrDefault(false)

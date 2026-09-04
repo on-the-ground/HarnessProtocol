@@ -2,7 +2,7 @@
 
 기준일: 2026-09-04. [설계 선언](../AHP_CHARTER.md) → [Semantic contract](semantic-contract.md) → 상세 계약을 따른다. 선언은 harness-protocol의 dev.harnessprotocol에, 적합성 fixture는 harness-conformance에 있다.
 
-기존 adapter는 dev.harnessprotocol.legacy를 사용한다. 이번 결과는 공개 모델·KDoc·fixture의 수정이며 세 adapter 구현 완료가 아니다. 기존 타입 제거와 adapter 전환은 [후속 단계](port-revision-plan.md#2-공개-port와-kdoc-전환)에서 수행한다.
+공개 선언에 이어 세 adapter와 factory를 새 Port에 연결했다. 기존 회귀 검사도 현재 Port·adapter로 이전했고 legacy 타입·구현을 제거했다. 현재 동작 증거와 미검증 범위는 [실제 adapter 검증](native-port-validation.md)에 기록하며 전체 적합성 통과·발행은 [전환 계획](port-revision-plan.md)을 따른다.
 
 ## 공개 형태
 
@@ -74,13 +74,15 @@ HarnessFixture.profiles()는 고정한 runtime 구성별 expectedSupport와 Requ
 
 ## 기존 실험과 남은 실행 검증
 
-패키지 이동으로 깨진 Koog 실험은 당시 protocol revision d5733031a2533dfd0d56821d912442a08552b0fd의 소스를 별도 build 디렉터리에 추출하도록 고쳤다. legacy 제거 후에도 현재 Port에 연결되지 않는다. 실험 Kotlin 소스와 기존 verification.json은 소급 수정하지 않았다. 준비 조건과 새 재현 기록은 [실험 안내](../experiments/koog-validation/README.md)에 있다.
+Koog 독립 실험도 현재 Port와 production ManagedTask를 참조하도록 이전했다. 과거 revision 소스 추출은 제거했으며 승인·질문·보관·비협조적 정리를 현행 계약으로 검사한다. 과거 evidence는 덮어쓰지 않고 [실험 안내](../experiments/koog-validation/README.md)에 현재 실행과 구별했다.
 
-공개 값 타입의 회귀 검사는 harness-protocol의 PublicModelTest다. harness-conformance의 세 adapter 공통 시나리오와 각 fixture 구현은 아직 작성·실행 전이다. 그 전체 검증을 값 타입 검사나 기존 legacy suite 통과로 대체하지 않는다.
+공개 값 타입의 회귀 검사는 harness-protocol의 PublicModelTest다. 실제 세 runtime의 실행 검사는 harness-native-integration의 25개다. 임시 ReferenceFixture 구현은 제거했고, harness-conformance의 48개 정의는 testFixtures로 옮겨 실제 adapter 검증에 재사용한다. 미연결 정의의 컴파일은 적합성 통과가 아니다. 전체 적합성을 값 타입 검사·SDK 경계 suite·일부 native 시나리오 통과로 대체하지 않는다.
 
-## 이번 검증 결과
+## 공개 Port 선언 당시 검증 기록
 
-Corretto 25.0.3에서 캐시된 의존성을 사용하되 test 결과는 재사용하지 않고 실행했다.
+아래는 legacy 제거 이전 단계의 기록이다. 최신 검증은 [native 검증](native-port-validation.md)과 [이전 회귀 검토](legacy-port-migration.md)를 따른다.
+
+당시 Corretto 25.0.3에서 캐시된 의존성을 사용하되 test 결과는 재사용하지 않고 실행했다.
 
 ```powershell
 ./gradlew.bat :harness-conformance:compileKotlin test --offline --rerun-tasks --console=plain
@@ -93,4 +95,4 @@ Corretto 25.0.3에서 캐시된 의존성을 사용하되 test 결과는 재사�
 | PublicModelTest | 9 | 0 / 0 / 0 |
 | 고정한 과거 Port의 Koog 실험 | 18 | 0 / 0 / 0 |
 
-새 fixture 선언도 컴파일됐다. JUnit XML에서 실제 실행 수와 시각을 확인했다. Python/Node host suite와 실모델 호출은 이번 수정에서 재실행하지 않았다. 기존 adapter·host·legacy 동작 코드는 변경하지 않았다.
+새 fixture 선언도 컴파일됐다. JUnit XML에서 실제 실행 수와 시각을 확인했다. Python/Node host suite와 실모델 호출은 이번 수정에서 재실행하지 않았다. 당시에는 기존 adapter·host·legacy 동작 코드를 변경하지 않았다. 현재는 모든 회귀가 최신 Port로 이전됐다.

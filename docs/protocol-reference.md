@@ -1,6 +1,6 @@
 # Protocol reference
 
-이 문서는 **개정된 AHP의 의미와 공개 명칭**을 정의한다. Kotlin 선언·KDoc은 dev.harnessprotocol에 있으며 실제 adapter는 아직 legacy를 사용한다. [공개 모델](public-model.md)이 선언을, [전환 계획](port-revision-plan.md)이 남은 adapter·실증 작업을 관리한다. 최상위 기준은 [설계 선언](../AHP_CHARTER.md)과 [Semantic contract](semantic-contract.md)다.
+이 문서는 **개정된 AHP의 의미와 공개 명칭**을 정의한다. Kotlin 선언·KDoc과 세 adapter의 새 Port 경로는 dev.harnessprotocol 계약을 사용한다. 실제 검증 범위는 [native 검증 기록](native-port-validation.md)을 따른다. [공개 모델](public-model.md)이 선언을, [전환 계획](port-revision-plan.md)이 남은 적합성·실증 작업을 관리한다. 최상위 기준은 [설계 선언](../AHP_CHARTER.md)과 [Semantic contract](semantic-contract.md)다.
 
 ## 기본 모델
 
@@ -18,7 +18,7 @@
 
 `provider`는 adapter 제공 종류를 구별하는 구성 식별자이며 계정·저장소·영속 문맥의 namespace를 대신하지 않는다. [제공 경계](semantic-contract.md#설계-주체)는 실행 책임의 경계를 뜻한다. adapter 선택과 지원 판단은 구성 경계에서 수행하고 portable 업무 판단은 vendor 클래스나 원본 payload를 해석하지 않는다.
 
-`validate`는 요청한 의미를 보존할 수 있는지 진단한다. 검증 대상은 문맥 설정, 작업 요구, 선택 계약의 각 적용 범위에 맞춰 구성한다. 기존 `AgentSpec`을 그대로 받는 시그니처를 최종안으로 확정한 것은 아니다.
+`validate`는 요청한 의미를 보존할 수 있는지 진단한다. harness는 `SessionSpec`, session은 `TaskRequest`를 검증하며 문맥 설정·작업 요구·선택 계약의 적용 범위를 구별한다.
 
 현재 선언은 harness의 `validate(SessionSpec)`과 session의 `validate(TaskRequest)`다. `CompatibilityReport.status`는 COMPATIBLE·INCOMPATIBLE·UNCONFIRMED를 구별한다. 미지원이 확인되면 `IncompatibleRequirementException`, 실제 수락 경계에서도 이행 여부를 확인할 수 없으면 `RequirementUnconfirmedException`으로 작업 전에 거절한다. 사전 검증의 미확인을 실제 경계에서 추가 확인해 수락할 수는 있다.
 
@@ -133,4 +133,4 @@ Handle 생성 전의 검증·시작 실패는 호출 실패다. handle을 받은
 
 ## 구현 전환
 
-현재 코드의 `AgentExecution`, `AgentResult`, 기본 `resumeSession`, `ExecutionPolicy` 등의 이전 계약은 [이름 전환표](abstraction-and-terminology.md)와 [구현 계획](port-revision-plan.md)에 따라 바꾼다. KDoc·컴파일 가능한 예제는 실제 타입·동작과 함께 갱신한다. 새 계약이 현재 배포본에 이미 구현돼 있다고 해석하지 않는다.
+세 adapter와 factory·소비 예제는 새 Port를 사용한다. `AgentExecution`, `AgentResult`, 기본 `resumeSession`, `ExecutionPolicy` 등의 이전 타입과 그 실행 경로는 제거했다. [이름 전환표](abstraction-and-terminology.md)는 의미 변경을, [전환 현황](port-revision-plan.md)은 남은 검증·발행를 기록한다. 소비 예제의 source 컴파일은 통과했지만 새 artifact는 발행하지 않았다.

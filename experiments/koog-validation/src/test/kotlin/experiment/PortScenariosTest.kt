@@ -8,21 +8,21 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.test.*
 
-/** Consumers assert the existing public Port and fixture business effects, not bridge/graph internals. */
+/** Consumers assert the current public Port and fixture business effects, not bridge/graph internals. */
 @org.junit.jupiter.api.Timeout(20)
 class PortScenariosTest {
     @TempDir lateinit var directory: Path
     private fun harness(executor: ScriptedExecutor, ops: FixtureOperations = FixtureOperations(), grace: Long = 2000, iterations: Int = 20) =
         KoogHarness(ConversationStore(directory), { executor }, ops, grace, iterations)
-    private val approvalSpec = AgentSpec(executionPolicy = ExecutionPolicy(approval = ApprovalPolicy.CALLER_DECIDES))
-    private suspend fun AgentExecution.pending(): InteractionRequest.Approval = withTimeout(5000) {
+    private val approvalSpec = SessionSpec(requirements = SessionRequirements(approval = ApprovalRequirement.CallerDecides))
+    private suspend fun AgentTask.pending(): InteractionRequest.Approval = withTimeout(5000) {
         pendingInteractions.first { it.isNotEmpty() }.single() as InteractionRequest.Approval
     }
-    private suspend fun AgentExecution.result() = withTimeout(5000) { awaitResult() }
+    private suspend fun AgentTask.outcome() = withTimeout(5000) { awaitOutcome() }
 
     @Test fun `slow observation does not block actual graph and reports dropped events`() = runBlocking<Unit> {
         val begin = CompletableDeferred<Unit>()
-        val steps = (0 until 10).map { index ->
+        val steps = (0 until 80).map { index ->
             val step: suspend (ai.koog.prompt.Prompt) -> ai.koog.prompt.message.Message.Assistant = {
                 if (index == 0) begin.await()
                 call("change_status", """{"requestId":"R-1"}""", "change-$index")
@@ -30,32 +30,32 @@ class PortScenariosTest {
             step
         } + listOf<suspend (ai.koog.prompt.Prompt) -> ai.koog.prompt.message.Message.Assistant>({ answer("All changes declined") })
         val ops = FixtureOperations()
-        harness(ScriptedExecutor(*steps.toTypedArray()), ops, iterations = 100).use { h ->
-            val execution = h.createSession(AgentSpec()).execute(AgentInput.Text("Review"))
+        harness(ScriptedExecutor(*steps.toTypedArray()), ops, iterations = 1000).use { h ->
+            val execution = h.createSession(SessionSpec()).startTask(TaskRequest(TaskInput.Text("Review")))
             val unblockObserver = CompletableDeferred<Unit>()
-            val seen = mutableListOf<AgentEvent>()
+            val seen = mutableListOf<TaskEvent>()
             val observer = launch(start = CoroutineStart.UNDISPATCHED) {
                 execution.events.collect { seen += it; unblockObserver.await() }
             }
             try {
                 begin.complete(Unit)
-                execution.result()
-                assertEquals(ExecutionState.COMPLETED, execution.state.value)
+                execution.outcome()
+                assertEquals(TaskState.COMPLETED, execution.state.value)
                 assertEquals(0, ops.changes.get())
             } finally { unblockObserver.complete(Unit) }
             withTimeout(5000) { observer.join() }
-            assertTrue(seen.any { it is AgentEvent.ObservationGap })
-            assertIs<AgentEvent.ExecutionCompleted>(seen.last())
+            assertTrue(seen.any { it is TaskEvent.ObservationGap })
+            assertIs<TaskEvent.TaskCompleted>(seen.last())
         }
     }
 
     @Test fun `immediate cancellation settles without waiting for the model`() = runBlocking<Unit> {
         val entered = CompletableDeferred<Unit>()
         harness(ScriptedExecutor({ entered.await(); answer("Unreachable") })).use { h ->
-            val execution = h.createSession(AgentSpec()).execute(AgentInput.Text("Review"))
-            execution.cancel()
-            assertFailsWith<AgentExecutionCancelledException> { execution.result() }
-            assertEquals(ExecutionState.CANCELLED, execution.state.value)
+            val execution = h.createSession(SessionSpec()).startTask(TaskRequest(TaskInput.Text("Review")))
+            execution.requestCancellation()
+            assertIs<TaskOutcome.Cancelled>(execution.outcome())
+            assertEquals(TaskState.CANCELLED, execution.state.value)
         }
     }
 
@@ -63,12 +63,12 @@ class PortScenariosTest {
         val ops = FixtureOperations()
         val executor = ScriptedExecutor({ lookupCall() }, { answer("Review completed with policy-A") })
         harness(executor, ops).use { h ->
-            val execution = h.createSession(AgentSpec()).execute(AgentInput.Text("Review R-1"))
-            assertEquals("Review completed with policy-A", execution.result().finalMessage)
-            assertNull(execution.result().usage)
-            assertEquals(ExecutionState.COMPLETED, execution.state.value)
+            val execution = h.createSession(SessionSpec()).startTask(TaskRequest(TaskInput.Text("Review R-1")))
+            assertEquals("Review completed with policy-A", assertIs<TaskOutput.Text>(execution.outcome().output).text)
+            assertEquals(AgentUsage.Unknown, execution.outcome().usage)
+            assertEquals(TaskState.COMPLETED, execution.state.value)
             assertEquals(1, ops.reads.get())
-            assertIs<AgentEvent.ExecutionCompleted>(execution.events.first())
+            assertIs<TaskEvent.TaskCompleted>(execution.events.first())
         }
         println("S1 PORT: actual tool call=1, canonical result, late terminal, usage=unknown")
     }
@@ -76,21 +76,21 @@ class PortScenariosTest {
     @Test fun `S2 approval gates actual effect and rejects unsupported or duplicate decisions`() = runBlocking<Unit> {
         val ops = FixtureOperations()
         harness(ScriptedExecutor({ changeCall() }, { answer("Changed") }), ops).use { h ->
-            val execution = h.createSession(approvalSpec).execute(AgentInput.Text("Process R-1"))
+            val execution = h.createSession(approvalSpec).startTask(TaskRequest(TaskInput.Text("Process R-1")))
             val request = execution.pending()
-            assertEquals(ExecutionState.WAITING, execution.state.value)
+            assertEquals(TaskState.AWAITING_RESPONSE, execution.state.value)
             assertEquals(0, ops.changes.get())
             assertFailsWith<IllegalArgumentException> { execution.respond(request.interactionId, InteractionResponse.Approval(ApprovalDecision.APPROVE_FOR_SESSION)) }
             assertEquals(0, ops.changes.get())
-            val observed = mutableListOf<AgentEvent>()
+            val observed = mutableListOf<TaskEvent>()
             val observer = launch(start = CoroutineStart.UNDISPATCHED) { execution.events.collect { observed += it } }
             execution.respond(request.interactionId, InteractionResponse.Approval(ApprovalDecision.APPROVE_ONCE))
-            execution.result()
+            execution.outcome()
             observer.join()
             assertEquals(1, ops.changes.get())
             assertTrue(execution.pendingInteractions.value.isEmpty())
-            val tool = observed.filterIsInstance<AgentEvent.ToolCallChanged>().single { it.status == WorkStatus.COMPLETED }
-            val effect = observed.filterIsInstance<AgentEvent.EffectChanged>().single { it.status == WorkStatus.COMPLETED }
+            val tool = observed.filterIsInstance<TaskEvent.ToolCallChanged>().single { it.status == WorkStatus.COMPLETED }
+            val effect = observed.filterIsInstance<TaskEvent.EffectChanged>().single { it.status == WorkStatus.COMPLETED }
             assertEquals(tool.workId, effect.workId)
             assertEquals(EffectKind.OTHER, effect.kind)
             assertFailsWith<IllegalStateException> { execution.respond(request.interactionId, InteractionResponse.Approval(ApprovalDecision.APPROVE_ONCE)) }
@@ -105,36 +105,30 @@ class PortScenariosTest {
             answer("Change declined; review remains available")
         })
         harness(executor, ops).use { h ->
-            val execution = h.createSession(approvalSpec).execute(AgentInput.Text("Process R-1"))
+            val execution = h.createSession(approvalSpec).startTask(TaskRequest(TaskInput.Text("Process R-1")))
             val request = execution.pending()
             execution.respond(request.interactionId, InteractionResponse.Approval(ApprovalDecision.DECLINE))
-            assertEquals(StopReason.FINISHED, execution.result().stopReason)
+            assertEquals(StopReason.FINISHED, assertIs<TaskOutcome.Completed>(execution.outcome()).stopReason)
             assertEquals(0, ops.changes.get())
             assertEquals(2, executor.prompts.size)
         }
     }
 
-    @Test fun `S2 native question cannot be represented by approval response`() = runBlocking<Unit> {
-        var received = ""
-        val nativeOps = object : FixtureOperations() {
-            override suspend fun askQuestion(question: String): String { received = question; return "scope=internal" }
-        }
-        val questionCall = { call("ask_question", """{"question":"Which scope?"}""") }
-        val nativeExecutor = ScriptedExecutor({ questionCall() }, { answer("Internal scope selected") })
-        val nativeAgent = reviewAgent(nativeExecutor, nativeOps)
-        try { nativeAgent.run("Review ambiguous request") } finally { nativeAgent.close() }
-        assertEquals("Which scope?", received)
-
-        val portExecutor = ScriptedExecutor({ questionCall() }, { prompt ->
-            assertTrue(prompt.messages.joinToString { it.toString() }.contains("no question response contract"))
-            answer("Cannot obtain missing scope through this adapter")
+    @Test fun `S2 typed question carries a caller answer without treating it as approval`() = runBlocking<Unit> {
+        val executor = ScriptedExecutor({ call("ask_question", """{"question":"Which scope?"}""") }, { prompt ->
+            assertTrue(prompt.messages.joinToString { it.toString() }.contains("scope=internal"))
+            answer("Internal scope selected")
         })
-        harness(portExecutor).use { h ->
-            val execution = h.createSession(approvalSpec).execute(AgentInput.Text("Review ambiguous request"))
-            assertTrue(execution.result().finalMessage.contains("Cannot obtain"))
-            assertTrue(execution.pendingInteractions.value.isEmpty())
+        harness(executor).use { h ->
+            val spec = SessionSpec(requirements = SessionRequirements(questions = QuestionRequirement.CallerAnswers))
+            val task = h.createSession(spec).startTask(TaskRequest(TaskInput.Text("Review ambiguous request")))
+            val request = withTimeout(5000) { task.pendingInteractions.first { it.isNotEmpty() }.single() }
+            assertIs<InteractionRequest.Question>(request)
+            assertFailsWith<IllegalArgumentException> { task.respond(request.interactionId, InteractionResponse.Approval(ApprovalDecision.APPROVE_ONCE)) }
+            task.respond(request.interactionId, InteractionResponse.Answer("scope=internal"))
+            assertEquals("Internal scope selected", assertIs<TaskOutput.Text>(task.outcome().output).text)
+            assertTrue(task.pendingInteractions.value.isEmpty())
         }
-        println("S2 QUESTION GAP: native caller text answer works; existing sealed approval response cannot carry it")
     }
 
     @Test fun `S3 completed context survives next input release and new harness`() = runBlocking<Unit> {
@@ -146,13 +140,13 @@ class PortScenariosTest {
             answer("Decision: marker-gamma")
         })
         val h = harness(executor)
-        val session: AgentSession = h.createSession(AgentSpec(instructions = "First policy"))
-        session.execute(AgentInput.Text("Remember marker-alpha")).result()
-        session.execute(AgentInput.Text("Add a constraint")).result()
+        val session: AgentSession = h.createSession(SessionSpec(instructions = "First policy", requirements = SessionRequirements(persistence = PersistenceRequirement.Required())))
+        session.startTask(TaskRequest(TaskInput.Text("Remember marker-alpha"))).outcome()
+        session.startTask(TaskRequest(TaskInput.Text("Add a constraint"))).outcome()
         session.release()
-        assertFailsWith<IllegalStateException> { session.execute(AgentInput.Text("Invalid")) }
-        val resumed = h.resumeSession(session.id, AgentSpec(instructions = "Updated policy"))
-        resumed.execute(AgentInput.Text("Continue after release")).result()
+        assertFailsWith<IllegalStateException> { session.startTask(TaskRequest(TaskInput.Text("Invalid"))) }
+        val resumed = h.reopenSession(requireNotNull(session.persistentRef), session.spec.copy(instructions = "Updated policy"))
+        resumed.startTask(TaskRequest(TaskInput.Text("Continue after release"))).outcome()
         h.close()
         val restartedExecutor = ScriptedExecutor({ prompt ->
             val messages = prompt.messages.joinToString { it.textContent() }
@@ -162,9 +156,9 @@ class PortScenariosTest {
             answer("Restored")
         })
         harness(restartedExecutor).use { restarted ->
-            val restored = restarted.resumeSession(session.id, AgentSpec(instructions = "Final policy"))
-            assertEquals("Restored", restored.execute(AgentInput.Text("Continue after runtime recreation")).result().finalMessage)
-            assertFailsWith<HarnessTransportException> { restarted.resumeSession(SessionId("unknown"), AgentSpec()) }
+            val restored = restarted.reopenSession(requireNotNull(session.persistentRef), session.spec.copy(instructions = "Final policy"))
+            assertEquals("Restored", assertIs<TaskOutput.Text>(restored.startTask(TaskRequest(TaskInput.Text("Continue after runtime recreation"))).outcome().output).text)
+            assertFailsWith<HarnessTransportException> { restarted.reopenSession(requireNotNull(session.persistentRef).copy(id = "unknown"), session.spec) }
         }
         println("S3 PORT: next input + release/resume + fresh harness restored completed conversation, instructions override preserved")
     }
@@ -172,14 +166,14 @@ class PortScenariosTest {
     @Test fun `S4 active session rejects overlap and cooperative cancel settles once`() = runBlocking<Unit> {
         val ops = FixtureOperations().apply { lookupGate = CompletableDeferred() }
         harness(ScriptedExecutor({ lookupCall() }, { answer("Unexpected") }), ops).use { h ->
-            val session = h.createSession(AgentSpec())
-            val execution = session.execute(AgentInput.Text("Review"))
+            val session = h.createSession(SessionSpec())
+            val execution = session.startTask(TaskRequest(TaskInput.Text("Review")))
             withTimeout(5000) { ops.lookupEntered.await() }
-            assertFailsWith<IllegalStateException> { session.execute(AgentInput.Text("Overlap")) }
-            execution.cancel()
-            assertFailsWith<AgentExecutionCancelledException> { execution.result() }
-            assertEquals(ExecutionState.CANCELLED, execution.state.value)
-            execution.cancel()
+            assertFailsWith<IllegalStateException> { session.startTask(TaskRequest(TaskInput.Text("Overlap"))) }
+            execution.requestCancellation()
+            assertIs<TaskOutcome.Cancelled>(execution.outcome())
+            assertEquals(TaskState.CANCELLED, execution.state.value)
+            execution.requestCancellation()
             assertEquals(0, ops.changes.get())
         }
     }
@@ -187,10 +181,10 @@ class PortScenariosTest {
     @Test fun `S4 pending cancellation clears interaction and prevents effect`() = runBlocking<Unit> {
         val ops = FixtureOperations()
         harness(ScriptedExecutor({ changeCall() }), ops).use { h ->
-            val execution = h.createSession(approvalSpec).execute(AgentInput.Text("Process"))
+            val execution = h.createSession(approvalSpec).startTask(TaskRequest(TaskInput.Text("Process")))
             val request = execution.pending()
-            execution.cancel()
-            assertFailsWith<AgentExecutionCancelledException> { execution.result() }
+            execution.requestCancellation()
+            assertIs<TaskOutcome.Cancelled>(execution.outcome())
             assertTrue(execution.pendingInteractions.value.isEmpty())
             assertEquals(0, ops.changes.get())
             assertFailsWith<IllegalStateException> { execution.respond(request.interactionId, InteractionResponse.Approval(ApprovalDecision.APPROVE_ONCE)) }
@@ -200,16 +194,16 @@ class PortScenariosTest {
     @Test fun `S4 close cancels pending execution and completion wins after completion`() = runBlocking<Unit> {
         val ops = FixtureOperations()
         val h = harness(ScriptedExecutor({ changeCall() }), ops)
-        val waiting = h.createSession(approvalSpec).execute(AgentInput.Text("Process"))
+        val waiting = h.createSession(approvalSpec).startTask(TaskRequest(TaskInput.Text("Process")))
         waiting.pending()
         h.close()
-        assertFailsWith<AgentExecutionCancelledException> { waiting.result() }
+        assertIs<TaskOutcome.Cancelled>(waiting.outcome())
         assertEquals(0, ops.changes.get())
         harness(ScriptedExecutor({ answer("Done") })).use { completedHarness ->
-            val execution = completedHarness.createSession(AgentSpec()).execute(AgentInput.Text("Review"))
-            execution.result()
-            execution.cancel()
-            assertEquals(ExecutionState.COMPLETED, execution.state.value)
+            val execution = completedHarness.createSession(SessionSpec()).startTask(TaskRequest(TaskInput.Text("Review")))
+            execution.outcome()
+            execution.requestCancellation()
+            assertEquals(TaskState.COMPLETED, execution.state.value)
         }
     }
 
@@ -224,56 +218,57 @@ class PortScenariosTest {
             }
         }
         val h = harness(ScriptedExecutor({ changeCall() }, { answer("Done") }), ops, grace = 30)
-        val execution = h.createSession(approvalSpec).execute(AgentInput.Text("Process"))
+        val execution = h.createSession(approvalSpec).startTask(TaskRequest(TaskInput.Text("Process")))
         val request = execution.pending()
         execution.respond(request.interactionId, InteractionResponse.Approval(ApprovalDecision.APPROVE_ONCE))
         withTimeout(5000) { entered.await() }
         try {
-            assertFailsWith<HarnessTransportException> { h.close() }
+            h.close()
             assertEquals(0, ops.changes.get())
-            assertEquals(ExecutionState.RUNNING, execution.state.value)
+            assertEquals(TaskState.UNRESOLVED, execution.state.value)
         } finally { releaseEffect.complete(Unit) }
-        assertFailsWith<AgentExecutionCancelledException> { execution.result() }
+        assertIs<TaskOutcome.Unresolved>(execution.outcome())
+        withTimeout(5000) { while (ops.changes.get() == 0) delay(5) }
         assertEquals(1, ops.changes.get())
-        println("S4 COUNTEREXAMPLE: close grace expired before effect; effect occurred later; cancellation confirmed only after tool returned")
+        println("S4 COUNTEREXAMPLE: close grace expired before effect; effect occurred later; public outcome remains unresolved after the late effect")
     }
 
     @Test fun `failure and iteration limit do not become invented successful responses`() = runBlocking<Unit> {
         harness(ScriptedExecutor({ error("controlled provider failure") })).use { h ->
-            val execution = h.createSession(AgentSpec()).execute(AgentInput.Text("Review"))
-            val error = assertFailsWith<AgentExecutionFailedException> { execution.result() }
+            val execution = h.createSession(SessionSpec()).startTask(TaskRequest(TaskInput.Text("Review")))
+            val error = assertIs<TaskOutcome.Failed>(execution.outcome())
             assertEquals(FailureKind.PROVIDER, error.kind)
-            assertEquals(ExecutionState.FAILED, execution.state.value)
+            assertEquals(TaskState.FAILED, execution.state.value)
         }
         harness(ScriptedExecutor({ lookupCall() }), iterations = 1).use { h ->
-            val execution = h.createSession(AgentSpec()).execute(AgentInput.Text("Review"))
-            val result = execution.result()
-            assertEquals(StopReason.TURN_LIMIT, result.stopReason)
-            assertEquals("", result.finalMessage)
-            assertEquals(ExecutionState.COMPLETED, execution.state.value)
+            val execution = h.createSession(SessionSpec()).startTask(TaskRequest(TaskInput.Text("Review")))
+            val result = assertIs<TaskOutcome.Completed>(execution.outcome())
+            assertEquals(StopReason.ITERATION_LIMIT, result.stopReason)
+            assertNull(result.output)
+            assertEquals(TaskState.COMPLETED, execution.state.value)
         }
-        println("STOP-REASON PRESERVED: native iteration exception maps to COMPLETED + TURN_LIMIT, no invented final response")
+        println("STOP-REASON PRESERVED: native iteration exception maps to COMPLETED + ITERATION_LIMIT, no invented final response")
     }
 
     @Test fun `unsupported configuration is rejected before model or business tool execution`() = runBlocking<Unit> {
         val executor = ScriptedExecutor()
         harness(executor).use { h ->
-            val unsupported = AgentSpec(executionPolicy = ExecutionPolicy(filesystem = FilesystemAccess.ReadOnly, network = NetworkAccess.DENIED))
+            val unsupported = SessionSpec(requirements = SessionRequirements(execution = ExecutionConstraint.Required(FilesystemAccess.ReadOnly, NetworkAccess.DENIED)))
             assertFalse(h.validate(unsupported).isCompatible)
-            assertFailsWith<IncompatibleAgentSpecException> { h.createSession(unsupported) }
+            assertFailsWith<IncompatibleRequirementException> { h.createSession(unsupported) }
             assertTrue(executor.prompts.isEmpty())
         }
     }
 
     @Test fun `S1 text result can carry structured data but does not guarantee its schema`() = runBlocking<Unit> {
         harness(ScriptedExecutor({ answer("""{"requestId":"R-1","action":"review","reason":"policy-A"}""") }, { answer("not JSON") })).use { h ->
-            val session = h.createSession(AgentSpec())
-            val first = session.execute(AgentInput.Text("Provide a processing proposal")).result()
-            assertEquals("R-1", Json.decodeFromString<ReviewOutcome>(first.finalMessage).requestId)
-            val second = session.execute(AgentInput.Text("Provide another proposal")).result()
-            assertEquals(StopReason.FINISHED, second.stopReason)
-            assertFails { Json.decodeFromString<ReviewOutcome>(second.finalMessage) }
+            val session = h.createSession(SessionSpec())
+            val first = session.startTask(TaskRequest(TaskInput.Text("Provide a processing proposal"))).outcome()
+            assertEquals("R-1", Json.decodeFromString<ReviewOutcome>(assertIs<TaskOutput.Text>(first.output).text).requestId)
+            val second = session.startTask(TaskRequest(TaskInput.Text("Provide another proposal"))).outcome()
+            assertEquals(StopReason.FINISHED, assertIs<TaskOutcome.Completed>(second).stopReason)
+            assertFails { Json.decodeFromString<ReviewOutcome>(assertIs<TaskOutput.Text>(second.output).text) }
         }
-        println("RESULT: string payload transport is possible; schema validity remains an application check in 0.1.0")
+        println("RESULT: string payload transport is possible; text output does not claim schema validation")
     }
 }

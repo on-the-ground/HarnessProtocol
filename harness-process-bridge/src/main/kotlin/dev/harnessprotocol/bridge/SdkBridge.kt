@@ -1,6 +1,6 @@
 package dev.harnessprotocol.bridge
 
-import dev.harnessprotocol.legacy.HarnessTransportException
+import dev.harnessprotocol.HarnessTransportException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong
  * Minimal request/event boundary between Kotlin and a vendor SDK host process.
  *
  * Event delivery per execution is lossless and ordered: [events] is backed by
- * an unbounded mailbox that only the owning [BridgeAgentExecution] drains. The
+ * an unbounded mailbox that only the owning [ProcessTaskHarness] drains. The
  * flow completes normally when [release] is called and exceptionally when the
  * host process dies or the bridge is closed.
  */
@@ -42,12 +42,22 @@ interface SdkBridge : AutoCloseable {
     fun release(executionId: String)
 }
 
+/** Transport evidence used by the new task port; ordinary failures do not prove non-delivery. */
+interface ConfirmedSdkBridge : SdkBridge {
+    suspend fun requestConfirmed(method: String, params: JsonObject = JsonObject(emptyMap())): JsonObject
+}
+class BridgeNotDeliveredException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+class BridgeAcceptanceUnconfirmedException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+
+suspend fun SdkBridge.confirmedRequest(method: String, params: JsonObject = JsonObject(emptyMap())): JsonObject =
+    if (this is ConfirmedSdkBridge) requestConfirmed(method, params) else request(method, params)
+
 class JsonLineProcessBridge(
     private val command: List<String>,
     private val workingDirectory: Path? = null,
     private val environment: Map<String, String> = emptyMap(),
     private val json: Json = DefaultBridgeJson,
-) : SdkBridge {
+) : ConfirmedSdkBridge {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val startMutex = Mutex()
     private val writeMutex = Mutex()
@@ -74,13 +84,22 @@ class JsonLineProcessBridge(
     /** Protocol violations observed from the host (unknown execution, late events). Diagnostic only. */
     val protocolErrorLog: String get() = synchronized(protocolErrors) { protocolErrors.toString() }
 
-    override suspend fun request(method: String, params: JsonObject): JsonObject {
-        if (closed) throw HarnessTransportException("SDK bridge is closed")
-        dead?.let { throw HarnessTransportException("SDK bridge host is no longer running; open a new harness", it) }
-        ensureStarted()
+    override suspend fun request(method: String, params: JsonObject): JsonObject = try {
+        requestConfirmed(method, params)
+    } catch (failure: Exception) {
+        throw HarnessTransportException(failure.message ?: "SDK bridge request failed", failure)
+    }
+
+    override suspend fun requestConfirmed(method: String, params: JsonObject): JsonObject {
+        if (closed) throw BridgeNotDeliveredException("SDK bridge is closed")
+        dead?.let { throw BridgeNotDeliveredException("SDK bridge host is no longer running; open a new harness", it) }
+        try { ensureStarted() } catch (failure: Exception) {
+            throw BridgeNotDeliveredException("Unable to start SDK bridge", failure)
+        }
         val id = nextRequestId.incrementAndGet()
         val result = CompletableDeferred<JsonObject>()
         pending[id] = result
+        dead?.let { result.completeExceptionally(it) }
 
         val message = buildJsonObject {
             put("kind", "request")
@@ -89,19 +108,22 @@ class JsonLineProcessBridge(
             put("params", params)
         }
 
+        var writeStarted = false
         try {
             writeMutex.withLock {
-                val activeWriter = writer ?: throw HarnessTransportException("SDK bridge is closed")
+                val activeWriter = writer ?: throw BridgeNotDeliveredException("SDK bridge is closed")
+                writeStarted = true
                 activeWriter.write(json.encodeToString(JsonElement.serializer(), message))
                 activeWriter.newLine()
                 activeWriter.flush()
             }
+            return result.await()
         } catch (failure: Throwable) {
+            if (!writeStarted || failure is BridgeNotDeliveredException) throw BridgeNotDeliveredException("Request was not delivered", failure)
+            throw BridgeAcceptanceUnconfirmedException("Request $id ($method) acceptance is unconfirmed", failure)
+        } finally {
             pending.remove(id)
-            result.completeExceptionally(failure)
         }
-
-        return result.await()
     }
 
     override fun events(executionId: String): Flow<JsonObject> = mailbox(executionId).receiveAsFlow()
@@ -112,7 +134,12 @@ class JsonLineProcessBridge(
     }
 
     private fun mailbox(executionId: String): Channel<JsonObject> =
-        mailboxes.computeIfAbsent(executionId) { Channel(Channel.UNLIMITED) }
+        mailboxes.computeIfAbsent(executionId) {
+            Channel<JsonObject>(Channel.UNLIMITED).also { channel ->
+                dead?.let { channel.close(it) }
+                if (closed || executionId in released) channel.close()
+            }
+        }
 
     private suspend fun ensureStarted() {
         if (process?.isAlive == true) return
@@ -193,7 +220,9 @@ class JsonLineProcessBridge(
         val error = message["error"]
         if (error != null) {
             waiter.completeExceptionally(
-                HarnessTransportException(error.jsonObject["message"]?.jsonPrimitive?.content ?: error.toString()),
+                if (error.jsonObject["delivery"]?.jsonPrimitive?.content == "not_accepted")
+                    BridgeNotDeliveredException(error.jsonObject["message"]?.jsonPrimitive?.content ?: error.toString())
+                else BridgeAcceptanceUnconfirmedException(error.jsonObject["message"]?.jsonPrimitive?.content ?: error.toString()),
             )
         } else {
             waiter.complete(message["result"]?.jsonObject ?: JsonObject(emptyMap()))
@@ -218,9 +247,26 @@ class JsonLineProcessBridge(
     }
 
     override fun close() {
+        if (closed) return
         closed = true
+        val activeWriter = writer
         writer = null
-        process?.destroy()
+        val active = process
+        // App Server is a child of the Python host. Destroying only the host leaves
+        // its owned runtime alive and keeps native session files locked on Windows.
+        val descendants = active?.descendants()?.use { it.toList() }.orEmpty()
+        // Let the host execute its finally/client.close path before force cleanup.
+        runCatching { activeWriter?.close() }
+        active?.waitFor(500, java.util.concurrent.TimeUnit.MILLISECONDS)
+        descendants.asReversed().forEach { it.destroy() }
+        active?.destroy()
+        active?.waitFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
+        descendants.filter { it.isAlive }.forEach { it.destroyForcibly() }
+        if (active?.isAlive == true) active.destroyForcibly()
+        runCatching {
+            java.util.concurrent.CompletableFuture.allOf(*descendants.map { it.onExit() }.toTypedArray())
+                .get(250, java.util.concurrent.TimeUnit.MILLISECONDS)
+        }
         process = null
         failEverything(HarnessTransportException("SDK bridge closed"))
         scope.cancel()

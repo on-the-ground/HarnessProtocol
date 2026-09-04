@@ -1,45 +1,23 @@
 package dev.harnessprotocol.testkit
 
-import dev.harnessprotocol.legacy.AgentSpec
-import dev.harnessprotocol.legacy.ApprovalPolicy
-import dev.harnessprotocol.legacy.ExecutionPolicy
-import dev.harnessprotocol.legacy.FilesystemAccess
-import dev.harnessprotocol.legacy.NetworkAccess
-import dev.harnessprotocol.legacy.SkillReference
+import dev.harnessprotocol.*
 
-/**
- * Exhaustive enumeration of [AgentSpec] values used by the intent-projection contract.
- *
- * Add a new axis here in the same change that adds a field to [AgentSpec]; the
- * projection contract only protects fields that are enumerated.
- */
+/** Independent intent axes, including omitted versus explicitly empty configuration. */
 object SpecSpace {
-    val instructions: List<String?> = listOf(null, "", "Be precise")
-    val models: List<String?> = listOf(null, "model-x")
-    val workingDirectories: List<String?> = listOf(null, "/workspace")
-    val skills: List<List<SkillReference>> = listOf(emptyList(), listOf(SkillReference("release-check", "/skills/release-check")))
-    val filesystems: List<FilesystemAccess> = listOf(
-        FilesystemAccess.ProviderDefault,
-        FilesystemAccess.ReadOnly,
-        FilesystemAccess.WorkspaceWrite(),
-        FilesystemAccess.WorkspaceWrite(setOf("/extra")),
-        FilesystemAccess.FullAccess,
-    )
-    val networks: List<NetworkAccess> = NetworkAccess.entries
-    val approvals: List<ApprovalPolicy> = ApprovalPolicy.entries
-
-    fun all(): Sequence<AgentSpec> = sequence {
-        for (i in instructions) for (m in models) for (w in workingDirectories) for (s in skills)
-            for (f in filesystems) for (n in networks) for (a in approvals) {
-                yield(
-                    AgentSpec(
-                        instructions = i,
-                        model = m,
-                        workingDirectory = w,
-                        skills = s,
-                        executionPolicy = ExecutionPolicy(filesystem = f, network = n, approval = a),
-                    ),
-                )
-            }
+    fun all(): Sequence<SessionSpec> = sequence {
+        val workspaces = listOf(WorkspaceRequirement.NotRequired, WorkspaceRequirement.Required(),
+            WorkspaceRequirement.Required("/workspace"), WorkspaceRequirement.Required(skills = listOf(
+                SkillReference("active", "/skills/active"), SkillReference("available", "/skills/available", false))))
+        val filesystems = listOf(null, FilesystemAccess.ReadOnly, FilesystemAccess.WorkspaceWrite(),
+            FilesystemAccess.WorkspaceWrite(setOf("/extra")), FilesystemAccess.FullAccess)
+        val approvals = listOf(ApprovalRequirement.ProviderDefault, ApprovalRequirement.DenyAll,
+            ApprovalRequirement.AgentReviewed, ApprovalRequirement.CallerDecides)
+        for (instructions in listOf(null, "", "Be precise")) for (model in listOf(null, "model-x"))
+            for (workspace in workspaces) for (fs in filesystems) for (network in listOf(null, NetworkAccess.DENIED, NetworkAccess.ALLOWED))
+                for (approval in approvals) {
+                    yield(SessionSpec(instructions, model, SessionRequirements(workspace = workspace,
+                        execution = if (fs == null && network == null) ExecutionConstraint.ProviderDefault else ExecutionConstraint.Required(fs, network),
+                        approval = approval)))
+                }
     }
 }

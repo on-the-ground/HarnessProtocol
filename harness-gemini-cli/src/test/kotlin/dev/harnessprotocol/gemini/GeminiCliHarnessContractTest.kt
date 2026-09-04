@@ -1,10 +1,8 @@
 package dev.harnessprotocol.gemini
 
-import dev.harnessprotocol.legacy.AgentHarness
-import dev.harnessprotocol.legacy.AgentSpec
-import dev.harnessprotocol.legacy.ApprovalPolicy
-import dev.harnessprotocol.legacy.FilesystemAccess
-import dev.harnessprotocol.legacy.NetworkAccess
+import dev.harnessprotocol.*
+import kotlin.test.assertNull
+
 import dev.harnessprotocol.testkit.AgentHarnessContractTest
 import dev.harnessprotocol.testkit.Envelope.assertAbsent
 import dev.harnessprotocol.testkit.Envelope.assertNullableString
@@ -21,18 +19,21 @@ import kotlin.test.assertEquals
 
 class GeminiCliHarnessContractTest : AgentHarnessContractTest() {
     override fun harness(bridge: RecordingBridge, scope: CoroutineScope): AgentHarness =
-        GeminiCliHarness.usingBridge(bridge, scope)
+        GeminiCliHarness.usingBridge(bridge, scope, StorageNamespace("contract-${java.util.UUID.randomUUID()}"))
 
     override fun projection() = IntentProjection { spec, sent ->
         sent.assertNullableString("instructions", spec.instructions)
         sent.assertNullableString("model", spec.model)
-        sent.assertNullableString("workingDirectory", spec.workingDirectory)
-        assertEquals(spec.skills.map { it.name to it.path }, sent.objects("skills").map { it.string("name") to it.string("path") })
+        sent.assertNullableString("workingDirectory", (spec.requirements.workspace as? WorkspaceRequirement.Required)?.workingDirectory)
+        val skills = (spec.requirements.workspace as? WorkspaceRequirement.Required)?.skills.orEmpty()
+        assertEquals(skills.map { it.name to it.path }, sent.objects("skills").map { it.string("name") to it.string("path") })
+        assertEquals(skills.map { it.activate.toString() }, sent.objects("skills").map { it.string("activate") })
+        if (spec.requirements.workspace == WorkspaceRequirement.NotRequired) sent.assertAbsent("skills", "workspace was not required")
         // The Gemini SDK exposes no policy surface. validate() rejects every non-default
         // policy, so a compatible spec is always provider-default and nothing is sent.
-        assertEquals(FilesystemAccess.ProviderDefault, spec.executionPolicy.filesystem)
-        assertEquals(NetworkAccess.PROVIDER_DEFAULT, spec.executionPolicy.network)
-        assertEquals(ApprovalPolicy.PROVIDER_DEFAULT, spec.executionPolicy.approval)
+        assertEquals(null, (spec.requirements.execution as? ExecutionConstraint.Required)?.filesystem)
+        assertEquals(null, (spec.requirements.execution as? ExecutionConstraint.Required)?.network)
+        assertEquals(ApprovalRequirement.ProviderDefault, spec.requirements.approval)
         sent.assertAbsent("filesystem", "no policy surface")
         sent.assertAbsent("network", "no policy surface")
         sent.assertAbsent("approval", "no policy surface")
@@ -52,7 +53,7 @@ class GeminiCliHarnessContractTest : AgentHarnessContractTest() {
         override fun cancelled() = listOf(buildJsonObject { put("type", "execution_cancelled") })
     }
 
-    override fun compatibleSpec() = AgentSpec()
+    override fun compatibleSpec() = SessionSpec()
 }
 
 class GeminiCliPolicyTest {
@@ -60,9 +61,9 @@ class GeminiCliPolicyTest {
     fun `caller decides is rejected where unsupported`() {
         val harness = GeminiCliHarness.usingBridge(RecordingBridge())
         val report = harness.validate(
-            AgentSpec(executionPolicy = dev.harnessprotocol.legacy.ExecutionPolicy(approval = ApprovalPolicy.CALLER_DECIDES)),
+            SessionSpec(requirements = SessionRequirements(approval = ApprovalRequirement.CallerDecides)),
         )
         kotlin.test.assertFalse(report.isCompatible)
-        assertEquals("executionPolicy.approval", report.issues.single().path)
+        assertEquals("requirements.approval", report.issues.single().path)
     }
 }

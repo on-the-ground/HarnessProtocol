@@ -1,6 +1,6 @@
 package dev.harnessprotocol.testkit
 
-import dev.harnessprotocol.legacy.AgentSpec
+import dev.harnessprotocol.SessionSpec
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -12,13 +12,13 @@ import kotlin.test.fail
 
 /**
  * Declares, independently of the adapter's own conversion code, what the bridge
- * envelope must contain for a given [AgentSpec].
+ * envelope must contain for a given [SessionSpec].
  *
  * Implementations are a list of rules; each rule inspects the spec and asserts
  * on the JSON. Keep them declarative so the test never re-implements the adapter.
  */
 fun interface IntentProjection {
-    fun assertPreserved(spec: AgentSpec, sent: JsonObject)
+    fun assertPreserved(spec: SessionSpec, sent: JsonObject)
 }
 
 /** Assertion helpers shared by projections. */

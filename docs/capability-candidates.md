@@ -10,7 +10,7 @@
 |---|---|---|
 | 영속 문맥 보관·재개 | 보관 범위·수명·성공 여부, release/재생성 후 `reopenSession`, 모르는 ID 거절, desired configuration 적용 | 기본 문맥 연속성과 다른 목적. Koog의 완료 이력 저장 사례가 있으나 production 저장·복구는 미검증이다. |
 | Caller 승인 | 대상 행위·허용 범위·decision, 승인 전 효과 없음, 거절·취소·중복 응답 처리 | Interaction 공통 구조 위의 구체적 판단. 도구별 중재를 전체 OS 권한 집행으로 해석하지 않는다. |
-| 질문·정보 응답 | 질문/답변 타입, 현재 요청, 일회 응답·철회, 같은 작업 계속 | 승인 enum으로 보존할 수 없다. Koog native callback으로 목적을 재현했고 새 공개 계약은 구현 전이다. |
+| 질문·정보 응답 | 질문/답변 타입, 현재 요청, 일회 응답·철회, 같은 작업 계속 | 공개 Question/Answer 타입은 선언됐다. 현재 세 production adapter 구성은 요구를 거절한다. 독립 Koog 실험은 실제 질문 도구를 Question/Answer로 연결하며 production 구성으로의 통합은 별도다. |
 | 구조화 산출물 | 요구한 schema, 검증 책임, 유효/불완전/검증 실패의 구별 | 텍스트 전달과 schema 보증은 다르다. JSON 문자열 실험은 native schema 집행 검증이 아니다. |
 | 작업 공간·자료·지침 제공 | 제공 범위·참조의 해석 위치·적용 수명. skill 제공과 활성화의 구별 | 로컬 workingDirectory와 skill path를 모든 하네스의 기본 어휘로 만들지 않는다. 범용 Resource 모델은 아직 근거가 없다. |
 | Filesystem/network 집행 | 제한의 범위와 실제 집행 또는 사전 거절. provider default의 정확한 의미 | 로컬 도구 환경의 제약을 공통 실행 그 자체와 분리한다. 승인 기능과도 구별한다. |

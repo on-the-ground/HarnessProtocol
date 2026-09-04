@@ -6,7 +6,7 @@ plugins {
 
 dependencies {
     api(project(":harness-protocol"))
-    implementation(project(":harness-process-bridge"))
+    api(project(":harness-process-bridge"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 

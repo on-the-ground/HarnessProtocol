@@ -3,11 +3,13 @@ import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.plugins.signing.SigningExtension
 
 plugins {
-    kotlin("jvm") version "2.2.0" apply false
-    kotlin("plugin.serialization") version "2.2.0" apply false
+    kotlin("jvm") version "2.3.10" apply false
+    kotlin("plugin.serialization") version "2.3.10" apply false
 }
 
 val artifactDescriptions = mapOf(
+    "harness-runtime" to "Adapter implementation utilities for task lifecycle and observation",
+    "harness-koog" to "Koog graph runtime adapter for Harness Protocol",
     "harness-protocol" to "Provider-neutral Kotlin ports for stateful agent harnesses",
     "harness-process-bridge" to "Internal process transport for Harness Protocol SDK adapters",
     "harness-codex" to "Codex SDK adapter for Harness Protocol",

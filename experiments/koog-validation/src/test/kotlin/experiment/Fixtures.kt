@@ -19,7 +19,7 @@ class ScriptedExecutor(vararg steps: suspend (Prompt) -> Message.Assistant) : Pr
     val prompts = CopyOnWriteArrayList<Prompt>()
     override suspend fun execute(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): Message.Assistant {
         prompts += prompt
-        check(prompts.size <= 12) { "Fixture model call cap exceeded" }
+        check(prompts.size <= 128) { "Fixture model call cap exceeded" }
         return checkNotNull(steps.poll()) { "Unexpected model request" }(prompt)
     }
     override fun executeStreaming(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): Flow<StreamFrame> =

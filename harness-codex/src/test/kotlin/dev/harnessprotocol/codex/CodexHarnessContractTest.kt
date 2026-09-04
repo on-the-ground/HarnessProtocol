@@ -1,10 +1,8 @@
 package dev.harnessprotocol.codex
 
-import dev.harnessprotocol.legacy.AgentHarness
-import dev.harnessprotocol.legacy.AgentSpec
-import dev.harnessprotocol.legacy.ApprovalPolicy
-import dev.harnessprotocol.legacy.FilesystemAccess
-import dev.harnessprotocol.legacy.NetworkAccess
+import dev.harnessprotocol.*
+import kotlin.test.assertNull
+
 import dev.harnessprotocol.testkit.AgentHarnessContractTest
 import dev.harnessprotocol.testkit.Envelope.assertAbsent
 import dev.harnessprotocol.testkit.Envelope.assertNullableString
@@ -23,43 +21,47 @@ import kotlin.test.assertEquals
 
 class CodexHarnessContractTest : AgentHarnessContractTest() {
     override fun harness(bridge: RecordingBridge, scope: CoroutineScope): AgentHarness =
-        CodexHarness.usingBridge(bridge, scope)
+        CodexHarness.usingBridge(bridge, scope, StorageNamespace("contract-${java.util.UUID.randomUUID()}"))
 
     override fun projection() = IntentProjection { spec, sent ->
         sent.assertNullableString("instructions", spec.instructions)
         sent.assertNullableString("model", spec.model)
-        sent.assertNullableString("workingDirectory", spec.workingDirectory)
-        assertEquals(spec.skills.map { it.name to it.path }, sent.objects("skills").map { it.string("name") to it.string("path") })
-        val fs = spec.executionPolicy.filesystem
+        sent.assertNullableString("workingDirectory", (spec.requirements.workspace as? WorkspaceRequirement.Required)?.workingDirectory)
+        val skills = (spec.requirements.workspace as? WorkspaceRequirement.Required)?.skills.orEmpty()
+        assertEquals(skills.map { it.name to it.path }, sent.objects("skills").map { it.string("name") to it.string("path") })
+        assertEquals(skills.map { it.activate.toString() }, sent.objects("skills").map { it.string("activate") })
+        if (spec.requirements.workspace == WorkspaceRequirement.NotRequired) sent.assertAbsent("skills", "workspace was not required")
+        val fs = (spec.requirements.execution as? ExecutionConstraint.Required)?.filesystem
         sent.assertString(
             "filesystem",
             when (fs) {
-                FilesystemAccess.ProviderDefault -> "provider_default"
+                null -> "provider_default"
                 FilesystemAccess.ReadOnly -> "read_only"
                 is FilesystemAccess.WorkspaceWrite -> "workspace_write"
                 FilesystemAccess.FullAccess -> "full_access"
             },
         )
-        sent.assertStrings("additionalWritableRoots", (fs as? FilesystemAccess.WorkspaceWrite)?.additionalWritableRoots?.toList().orEmpty())
+        if (fs is FilesystemAccess.WorkspaceWrite) sent.assertStrings("additionalWritableRoots", fs.additionalWritableRoots.toList())
+        else sent.assertAbsent("additionalWritableRoots", "no workspace-write override")
         // B3: a compatible spec never carries network intent outside workspace-write.
-        if (spec.executionPolicy.network != NetworkAccess.PROVIDER_DEFAULT) {
+        if ((spec.requirements.execution as? ExecutionConstraint.Required)?.network != null) {
             assertEquals(true, fs is FilesystemAccess.WorkspaceWrite, "network intent must have been rejected for $fs")
         }
         sent.assertString(
             "network",
-            when (spec.executionPolicy.network) {
-                NetworkAccess.PROVIDER_DEFAULT -> "provider_default"
+            when ((spec.requirements.execution as? ExecutionConstraint.Required)?.network) {
+                null -> "provider_default"
                 NetworkAccess.DENIED -> "denied"
                 NetworkAccess.ALLOWED -> "allowed"
             },
         )
         sent.assertString(
             "approval",
-            when (spec.executionPolicy.approval) {
-                ApprovalPolicy.PROVIDER_DEFAULT -> "provider_default"
-                ApprovalPolicy.DENY_ALL -> "deny_all"
-                ApprovalPolicy.AGENT_REVIEWED -> "agent_reviewed"
-                ApprovalPolicy.CALLER_DECIDES -> "caller_decides"
+            when (spec.requirements.approval) {
+                ApprovalRequirement.ProviderDefault -> "provider_default"
+                ApprovalRequirement.DenyAll -> "deny_all"
+                ApprovalRequirement.AgentReviewed -> "agent_reviewed"
+                ApprovalRequirement.CallerDecides -> "caller_decides"
             },
         )
         sent.assertAbsent("metadata", "metadata was removed from the port")
@@ -87,7 +89,7 @@ class CodexHarnessContractTest : AgentHarnessContractTest() {
         )
     }
 
-    override fun compatibleSpec() = AgentSpec()
+    override fun compatibleSpec() = SessionSpec()
 }
 
 internal fun notification(method: String, payload: JsonObject = JsonObject(emptyMap())) =

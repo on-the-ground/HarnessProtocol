@@ -1,0 +1,49 @@
+{
+  "date": "2026-09-04",
+  "command": "./gradlew.bat --offline -p experiments/koog-validation test --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "port": "Current checkout harness-protocol and harness-runtime via composite build; no extracted historical sources",
+  "runtime": "Koog 1.2.0 graph, registered tools, file history, native checkpoints; controlled PromptExecutor; no external model calls",
+  "suites": [
+    {
+      "name": "experiment.NativeKoogTest",
+      "timestamp": "2026-09-04T08:56:31.920Z",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "experiment.PortScenariosTest",
+      "timestamp": "2026-09-04T08:56:33.451Z",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "sourceHashes": {
+    "build.gradle.kts": "bcac0edbdb85194dd71e9a479adf0f8133971bf3ea448aa15834c17f72213fed",
+    "gradle.lockfile": "b31507c4c70256ecf8244c79bc66405e79466ac8a4c2e730e748280132e7e648",
+    "settings.gradle.kts": "f4fe04be6b907715d8a6c1340e31388ccf73859a85725b1f3ba7189668f55826",
+    "src/main/kotlin/experiment/ConversationStore.kt": "306acb223d3480e9dcea386ba5f42628a9b11f286364aa38f576e2047adf7e6b",
+    "src/main/kotlin/experiment/KoogHarness.kt": "831b9e46d9172729b2e0984882f4008a5a4d38c1630aa50c0fcdcc5d77fa4963",
+    "src/main/kotlin/experiment/KoogRuntime.kt": "bc64fc38bc7105a1b082ef16e10efbc98a37e81ae490dd81288aca402d960912",
+    "src/test/kotlin/experiment/Fixtures.kt": "b96867feb2aefa485e47e6b6db2f5d8e792676f7940dedcbe13669ae8173e8f4",
+    "src/test/kotlin/experiment/NativeKoogTest.kt": "3406cc046e9dbdd8f75bdc6a7689c07ec8c88e7d82f1320986c10833de0d5e8f",
+    "src/test/kotlin/experiment/PortScenariosTest.kt": "049be48cc244a73c635e72afe82f21fdb95ff164c574f627e3b11f1414febc79"
+  },
+  "changes": [
+    "TaskRequest/TaskOutcome and production ManagedTask",
+    "Optional persistence reference with process-local unresolved block",
+    "Typed Question/Answer drives real question tool",
+    "No fabricated output at iteration limit",
+    "Cleanup expiry is Unresolved; late real effect cannot change outcome",
+    "Observer overflow through 81 real graph calls; maximum fixture calls 128"
+  ],
+  "previousEvidence": [
+    "verification.json",
+    "reproduction-after-port-revision.json"
+  ],
+  "scope": "4 native and 14 current-port research scenarios; not a production Koog capability claim or full conformance certification"
+}

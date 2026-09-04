@@ -12,7 +12,7 @@
 
 ## 현재 구현의 좌표와 factory
 
-아래 정보는 전환 전 구현에 관한 것이다. `0.1.0` 좌표에서 새 AgentTask API를 제공한다고 주장하지 않는다.
+소스의 factory는 새 Port로 전환했다. artifact는 이번 작업에서 발행하지 않았으며 기존 `0.1.0` 다운로드가 새 AgentTask API를 제공한다고 주장하지 않는다.
 
 다음 예시는 이 저장소에서 `./gradlew.bat publishToMavenLocal`을 실행해 로컬 Maven 저장소에 설치한 artifact를 소비한다. 공개 Maven repository에서 다운로드할 수 있다는 안내가 아니다. publicationGroup/publicationVersion을 변경했다면 소비 좌표도 실제 로컬 발행값에 맞춘다. 현재 문서 작업에서는 발행을 실행하지 않았다.
 
@@ -23,15 +23,17 @@ dependencies {
 }
 ```
 
-현재 factory는 `Harnesses.create(configuration.provider)`이며 Codex/Gemini adapter를 제공한다. Koog 실험은 bundle에 포함되지 않는다. 개별 protocol/codex/gemini-cli artifact도 있고 process-bridge는 해당 adapter의 내부 의존성이다. adapter-testkit은 test-only이며 발행 대상이 아니다.
+현재 `dev.harnessprotocol.Harnesses.create(provider)`는 Codex/Gemini adapter를 제공한다. Koog는 구성에 필요한 executor·model을 `Harnesses.koog(executorFactory, model, tools)`로 받는다. bundle에 `harness-koog`와 `harness-runtime`을 포함했다. process-bridge는 두 process adapter의 구현 의존성이며 Koog의 필수 기반이 아니다. adapter-testkit·native-integration은 test-only다.
+
+현재 소스의 소비 예제는 `./gradlew.bat -p samples/basic -PuseProjectSource compileKotlin`로 발행 없이 검증할 수 있다. 이 옵션은 명시적 composite-build dependency substitution을 사용한다. 새 factory를 소비하는 컴파일이 통과했으며, 발행된 POM/JAR 검증과는 구별한다.
 
 ## 현재 runtime 준비
 
 | 경로 | 현재 필요한 환경 |
 |---|---|
 | Codex | Python 3.10+, requirements에 고정된 openai-codex 0.147.0 및 포함된 runtime. client 세부는 [Provider mapping](provider-mapping.md) |
-| Gemini CLI | Node와 SDK build entrypoint. 기존 조사에서는 외부 build 경로를 사용했으며 현재 설치 가능한 release는 후속 연동 때 재확인 |
-| Koog 실험 | [독립 빌드](../experiments/koog-validation/README.md)의 JDK·Kotlin·lockfile. 모델 경계는 fixture이며 실모델 인증 불필요 |
+| Gemini CLI | Node와 공식 SDK build entrypoint. 고정 source revision과 내부 호환 코드·빌드 제한은 [실제 adapter 검증](native-port-validation.md) 참조 |
+| Koog | `ai.koog:agents-core:1.2.0`, caller가 구성한 PromptExecutor·LLModel·ToolRegistry. root Kotlin 2.3.10, JVM target 21/JDK 25 |
 
 현재 JAR은 bridge script와 requirements를 포함하고 factory가 script를 추출한다. Python/Node 실행 파일과 provider 인증은 운영 환경이 제공한다. 현재 실행 파일 override는 HARNESS_CODEX_PYTHON, HARNESS_GEMINI_NODE이고 Gemini SDK 경로는 GEMINI_CLI_SDK_MODULE로 지정할 수 있다.
 
@@ -51,10 +53,12 @@ publicationGroup/publicationVersion을 지정할 수 있다. 공개 발행에는
 
 ## 개정 계약의 배포 전환
 
-1. 실제 공개 타입과 KDoc을 새 의미로 전환하고 버전·소스 호환성과 의미 변경을 기록한다.
+공개 Port·KDoc, 세 adapter의 factory·bundle 구성, source 소비 예제 컴파일은 완료했다. 실제 artifact는 발행하지 않았으며 아래에서 migration 예제 보강과 발행된 artifact 검증은 남아 있다.
+
+1. 공개 타입과 KDoc은 새 의미로 전환했다. 발행 버전과 소비자의 소스·의미 호환성 변경을 정리한다.
 2. 기본 영속 Session을 사용하던 소비자가 새 영속성 요구를 명시하도록 migration 예제를 제공한다.
 3. 예외 중심 결과 회수를 TaskOutcome으로, finalMessage 사용을 TaskOutput으로 옮기는 소비 예제를 제공한다.
-4. 선택 기능의 지원·거절과 runtime 준비를 provider별로 명시한다. 새 provider를 포함했다면 factory와 의존성에 실제 반영한다.
+4. 선택 기능의 지원·거절과 runtime 준비는 provider별로 명시했고 세 provider를 factory·의존성에 반영했다. 지원 범위가 바뀌면 같은 검증으로 갱신한다.
 5. [samples/basic](../samples/basic)을 새 artifact만으로 빌드하여 transitive dependency와 공개 API를 검증한다.
 6. README·문서의 구현 상태를 실연동 결과와 일치시킨다.
 

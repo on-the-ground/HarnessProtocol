@@ -1,0 +1,168 @@
+{
+  "date": "2026-09-04",
+  "command": "./gradlew.bat --offline test :harness-conformance:testFixturesClasses hostTests -PnativeHarnessTests -PstrictHostTests --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "nativeBoundary": "Real Codex App Server, official Gemini SDK/core and Koog graph; controlled model responses; no external model calls",
+  "codex": "openai-codex 0.147.0",
+  "geminiSource": "87a9c71d57a4ec56c00f3ff628970fea8291d812",
+  "geminiBuild": "Generated resources and tsc --build --noCheck; full upstream typecheck exceeded available Node heap; added @types/command-exists no-save",
+  "koog": "1.2.0",
+  "jvm": [
+    {
+      "module": "harness-bundle",
+      "suites": [
+        {
+          "name": "dev.harnessprotocol.legacy.HarnessesTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "module": "harness-codex",
+      "suites": [
+        {
+          "name": "dev.harnessprotocol.codex.CodexEventMapperTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+          "tests": 20,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.harnessprotocol.codex.CodexInteractionTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "module": "harness-gemini-cli",
+      "suites": [
+        {
+          "name": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+          "tests": 20,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.harnessprotocol.gemini.GeminiCliPolicyTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.harnessprotocol.gemini.GeminiEventMapperTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "module": "harness-native-integration",
+      "suites": [
+        {
+          "name": "dev.harnessprotocol.integration.CodexNativeHarnessTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.harnessprotocol.integration.GeminiNativeHarnessTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.harnessprotocol.integration.KoogNativeHarnessTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.harnessprotocol.integration.KoogNativeToolTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "module": "harness-process-bridge",
+      "suites": [
+        {
+          "name": "dev.harnessprotocol.bridge.BridgeProtocolTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.harnessprotocol.bridge.ProcessLifecycleTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "module": "harness-protocol",
+      "suites": [
+        {
+          "name": "dev.harnessprotocol.PublicModelTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    }
+  ],
+  "host": {
+    "python": {
+      "tests": 15,
+      "failed": 0,
+      "warnings": 4
+    },
+    "node": {
+      "tests": 5,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "scope": "25 native runtime checks, 71 legacy regressions and 9 public model checks; temporary reference engine removed; 48 unattached scenario definitions compile but are not conformance passes; no publication",
+  "sample": {
+    "command": "./gradlew.bat --offline -p samples/basic -PuseProjectSource compileKotlin",
+    "result": "BUILD SUCCESSFUL",
+    "mode": "Source composite build; no publication"
+  },
+  "conformanceScenarioLibrary": {
+    "source": "harness-conformance/src/testFixtures",
+    "definitions": 48,
+    "executed": 0,
+    "compiled": true,
+    "temporaryHarnessRemoved": true,
+    "removedFiles": 8
+  },
+  "verificationMode": "Unchanged JVM suites reused Gradle up-to-date results; host 20 tests rerun; scenario testFixtures compiled successfully",
+  "previousEvidence": "before-reference-removal.json"
+}

@@ -184,8 +184,9 @@ class Bridge:
                 self.emit(turn_id, notification.method, notification.payload)
                 if notification.method == "turn/completed" and turn_completed_matches(notification.payload, turn_id):
                     break
-        except Exception as error:  # SDK failures must terminate the Kotlin execution.
-            self.emit(turn_id, "error", {"error": {"message": str(error), "type": type(error).__name__}})
+        except Exception as error:
+            # Losing the client notification path does not prove that App Server work stopped.
+            self.emit(turn_id, "observation_lost", {"message": str(error), "type": type(error).__name__})
         finally:
             try:
                 self.client.unregister_turn_notifications(turn_id)
@@ -375,7 +376,7 @@ def make_inputs(input_value: dict[str, Any], spec: dict[str, Any]) -> list[dict[
     text = required_string(input_value, "text")
     # Provider activation envelope: Codex activates a skill through a `$name`
     # mention plus a skill input item. The user's text itself is not altered.
-    mentions = " ".join(f"${skill['name']}" for skill in skills)
+    mentions = " ".join(f"${skill['name']}" for skill in skills if skill.get("activate", True))
     if mentions:
         text = f"{mentions}\n\n{text}"
     result: list[dict[str, Any]] = [{"type": "text", "text": text}]

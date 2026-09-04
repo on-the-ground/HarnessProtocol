@@ -2,20 +2,20 @@
 
 이 문서는 [개정 계약](protocol-reference.md)의 목적을 Codex·Gemini CLI·Koog의 서로 다른 수단에 대응시키고 구현 전환 상태를 기록한다. SDK 기능이 공통 목적을 결정하지 않는다.
 
-현재 Codex/Gemini 코드는 이전 공개 API를 사용하고 Koog는 격리 실험이다. 아래의 native 대응은 새 계약 적합성 인증이 아니다. 기존 SDK 조사는 2026-09-03, Koog 실행 근거는 2026-09-04 기준이며 이번 문서 개편에서 외부 release를 재조사하지 않았다.
+현재 세 adapter는 새 공개 Port에 연결돼 있다. 실제 runtime과 통제된 모델 응답의 검증 범위·revision·남은 gate는 [실제 adapter 검증](native-port-validation.md)을 따른다. 이 연결과 일부 시나리오 통과를 새 계약 전체의 적합성 인증으로 취급하지 않는다. Koog 격리 실험은 별도의 이전 증거다.
 
 ## 목적별 대응과 전환
 
-| 공통 목적 | Codex의 현재 수단 | Gemini CLI의 현재 수단 | Koog 실험 / 필요한 전환 |
+| 공통 목적 | Codex의 현재 수단 | Gemini CLI의 현재 수단 | Koog의 현재 수단 / 남은 전환 |
 |---|---|---|---|
 | AgentHarness | Python CodexClient와 App Server 연결 | Node SDK host | Kotlin graph runtime 직접 연결. bridge 공통화 불필요 |
-| Session 문맥 | thread ID | SDK session ID | 완료 이력을 adapter가 보관하면 후속 입력 연결 가능. 기본 session과 영속성 분리 |
-| 영속 보관·reopen | thread/resume | resumeSession + initialize | 실험 파일 저장소. 보관 범위·오류·재생성 조건을 선택 계약으로 검증 |
+| Session 문맥 | 실제 thread의 후속 모델 입력 | SDK session의 실제 이력 | 종료 전 확보한 native graph prompt history를 다음 작업에 연결 |
+| 영속 보관·reopen | namespace 구성 시 thread/resume, 설정 변경 거절 | namespace 구성 시 resumeSession + initialize, desired 지시 반영 | production 구성은 미지원. 실험 파일 저장소의 이관은 후속 |
 | Task 시작 | turn/start와 notification | sendStream | graph run. 여러 LLM/tool 호출을 하나의 업무 위임으로 묶음 |
-| Caller 승인 | handler → pending decision → 응답 | 현 adapter는 CALLER_DECIDES 거절 | tool 실행 전 승인 gate. 실제 효과와 승인 순서 검증 |
+| Caller 승인 | handler → pending decision → 응답 | CallerDecides 요구 거절 | bare ToolRegistry 구성은 거절. 실험의 승인 gate 이관은 후속 |
 | 질문·답변 | 기존 공개 AHP 경로 없음 | 기존 공개 AHP 경로 없음 | native callback은 가능. 새 Question/Answer 전달 계약 필요 |
 | 취소 요청 | pending handler 해제 후 turn/interrupt | AbortController.abort | coroutine 취소. 비협조적 도구의 실제 종료 여부는 별도 확인 |
-| Outcome | 현재 turn completion/error를 이전 결과·예외로 변환 | finished/error 및 host 알림 | 결과·예외 관찰. 세 경로 모두 새 TaskOutcome/Unresolved 의미로 개정 |
+| Outcome | 해당 turn의 종결 보고를 네 outcome으로 분류, 관찰 유실은 Unresolved | inner finished는 usage 경계, sendStream 전체 종료의 host 알림으로 종결 | 실제 graph/tool 정리 뒤 종결. 비협조적 작업의 유예 만료는 Unresolved |
 | 산출물 | final-answer 메시지, 부족하면 관찰한 delta | 누적 content | String 결과. TaskOutput과 schema 보장 분리 필요 |
 | Tool/effect | tool·command·file·search item lifecycle | tool request/response | 실제 registry 호출 hooks. 내부 node는 자동으로 tool이 되지 않음 |
 | Usage/context | token usage, compaction 알림 | usageMetadata, chat-compressed | 메타데이터가 없으면 unknown. 전체 측정·compaction 미검증 |
@@ -37,7 +37,7 @@ Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`�
 
 ## 현재 정책·자원 제약
 
-아래는 기존 구현의 지원 상태다. 새 core의 보편적 필드 목록이 아니다.
+아래는 구성된 process adapter의 지원 범위다. native 투영과 실제 집행의 검증 범위는 구별하며 새 core의 보편적 필드 목록이 아니다. Koog를 포함한 전체 구성표는 [실제 adapter 검증](native-port-validation.md#지원-범위와-남은-gate)을 따른다.
 
 | 요구 | Codex 현재 경로 | Gemini 현재 경로 |
 |---|---|---|
@@ -51,17 +51,17 @@ Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`�
 
 ## 상태·결과 매핑 원칙
 
-규범은 [종결 확인의 근거](lifecycle-and-concurrency.md#종결-확인의-근거)다. 다음 표는 기존 조사·실험이 제공한 신호와 새 계약으로의 검증 과제를 구별한다. 아직 세 adapter의 새 판정 규칙을 실행 검증한 표가 아니다.
+규범은 [종결 확인의 근거](lifecycle-and-concurrency.md#종결-확인의-근거)다. 다음 표는 현재 adapter의 근거와 실제 확인 범위를 구별한다. SDK/runtime revision과 상세 실행 목록은 [native 검증 기록](native-port-validation.md)을 따른다.
 
-| 대상 | 기존 경로의 근거 후보 | 충분한 근거가 되기 위한 조건 | 남은 검증 |
+| 대상 | 현재 판정 근거 | 실제 확인한 범위 | 남은 검증 |
 |---|---|---|---|
-| Codex | turn 종결 보고와 status, interrupt 요청 응답 | 종결 보고가 해당 Task의 위임 범위를 끝낸다는 대응과 사유를 확인. interrupt 요청 수락만으로 Cancelled를 만들지 않음 | turn/Task 범위, 완료·취소 경쟁, 하위 실행의 귀속과 보고 유실을 fixture·실연동으로 확인 |
-| Gemini CLI | sendStream 관찰 종료 후 host가 합성한 completed/failed/cancelled 알림 | 관찰 loop 종료가 귀속된 실제 작업의 종결을 뜻하는지 SDK 계약·실행으로 입증. 합성 이벤트의 이름만으로 판정하지 않음 | stream 종료 후 계속되는 작업·도구, abort 뒤 실제 종료, 보고 유실·비협조적 작업을 구별 |
-| Koog | graph 실행 coroutine과 등록 tool의 종료. 비협조적 tool 반환 전에는 기존 실험에서 실행이 남음 | 해당 coroutine의 종료가 귀속된 graph/tool 실행의 종결을 포괄하고 종료 사유를 확인할 수 있음 | 실험 밖으로 분리된 작업·외부 효과의 범위, production 수명 관리, 새 네 outcome 판정 검사 |
+| Codex | 해당 turn의 종결 보고·status. interrupt 수락 자체는 취소 완료가 아님 | 실제 App Server 완료·명시 취소·정리·취소 후 문맥 재사용 | 하위 실행의 귀속, 완료·취소 경계 경쟁, 보고 유실 |
+| Gemini CLI | 내부 finished와 구별한 sendStream 전체 종료 및 host 보고 | 실제 SDK 완료·명시 취소·정리·취소 후 문맥 재사용 | 비협조적·분리된 도구, 보고 유실, 종료 경계 경쟁 |
+| Koog | 실제 graph/tool 및 소유 자원 정리 종료 | 완료·실패·취소, 유예 초과 Unresolved 이후 실제 파일 효과, 부분 산출물·문맥 보존 | graph 밖 분리 작업, 다중 자원·유예 경계 경쟁 |
 
-Adapter가 같은 범위의 충분한 근거를 확보했다면 그 결과를 전달해야 한다. 근거가 부족한 bounded 정리는 Unresolved다. 어떤 adapter에서도 stream·process 종료 자체를 항상 성공 또는 항상 미확정으로 고정하지 않는다. 구현 전환 시 표에 SDK/runtime revision, 보장 범위와 실제 통과 시나리오를 추가한다.
+Adapter가 같은 범위의 충분한 근거를 확보했다면 그 결과를 전달해야 한다. 근거가 부족한 bounded 정리는 Unresolved다. 어떤 adapter에서도 stream·process 종료 자체를 항상 성공 또는 항상 미확정으로 고정하지 않는다. 추가 시나리오 검증 결과는 이 표와 native 기록에 반영한다.
 
-현재 host death → TRANSPORT 실패, close 유예 → CANCELLED 경로는 개정 대상이다. 먼저 확인한 사실을 판정한다.
+새 Port는 기존의 host death → TRANSPORT 실패, close 유예 → CANCELLED 규칙을 사용하지 않는다. 먼저 확인한 사실을 판정한다.
 
 - 작업 실패를 provider가 확인했다면 Failed로 분류한다.
 - 실제 취소 종료를 확인했다면 Cancelled로 분류한다.
@@ -80,6 +80,6 @@ Tool/effect의 이름·인자 key 매핑은 버전별 fixture로 검증한다. i
 
 ## 검증 상태
 
-[Koog 결과](koog-abstraction-validation-results.md)의 18개 실험은 실제 Koog runtime과 통제된 모델 경계를 사용했다. 기존 회귀 71개는 Codex/Gemini mapper·bridge fixture 등을 검사했다. 세 구현의 동일 업무·동일 새 계약·실모델 검증은 아직 완료되지 않았다.
+[Koog 결과](koog-abstraction-validation-results.md)의 18개는 이전 계약의 실험 기록이다. 현재는 세 adapter에 같은 기본 시나리오를 적용한 21개와 구현별 4개, 총 25개 native 검사가 통과했다. 현재 Port로 이전한 SDK·bridge·bundle 회귀 71개와 공개 값 타입 9개는 별도다. 모든 계약 시나리오의 적합성과 실모델 검증은 완료 범위가 아니다.
 
-Gemini SDK build entrypoint와 지시 옵션의 실제 요구 조건, Codex 승인 실제 payload, Koog production 저장·정리 및 선택 계약은 후속 연동에서 확인한다. [Testing](testing.md)의 공통 행동과 구현별 검사를 구분하여 결과를 갱신한다.
+Gemini SDK build entrypoint·지시 전달 결함, Codex 재개 설정 변경의 제한, 세 runtime의 기본 동작과 Koog 비협조적 정리는 [실제 adapter 검증](native-port-validation.md)에 새 증거로 기록했다. Codex 실제 승인 payload·효과, Koog production 저장소 및 선택 계약 전체 검증은 남아 있다. 독립 Koog 실험의 승인·질문·보관 구성도 현재 Port로 이전했으며 production 기본 지원과 구별한다. [Testing](testing.md)의 공통 행동과 구현별 검사를 구분한다.

@@ -7,6 +7,7 @@ dependencies {
     api(project(":harness-protocol"))
     api(project(":harness-codex"))
     api(project(":harness-gemini-cli"))
+    api(project(":harness-koog"))
 
     testImplementation(kotlin("test"))
 }

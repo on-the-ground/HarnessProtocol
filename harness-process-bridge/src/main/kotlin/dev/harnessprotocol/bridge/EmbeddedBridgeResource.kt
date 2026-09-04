@@ -1,6 +1,6 @@
 package dev.harnessprotocol.bridge
 
-import dev.harnessprotocol.legacy.HarnessTransportException
+import dev.harnessprotocol.HarnessTransportException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption

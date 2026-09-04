@@ -15,7 +15,7 @@
 - 실행 종결 판정과 업무 산출물은 TaskOutcome/TaskOutput으로 구별한다.
 - 공통 행동은 SdkBridge 없이 검증할 수 있으며 원본 진단은 별도 경로로 둔다.
 
-이 결론에 맞춰 구현을 바꾸는 것이 다음 작업이다. 기존 공개 API·KDoc·세 adapter가 이미 전환됐다는 뜻은 아니다.
+이 결론을 반영한 공개 Port·KDoc과 세 adapter 연결은 완료했다. 아래 표는 이전 실험의 관찰을 보존한 것이며 새 코드의 결과는 [native 검증 기록](native-port-validation.md)에서 확인한다.
 
 ## 환경과 실제 검증
 
@@ -30,7 +30,7 @@
 | 실험 검사 | native 4개 + Port 시나리오 14개 = 18개, 실패·오류·skip 0 |
 | 기존 회귀 | 71개, 실패·오류·skip 0 |
 
-실행한 테스트 이름·관찰 로그·소스 hash는 [verification.json](../experiments/koog-validation/evidence/verification.json), 재현 절차는 [실험 README](../experiments/koog-validation/README.md)에 있다. 이번 문서 정리에서 검사를 재실행하거나 기록을 바꾸지 않았다.
+실행한 테스트 이름·관찰 로그·소스 hash는 [verification.json](../experiments/koog-validation/evidence/verification.json), 당시 소스는 기록의 Git revision에서 확인한다. 실행 가능한 실험은 이후 현재 Port로 이전했다. [실험 README](../experiments/koog-validation/README.md)와 [현재 결과](../experiments/koog-validation/evidence/current-port-migration.json)는 새 단계의 증거이며 위 과거 기록을 덮어쓰지 않는다.
 
 공식 배포본은 [Maven Central 1.2.0](https://repo.maven.apache.org/maven2/ai/koog/agents-core-jvm/1.2.0/)이며 실제 source JAR와 동작을 대조했다. 참고 자료는 [graph agents](https://docs.koog.ai/agents/graph-based-agents/), [persistence](https://docs.koog.ai/features/agent-persistence/), [event handlers](https://docs.koog.ai/features/agent-event-handlers/)다. 판정은 문서의 가능성보다 실제 관찰을 우선한다.
 
@@ -98,8 +98,8 @@ Koog는 실제 runtime에 통제된 모델을 연결한 증거이고, Codex/Gemi
 
 업무 기능은 fixture 애플리케이션이 소유하고 adapter는 도구 노출·승인·전달을 맡았다. 이 역할 분리는 비즈니스 판단이 graph·SDK 이벤트를 알지 않아도 된다는 근거다. 공개 custom tool 등록 계약이나 모든 하네스의 임의 callback 지원을 증명한 것은 아니다.
 
-## 다음 구현과 남은 검증
+## 현재 구현과 남은 검증
 
-[전환 계획](port-revision-plan.md)에 따라 공개 타입·KDoc·세 adapter·공통 검사를 개정한다. 기존 실험에서 보강해 구현할 수 있었던 목적도 core 필수성은 별도로 판단한다.
+[전환 현황](port-revision-plan.md)의 새 Port·세 adapter와 공통 native 검사 25개가 현재 기준이다. 독립 실험은 현재 Port로 이전했고 승인·질문·저장소를 구성한다. 이 선택 기능을 production 기본 구현이 모두 제공하는 것은 아니며, core 필수성도 구현 가능성과 구별한다.
 
-실모델 호출, 세 provider의 동일 새 계약, 원격 단절·재접속, production 저장소·crash recovery·다중 writer, native structured output 집행, 전체 provider 오류·진단·context/usage 관찰은 완료 범위가 아니다. 해당 검증 없이 새 적합 구현이나 보편적 보장을 주장하지 않는다.
+실모델 호출, 세 provider의 새 계약 전체 적합성, 원격 단절·재접속, production 저장소·crash recovery·다중 writer, native structured output 집행, 전체 오류·진단·usage 관찰은 완료 범위가 아니다. 해당 검증 없이 보편적 보장을 주장하지 않는다.

@@ -16,6 +16,9 @@ rootProject.name = "harness-protocol"
 
 include(
     "harness-protocol",
+    "harness-runtime",
+    "harness-koog",
+    "harness-native-integration",
     "harness-process-bridge",
     "harness-codex",
     "harness-gemini-cli",

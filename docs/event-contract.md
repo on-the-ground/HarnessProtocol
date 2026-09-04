@@ -1,6 +1,6 @@
 # Event contract
 
-이 문서는 개정된 `TaskEvent`와 상태·산출물·진단의 관계를 정의한다. 현재 이벤트 타입은 구현 전환 대상이다. [Protocol reference](protocol-reference.md)와 [Lifecycle](lifecycle-and-concurrency.md)이 종결·개입의 의미를 정한다.
+이 문서는 공개 `TaskEvent`와 상태·산출물·진단의 관계를 정의한다. 세 adapter는 이 이벤트·진단 타입을 사용하며 실행 검증 범위는 [native 검증 기록](native-port-validation.md)을 따른다. [Protocol reference](protocol-reference.md)와 [Lifecycle](lifecycle-and-concurrency.md)이 종결·개입의 의미를 정한다.
 
 ## 관찰과 실행의 독립성
 
@@ -103,4 +103,4 @@ Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요
 
 ## 전환·검증
 
-기존 `AgentEvent` 및 `ProviderEventObserved`를 단순 rename하지 않고 공통 의미 이벤트와 진단 경로를 분리한다. 기존 mapper의 유효한 message 조립·usage·work ID 검사는 유지하고, 모든 원본 알림 보존이나 process 종료만으로 Task 실패를 확정하는 기대는 변경한다. [공통 검사 기준](testing.md)을 따른다.
+새 adapter는 `TaskEvent`와 별도 진단 경로를 사용하며 실제 native 검사에서 두 observer의 독립 종료를 확인했다. 기존 message 조립·usage·work ID 검사는 현재 mapper와 production task runtime으로 이전했다. 느린 observer overflow, 사용량 reset·누락, 하위 작업 상관관계 등 남은 조건은 [공통 검사 기준](testing.md)에 따라 새 Port에서 검증한다.

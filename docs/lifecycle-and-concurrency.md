@@ -1,6 +1,6 @@
 # Lifecycle and concurrency
 
-개정된 `AgentHarness`, `AgentSession`, `AgentTask`의 수명·상태·동시성 계약이다. 공개 선언·KDoc은 마련됐고 실제 adapter를 후속 구현에서 맞춘다. [Protocol reference](protocol-reference.md), [Event contract](event-contract.md), [설계 기준](semantic-contract.md)을 함께 따른다.
+공개 `AgentHarness`, `AgentSession`, `AgentTask`의 수명·상태·동시성 계약이다. 세 adapter의 native 완료·취소·정리와 문맥 검증 범위는 [현재 결과](native-port-validation.md)에 기록했다. 아래 규범에는 추가 검증이 필요한 조건도 포함한다. [Protocol reference](protocol-reference.md), [Event contract](event-contract.md), [설계 기준](semantic-contract.md)을 함께 따른다.
 
 ## 소유와 문맥
 
@@ -123,4 +123,4 @@ Consumer는 작업 scope에 observer를 두고 outcome을 회수한 뒤 observer
 
 ## 구현 전환 항목
 
-현재 구현의 close 강제 취소, host death 일괄 transport 실패, 기본 영속 session, terminal만 검사하는 session gate는 이 계약에 맞춰 수정해야 한다. [Testing](testing.md)의 정상·경쟁·종료 미확정 시나리오와 함께 구현하고 KDoc도 같은 단계에서 갱신한다.
+새 경로는 취소 요청과 종결을 구별하고, 관찰 상실·정리 유예 만료에는 Unresolved와 문맥 차단을 사용한다. 영속성은 선택 요구로 분리했다. 기본 native 시나리오와 Koog의 비협조적 효과는 검증했으며, 여러 handle·시작 수락 유실·정확한 유예 경계 경쟁 등은 [Testing](testing.md)의 추가 검증 대상이다. 이전 강제 취소 실행 경로는 제거했다.

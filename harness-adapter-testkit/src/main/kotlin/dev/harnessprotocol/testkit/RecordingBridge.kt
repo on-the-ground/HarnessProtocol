@@ -1,6 +1,6 @@
 package dev.harnessprotocol.testkit
 
-import dev.harnessprotocol.legacy.HarnessTransportException
+import dev.harnessprotocol.HarnessTransportException
 import dev.harnessprotocol.bridge.SdkBridge
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -23,10 +23,10 @@ class RecordingBridge(
 ) : SdkBridge {
     data class Request(val method: String, val params: JsonObject)
 
-    private val recorded = mutableListOf<Request>()
-    private val channels = mutableMapOf<String, Channel<JsonObject>>()
-    private val releasedIds = mutableListOf<String>()
-    private val handlers = mutableMapOf<String, (JsonObject) -> JsonObject>()
+    private val recorded = java.util.concurrent.CopyOnWriteArrayList<Request>()
+    private val channels = java.util.concurrent.ConcurrentHashMap<String, Channel<JsonObject>>()
+    private val releasedIds = java.util.concurrent.CopyOnWriteArrayList<String>()
+    private val handlers = java.util.concurrent.ConcurrentHashMap<String, (JsonObject) -> JsonObject>()
 
     /** Ordered requests received so far. */
     val requests: List<Request> get() = recorded.toList()

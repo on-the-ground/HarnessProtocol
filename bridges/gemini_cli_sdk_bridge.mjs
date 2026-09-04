@@ -3,6 +3,11 @@
 import { randomUUID } from "node:crypto";
 import { createInterface } from "node:readline";
 import { pathToFileURL } from "node:url";
+import { Console } from "node:console";
+
+// Reserve stdout for the bridge protocol, including while the SDK initializes.
+// Native diagnostic logging must not be interpreted as an NDJSON response.
+globalThis.console = new Console(process.stderr, process.stderr);
 
 const sessions = new Map();
 const executions = new Map();
@@ -63,6 +68,7 @@ async function createSession(spec) {
   const agent = new sdk.GeminiCliAgent(agentOptions(spec, sdk));
   const session = agent.session();
   await session.initialize();
+  applySessionInstructions(session, spec);
   sessions.set(session.id, { agent, session, spec });
   return { sessionId: session.id };
 }
@@ -74,8 +80,25 @@ async function resumeSession(params) {
   const agent = new sdk.GeminiCliAgent(agentOptions(spec, sdk));
   const session = await agent.resumeSession(sessionId);
   await session.initialize();
-  sessions.set(sessionId, { agent, session, spec });
-  return { sessionId };
+  applySessionInstructions(session, spec);
+  sessions.set(session.id, { agent, session, spec });
+  return { sessionId: session.id };
+}
+
+function applySessionInstructions(session, spec) {
+  if (spec.instructions === undefined || spec.instructions === null) return;
+  // Compatibility with Gemini CLI 87a9c71: Config's memoryContextManager bypasses
+  // both static instructions and setUserMemory(). Keep this SDK-specific seam in
+  // the adapter; never downgrade system instructions into a user-message prefix.
+  // These are TS-private fields, so a different SDK layout must fail explicitly.
+  const config = session.config;
+  const client = session.client;
+  if (typeof config?.getSystemInstructionMemory !== "function" ||
+      typeof client?.updateSystemInstruction !== "function") {
+    throw new Error("This Gemini SDK version cannot preserve explicit session instructions; the adapter compatibility seam needs updating");
+  }
+  config.getSystemInstructionMemory = () => spec.instructions;
+  client.updateSystemInstruction();
 }
 
 function startExecution(params) {
@@ -99,6 +122,7 @@ async function streamExecution(executionId, session, text, controller) {
   emit(executionId, { type: "execution_started" });
   let failed = false;
   let cancelled = false;
+  let failureKind;
   try {
     for await (const event of session.sendStream(text, controller.signal)) {
       emit(executionId, event);
@@ -106,16 +130,17 @@ async function streamExecution(executionId, session, text, controller) {
         failed = true;
       }
       if (event.type === "user_cancelled") cancelled = true;
+      if (event.type === "agent_execution_blocked") failureKind = "policy_blocked";
     }
-    if (controller.signal.aborted || cancelled) {
+    if (cancelled) {
       emit(executionId, { type: "execution_cancelled" });
     } else if (failed) {
-      emit(executionId, { type: "execution_failed", value: { message: "Gemini CLI execution failed" } });
+      emit(executionId, { type: "execution_failed", value: { message: "Gemini CLI execution failed", failureKind } });
     } else {
       emit(executionId, { type: "execution_completed" });
     }
   } catch (error) {
-    if (controller.signal.aborted) {
+    if (controller.signal.aborted && error?.name === "AbortError") {
       emit(executionId, { type: "execution_cancelled" });
     } else {
       emit(executionId, {
@@ -179,7 +204,7 @@ function jsonReplacer(_key, value) {
 export function activationPrompt(spec, text) {
   // Provider activation envelope: Gemini CLI activates a loaded skill through a
   // `$name` mention. The user's text itself is not altered.
-  const skillMentions = (spec.skills ?? []).map((skill) => `$${skill.name}`).join(" ");
+  const skillMentions = (spec.skills ?? []).filter((skill) => skill.activate !== false).map((skill) => `$${skill.name}`).join(" ");
   return skillMentions ? `${skillMentions}\n\n${text}` : text;
 }
 

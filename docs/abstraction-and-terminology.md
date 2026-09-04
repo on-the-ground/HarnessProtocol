@@ -1,7 +1,7 @@
 # AHP 추상 개정과 용어
 
 작성일: 2026-09-04  
-상태: 공개 Port·KDoc은 dev.harnessprotocol에 선언됐으며 adapter·factory의 legacy 전환은 후속 통합 단계다.
+상태: 공개 Port·KDoc과 세 adapter·factory 연결 완료. 실제 runtime 검사 25개 통과, 추가 계약 검증은 [전환 현황](port-revision-plan.md)을 따른다.
 최상위 기준: [AHP 설계 선언](../AHP_CHARTER.md)  
 실험 근거: [Koog 검증 결과](koog-abstraction-validation-results.md)
 
@@ -38,14 +38,14 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 |---|---|---|
 | `AgentExecution` | `AgentTask` | 관점의 중심을 내부 실행 루프에서 위임받은 작업으로 옮긴다. |
 | `ExecutionId` / `executionId` | `TaskId` / `taskId` | 식별 대상은 한 번의 업무 위임이다. |
-| `AgentSession.execute(input)` | `AgentSession.startTask(input)` | 완료까지 수행하는 함수와 구별하여 작업 시작 및 handle 반환을 드러낸다. |
+| `AgentSession.execute(input)` | `AgentSession.startTask(request)` | TaskRequest의 입력·요구로 작업을 시작하고 handle을 반환한다. |
 | `AgentInput` | `TaskInput` | 작업에 전달하는 입력임을 명확히 한다. 작업 중 질문에 대한 답변과도 구별한다. |
 | `ExecutionState` | `TaskState` | Task handle에서 관찰하는 상태다. 아래 종결 의미도 함께 개정한다. |
 | `WAITING` | `AWAITING_RESPONSE` | 승인·질문 등에 대한 외부 응답 대기를 나타낸다. 일반 지연이나 rate limit 대기와 구별한다. |
 | `AgentExecution.cancel()` | `AgentTask.requestCancellation()` | 요청 전달이 실제 취소 완료를 뜻하지 않음을 호출 지점에서 드러낸다. |
 | `awaitResult()` | `awaitOutcome()` | 성공뿐 아니라 실패·취소·종료 미확정의 종결 판정을 회수한다. 반환·예외 계약도 함께 개정한다. |
 | `AgentResult` | `TaskOutcome`과 `TaskOutput`으로 책임 분리 | 종료 사유·실패와 사용자에게 전달한 산출물을 구별한다. 단순 타입 이름 변경이 아니다. |
-| `finalMessage` | 텍스트 산출물 `TaskOutput.Text`의 내용으로 이동 | 텍스트를 모든 업무 결과의 유일한 형태로 고정하지 않는다. 최종 field 배치는 결과 모델 설계에서 정한다. |
+| `finalMessage` | `TaskOutcome.output`의 `TaskOutput.Text.text` | 텍스트를 모든 업무 결과의 유일한 형태로 고정하지 않는다. |
 | `AgentEvent` | `TaskEvent` | 작업 범위의 의미 이벤트라는 점을 명확히 한다. |
 | `ExecutionStarted/Completed/Failed/Cancelled` | `TaskStarted/Completed/Failed/Cancelled`, 종료 미확정은 `TaskUnresolved` | 이벤트·식별자·상태의 주어를 일치시키고 종료 미확정을 구별한다. |
 | 기본 Port의 `resumeSession` | 영속성 선택 계약의 `reopenSession` | 보관된 업무 문맥에 대한 새 handle 획득임을 나타낸다. 중단된 작업의 재실행·복구와 구별한다. |
@@ -74,7 +74,7 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 
 선택 계약은 보장을 약하게 만드는 장치가 아니다. 요구한 영속성, 권한 제한, 질문 대응, 출력 형태를 지원한다고 선언했다면 정확히 이행해야 한다. 지원 탐색·요구 검증·진단 분리의 공개 형태는 [공개 모델](public-model.md)을 따른다.
 
-명명은 개념의 주어를 따른다. Task 자체의 입력·상태·outcome·종결 이벤트는 `Task*`, 도구·메시지·interaction은 각 대상의 이름을 사용한다. `TaskEvent`에 속한다는 이유로 모든 하위 이벤트에 Task를 덧붙이지 않는다. 타입 충돌은 AHP package·타입 qualification으로 구별하고, 정확한 Kotlin nesting은 공개 모델 단계에서 정한다. 이름을 유지하는 이벤트도 위 목적 심사를 거친 것이며 기존 존재 자체가 존치 근거는 아니다.
+명명은 개념의 주어를 따른다. Task 자체의 입력·상태·outcome·종결 이벤트는 `Task*`, 도구·메시지·interaction은 각 대상의 이름을 사용한다. `TaskEvent`에 속한다는 이유로 모든 하위 이벤트에 Task를 덧붙이지 않는다. 타입 충돌은 AHP package·타입 qualification으로 구별하고, Kotlin nesting은 [공개 모델](public-model.md)과 실제 선언을 따른다. 이름을 유지하는 이벤트도 위 목적 심사를 거친 것이며 기존 존재 자체가 존치 근거는 아니다.
 
 ## 5. 결과와 종료 용어의 의미
 
@@ -93,10 +93,10 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 
 ## 6. 전환 범위
 
-후속 통합에서는 위 책임 분리와 공개 모델을 실제 adapter에 적용한다. 식별자·이벤트·실패·KDoc·소비 예제·공통 검사를 같은 의미로 맞춘다. 내부 SDK의 thread/turn, Koog graph 등의 이름은 각 adapter에서 필요에 따라 유지한다.
+실제 세 adapter와 소비 예제는 위 공개 모델을 사용한다. 구현별 native 상태·이벤트를 같은 업무 의미로 연결했으며 검증 범위는 [실제 adapter 검증](native-port-validation.md)에 기록했다. 내부 SDK의 thread/turn, Koog graph 등의 이름은 각 adapter에서 필요에 따라 유지한다.
 
 0.1.0의 강한 보장과 새 계약이 다를 때 typealias로 호환되는 척하지 않는다. 특히 영속성, `awaitOutcome`의 결과 전달, 종료 미확정 처리는 소비자 migration이 필요한 의미 변경이다. 이전 사용 사례가 요구한 보장을 새 계약에서 어떻게 명시할지 함께 제공한다.
 
-실험 코드·실행 기록은 검증 당시 0.1.0의 재현 자료이므로 소급 rename하지 않는다. 새 계약에 맞춘 Koog 구현과 검증은 후속 통합의 산출물로 관리한다. 세 adapter의 공통 행동 검사는 `AgentHarness`/`AgentTask` 등 공개 계약을 기준으로 하고 provider별 준비 방식은 fixture로 분리한다.
+실험 코드·실행 기록은 검증 당시 0.1.0의 재현 자료이므로 소급 rename하지 않는다. 새 Koog 구현은 harness-koog, 세 runtime의 검증은 harness-native-integration에 있다. 공통 행동 검사는 `AgentHarness`/`AgentTask` 등 공개 계약을 기준으로 하고 provider별 준비 방식은 fixture로 분리한다.
 
 본 문서는 개정의 근거와 용어다. 선언의 존재만으로 세 adapter 통합 완료나 새 계약의 실행 검증을 주장하지 않는다.

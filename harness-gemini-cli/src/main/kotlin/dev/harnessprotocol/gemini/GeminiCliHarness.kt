@@ -1,166 +1,58 @@
 package dev.harnessprotocol.gemini
 
-import dev.harnessprotocol.legacy.AgentHarness
-import dev.harnessprotocol.legacy.AgentInput
-import dev.harnessprotocol.legacy.AgentSession
-import dev.harnessprotocol.legacy.AgentSpec
-import dev.harnessprotocol.legacy.ApprovalPolicy
-import dev.harnessprotocol.legacy.CompatibilityIssue
-import dev.harnessprotocol.legacy.CompatibilityReport
-import dev.harnessprotocol.legacy.ExecutionId
-import dev.harnessprotocol.legacy.FilesystemAccess
-import dev.harnessprotocol.legacy.NetworkAccess
-import dev.harnessprotocol.legacy.ProviderId
-import dev.harnessprotocol.legacy.SessionId
-import dev.harnessprotocol.bridge.BridgeAgentExecution
-import dev.harnessprotocol.bridge.BridgeHarnessRuntime
-import dev.harnessprotocol.bridge.EmbeddedBridgeResource
-import dev.harnessprotocol.bridge.JsonLineProcessBridge
-import dev.harnessprotocol.bridge.SdkBridge
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.put
-import java.nio.file.Path
+import dev.harnessprotocol.*
+import dev.harnessprotocol.bridge.*
+import dev.harnessprotocol.runtime.ManagedTask
+import kotlinx.coroutines.*
+import kotlinx.serialization.json.*
 
-class GeminiCliHarness private constructor(
-    private val bridge: SdkBridge,
-    private val scope: CoroutineScope,
-) : AgentHarness {
-    override val provider: ProviderId = ProviderId("gemini-cli")
-    private val runtime = BridgeHarnessRuntime(bridge, scope)
-
-    override fun validate(spec: AgentSpec): CompatibilityReport {
-        val issues = buildList {
-            if (spec.executionPolicy.filesystem !is FilesystemAccess.ProviderDefault) {
-                add(CompatibilityIssue("executionPolicy.filesystem", SDK_POLICY_LIMITATION))
-            }
-            if (spec.executionPolicy.network != NetworkAccess.PROVIDER_DEFAULT) {
-                add(CompatibilityIssue("executionPolicy.network", SDK_POLICY_LIMITATION))
-            }
-            if (spec.executionPolicy.approval != ApprovalPolicy.PROVIDER_DEFAULT) {
-                add(CompatibilityIssue("executionPolicy.approval", SDK_POLICY_LIMITATION))
-            }
-        }
-        return CompatibilityReport(issues)
-    }
-
-    override suspend fun createSession(spec: AgentSpec): AgentSession {
-        validate(spec).requireCompatible()
-        val result = bridge.request("create_session", spec.toBridgeJson())
-        return newSession(SessionId(result.string("sessionId")), spec)
-    }
-
-    override suspend fun resumeSession(id: SessionId, spec: AgentSpec): AgentSession {
-        validate(spec).requireCompatible()
-        val result = bridge.request(
-            "resume_session",
-            buildJsonObject {
-                put("sessionId", id.value)
-                put("spec", spec.toBridgeJson())
-            },
-        )
-        // The host may normalize the ID; the response is authoritative.
-        return newSession(SessionId(result.string("sessionId")), spec)
-    }
-
-    private fun newSession(id: SessionId, spec: AgentSpec): AgentSession =
-        GeminiSession(runtime.open(id), spec, bridge, runtime)
-
-    override fun close() {
-        runBlocking { runtime.closeAll() }
-        bridge.close()
-        scope.cancel()
-    }
-
-    companion object {
-        fun launch(options: GeminiCliSdkOptions): GeminiCliHarness {
-            val bridgeScript = options.bridgeScript ?: EmbeddedBridgeResource.extract(
-                owner = GeminiCliHarness::class.java,
-                resourceName = "/dev/harnessprotocol/gemini/gemini_cli_sdk_bridge.mjs",
-                suffix = ".mjs",
-            )
-            val environment = buildMap {
-                putAll(options.environment)
-                options.sdkModule?.let { put("GEMINI_CLI_SDK_MODULE", it) }
-            }
-            val bridge = JsonLineProcessBridge(
-                command = options.nodeCommand + bridgeScript.toAbsolutePath().toString(),
-                workingDirectory = options.processWorkingDirectory,
-                environment = environment,
-            )
-            return GeminiCliHarness(bridge, CoroutineScope(SupervisorJob() + Dispatchers.Default))
-        }
-
-        fun usingBridge(
-            bridge: SdkBridge,
-            scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
-        ): GeminiCliHarness = GeminiCliHarness(bridge, scope)
-    }
-}
-
-data class GeminiCliSdkOptions(
-    val bridgeScript: Path? = null,
-    val sdkModule: String? = null,
-    val nodeCommand: List<String> = listOf(
-        System.getenv("HARNESS_GEMINI_NODE")?.takeIf(String::isNotBlank) ?: "node",
-    ),
-    val processWorkingDirectory: Path? = null,
-    val environment: Map<String, String> = emptyMap(),
-)
-
-private class GeminiSession(
-    private val state: BridgeHarnessRuntime.SessionState,
-    override val spec: AgentSpec,
-    private val bridge: SdkBridge,
-    private val runtime: BridgeHarnessRuntime,
-) : AgentSession {
-    override val id: SessionId get() = state.id
-
-    override suspend fun execute(input: AgentInput): BridgeAgentExecution =
-        runtime.execute(state, mapEvent = { executionId -> GeminiEventMapper(executionId)::map }) {
-            val result = bridge.request(
-                "start_execution",
-                buildJsonObject {
-                    put("sessionId", id.value)
-                    put("input", input.toBridgeJson())
-                },
-            )
-            ExecutionId(result.string("executionId"))
-        }
-
-    override suspend fun release() = runtime.release(state)
-}
-
-private fun AgentSpec.toBridgeJson(): JsonObject = buildJsonObject {
-    instructions?.let { put("instructions", it) }
-    model?.let { put("model", it) }
-    workingDirectory?.let { put("workingDirectory", it) }
-    put("skills", buildJsonArray {
-        skills.forEach { skill ->
-            add(buildJsonObject {
-                put("name", skill.name)
-                put("path", skill.path)
-            })
-        }
+/** Task port connected to the official Gemini CLI SDK's session/sendStream lifecycle. */
+open class GeminiCliHarness protected constructor(bridge: SdkBridge, scope: CoroutineScope, namespace: StorageNamespace?) :
+    ProcessTaskHarness(bridge, scope, storageNamespace = namespace) {
+    override val provider = ProviderId("gemini-cli")
+    override val support = SupportReport(mapOf(
+        Capability.CALLER_APPROVAL to Support.Unsupported("The SDK connection has no approval handler"),
+        Capability.QUESTIONS to Support.Unsupported("The SDK connection has no typed question handler"),
+        Capability.PERSISTENCE to if (namespace != null) Support.Conditional(SupportScope.SESSION, "Same application process; no concurrent access") else Support.Unsupported("Configure storageNamespace"),
+        Capability.WORKSPACE to Support.Supported,
+        Capability.EXECUTION_CONSTRAINT to Support.Unsupported("The SDK does not expose policy enforcement"),
+        Capability.STRUCTURED_OUTPUT to Support.Unsupported("Schema enforcement is not configured"),
+        Capability.DIAGNOSTICS to Support.Supported,
+    ))
+    override fun validate(spec: SessionSpec) = CompatibilityReport(buildList {
+        addAll(persistenceIssues(spec))
+        if (spec.requirements.approval != ApprovalRequirement.ProviderDefault)
+            add(CompatibilityIssue("requirements.approval", "The SDK does not expose approval mediation"))
+        if (spec.requirements.questions != QuestionRequirement.NotRequired)
+            add(CompatibilityIssue("requirements.questions", "The SDK does not expose typed questions"))
+        if (spec.requirements.execution != ExecutionConstraint.ProviderDefault)
+            add(CompatibilityIssue("requirements.execution", "The SDK does not expose filesystem or network enforcement"))
     })
-}
-
-private fun AgentInput.toBridgeJson(): JsonObject = when (this) {
-    is AgentInput.Text -> buildJsonObject {
-        put("type", "text")
-        put("text", text)
+    override fun sessionPayload(spec: SessionSpec) = buildJsonObject {
+        spec.instructions?.let { put("instructions", it) }
+        spec.model?.let { put("model", it) }
+        (spec.requirements.workspace as? WorkspaceRequirement.Required)?.let { workspace ->
+            workspace.workingDirectory?.let { put("workingDirectory", it) }
+            put("skills", buildJsonArray { workspace.skills.forEach { skill -> add(buildJsonObject {
+                put("name", skill.name); put("path", skill.path); put("activate", skill.activate)
+            }) } })
+        }
+    }
+    override fun ingest(task: ManagedTask, spec: SessionSpec, request: TaskRequest): (JsonObject) -> Unit =
+        GeminiTaskMapper(task, spec)::accept
+    private class Persistent(bridge: SdkBridge, scope: CoroutineScope, namespace: StorageNamespace) :
+        GeminiCliHarness(bridge, scope, namespace), PersistentSessions {
+        override suspend fun reopenSession(ref: PersistentSessionRef, spec: SessionSpec) = reopen(ref, spec)
+    }
+    companion object {
+        fun launch(options: GeminiCliSdkOptions = GeminiCliSdkOptions(), storageNamespace: StorageNamespace? = null): GeminiCliHarness {
+            val script = options.bridgeScript ?: EmbeddedBridgeResource.extract(GeminiCliHarness::class.java,
+                "/dev/harnessprotocol/gemini/gemini_cli_sdk_bridge.mjs", ".mjs")
+            val environment = options.environment + (options.sdkModule?.let { mapOf("GEMINI_CLI_SDK_MODULE" to it) } ?: emptyMap())
+            return usingBridge(JsonLineProcessBridge(options.nodeCommand + script.toAbsolutePath().toString(),
+                options.processWorkingDirectory, environment), storageNamespace = storageNamespace)
+        }
+        fun usingBridge(bridge: SdkBridge, scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default), storageNamespace: StorageNamespace? = null): GeminiCliHarness =
+            if (storageNamespace == null) GeminiCliHarness(bridge, scope, null) else Persistent(bridge, scope, storageNamespace)
     }
 }
-
-private fun JsonObject.string(name: String): String =
-    requireNotNull(this[name]) { "SDK bridge response is missing '$name': $this" }.jsonPrimitive.content
-
-private const val SDK_POLICY_LIMITATION =
-    "Gemini CLI has this policy purpose, but the current SDK does not expose a policy/approval bridge; refusing silent degradation"

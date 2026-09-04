@@ -32,36 +32,40 @@ AgentHarness                   하네스 제공 경계
 
 ## 문서와 구현 상태
 
-**공개 Port와 KDoc은 `dev.harnessprotocol`에 선언돼 있다. 실제 adapter·factory는 아직 `legacy` API를 사용한다.** 새 Port 예시는 현재 adapter를 그대로 실행하는 사용법이 아니다. 공개 모델의 결정과 리뷰 반영은 [공개 모델](docs/public-model.md)을 따른다.
+**Codex·Gemini CLI·Koog adapter와 `Harnesses` factory는 새 `dev.harnessprotocol` Port를 사용한다.** 공통 시나리오 7개를 세 실제 runtime에 적용한 21개와 구현별 4개, 총 25개가 통과했다. 임시 참조 하네스는 제거했다. 전체 계약 인증과 실모델 검증은 별도이며, 구현 범위·발견한 결함·남은 gate는 [실제 adapter 검증](docs/native-port-validation.md), 공개 모델은 [공개 모델](docs/public-model.md)을 따른다.
 
-| 읽는 순서 | 문서 |
-|---|---|
-| 목적과 판단 기준 | [설계 선언](AHP_CHARTER.md), [Semantic contract](docs/semantic-contract.md) |
-| 개념과 이름 | [추상 개정과 용어](docs/abstraction-and-terminology.md) |
-| 동작 계약 | [Protocol reference](docs/protocol-reference.md), [Lifecycle](docs/lifecycle-and-concurrency.md), [Event contract](docs/event-contract.md) |
-| 추가로 요구할 보장 | [선택 계약과 검토 항목](docs/capability-candidates.md) |
-| 구현 전환 | [공개 모델](docs/public-model.md), [Port revision plan](docs/port-revision-plan.md), [Provider mapping](docs/provider-mapping.md), [Testing](docs/testing.md) |
-| 배포와 구현 세부 | [Distribution](docs/distribution.md), [Bridge protocol](docs/bridge-protocol.md) |
-| 실증 근거 | [Koog 검증 계획](docs/koog-abstraction-validation-plan.md), [검증 결과](docs/koog-abstraction-validation-results.md) |
-| 회귀 검토 | [문서 개편 후 회귀 검토](docs/regression-review.md): 복원한 보장, 새 설계의 경계 조건, 기존 suite 재실행 결과 |
-| 총평 반영 | [채택·수정·보류 판단](docs/review-disposition.md): 종결 증거, 문맥 조정, 지원 탐색, 이벤트 존치와 남은 검증 |
-| Codex 기반 선택 | [codex-agent 검토](docs/codex-agent-adoption-review.md), [저수준 client 조사](docs/spikes/2026-09-03-codex-low-level-client.md) |
+| 읽는 순서       | 문서                                                                                                                                                        |
+|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Quickstart  | [FAQ for newcommers](docs/FAQ.md)                                                                                                                         |
+| 목적과 판단 기준   | [설계 선언](AHP_CHARTER.md), [Semantic contract](docs/semantic-contract.md)                                                                                   |
+| 개념과 이름      | [추상 개정과 용어](docs/abstraction-and-terminology.md)                                                                                                          |
+| 동작 계약       | [Protocol reference](docs/protocol-reference.md), [Lifecycle](docs/lifecycle-and-concurrency.md), [Event contract](docs/event-contract.md)                |
+| 추가로 요구할 보장  | [선택 계약과 검토 항목](docs/capability-candidates.md)                                                                                                             |
+| 구현 전환       | [공개 모델](docs/public-model.md), [Port revision plan](docs/port-revision-plan.md), [Provider mapping](docs/provider-mapping.md), [Testing](docs/testing.md) |
+| 배포와 구현 세부   | [Distribution](docs/distribution.md), [Bridge protocol](docs/bridge-protocol.md)                                                                          |
+| 실증 근거       | [Koog 검증 계획](docs/koog-abstraction-validation-plan.md), [검증 결과](docs/koog-abstraction-validation-results.md)                                              |
+| 회귀 검토       | [문서 개편 후 회귀 검토](docs/regression-review.md): 복원한 보장, 새 설계의 경계 조건, 기존 suite 재실행 결과                                                                          |
+| 총평 반영       | [채택·수정·보류 판단](docs/review-disposition.md): 종결 증거, 문맥 조정, 지원 탐색, 이벤트 존치와 남은 검증                                                                             |
+| Codex 기반 선택 | [codex-agent 검토](docs/codex-agent-adoption-review.md), [저수준 client 조사](docs/spikes/2026-09-03-codex-low-level-client.md)                                  |
 
-확정된 의미와 아직 정해야 할 공개 필드·선택 계약 API는 문서에서 구분한다. 기존 버전의 설계 이력은 Git에서 확인한다.
+공개 필드와 선택 계약 API는 선언돼 있다. 남은 작업은 실제 adapter의 미검증 보장과 선택 기능의 구현·검증이며, 기존 설계 이력은 Git에서 확인한다.
 
 ## 구현 구성
 
 | 위치 | 역할과 전환 상태 |
 |---|---|
-| `harness-protocol` | `dev.harnessprotocol`에 확정된 공개 Port. 기존 구현이 쓰는 타입은 `dev.harnessprotocol.legacy`에 남아 있으며 전환 후 제거한다. |
-| `harness-codex`, `harness-gemini-cli` | 기존 provider adapter. 새 필수 계약과 지원하는 선택 계약에 맞춰 수정한다. |
+| `harness-protocol` | `dev.harnessprotocol`에 확정된 공개 Port. 모든 adapter·회귀 검사·독립 실험이 이 Port를 사용하며 이전 패키지는 제거했다. |
+| `harness-codex`, `harness-gemini-cli` | 새 Port를 실제 native SDK에 연결한다. 기존 회귀도 현재 구현을 검증하며 별도 구 구현은 없다. |
+| `harness-koog` | 실제 Koog graph·ToolRegistry를 직접 연결하는 새 Port adapter. 모델 executor는 구성 경계에서 제공한다. |
+| `harness-runtime` | adapter가 선택하여 사용하는 Task 수명·관찰 구현. 공개 Port의 필수 기반이 아니다. |
 | `harness-process-bridge`, `bridges` | 두 process adapter의 내부 transport와 host. 모든 하네스의 필수 기반이 아니다. |
-| `harness-adapter-testkit` | 기존 bridge 기반 검사. 공개 Port의 행동 검사와 구현별 투영 검사를 분리한다. |
-| `harness-conformance` | 새 Port의 적합성 검사와 그 fixture seam. 구현과 독립적으로 작성한다. |
-| `harness-bundle` | 현재 adapter 선택·배포 편의 모듈. Koog 실험은 아직 포함하지 않는다. |
-| `experiments/koog-validation` | 실제 Koog 런타임과 통제된 모델 응답을 사용한 격리 실험. 새 계약에 적합한 production adapter는 아니다. |
+| `harness-adapter-testkit` | 현재 process adapter의 공통 회귀, 독립적인 설정 투영, SDK 이벤트 매핑 검사. |
+| `harness-conformance` | 실제 adapter를 제어할 fixture seam과 `testFixtures`의 재사용 시나리오 48개. 임시 하네스와 실행 subclass는 없으며 시나리오 정의 자체는 통과 수에 넣지 않는다. |
+| `harness-bundle` | Codex·Gemini·Koog adapter 구성 편의. Koog의 executor·model을 명시적으로 받는다. |
+| `harness-native-integration` | 세 실제 runtime과 통제된 모델 경계로 공개 동작을 검증한다. `-PnativeHarnessTests`로 실행한다. |
+| `experiments/koog-validation` | 현재 Port를 사용하는 별도 Koog 승인·질문·파일 보관 구성의 격리 실험. production 기본 구성과 구별한다. |
 
-Koog 실험 18개와 기존 회귀 71개가 통과한 [기록](experiments/koog-validation/evidence/verification.json)은 기존 계약을 대상으로 한 증거다. 개정 계약의 세 adapter 통합 통과나 실모델 검증을 뜻하지 않는다.
+Koog 실험 18개와 기존 회귀 71개가 통과한 [기록](experiments/koog-validation/evidence/verification.json)은 기존 계약을 대상으로 한 증거다. 현재 실행 결과는 [native 검증](docs/native-port-validation.md)과 [legacy 이전 검토](docs/legacy-port-migration.md)에 별도로 기록한다. 실모델 검증을 뜻하지 않는다.
 
 ## 현재 구현을 빌드·검증하기
 
@@ -71,6 +75,7 @@ Koog 실험 18개와 기존 회귀 71개가 통과한 [기록](experiments/koog-
 ./gradlew.bat test
 ./gradlew.bat hostTests
 ./gradlew.bat check -PstrictHostTests
+./gradlew.bat test hostTests -PnativeHarnessTests -PstrictHostTests
 ```
 
-Host 준비와 검증 범위는 [Testing](docs/testing.md), 현재 artifact와 실행 환경 요구는 [Distribution](docs/distribution.md)에 있다. [samples/basic](samples/basic)은 기존 API의 소비 예제이며 구현 전환 때 함께 갱신한다.
+Host 준비와 검증 범위는 [Testing](docs/testing.md), native runtime 준비·결과는 [실제 adapter 검증](docs/native-port-validation.md), artifact 구성은 [Distribution](docs/distribution.md)에 있다. [samples/basic](samples/basic)은 새 factory의 소비 예제다. 이번 작업에서는 artifact를 발행하지 않았다.

@@ -1,6 +1,12 @@
 # Testing
 
-검증 기준은 [Semantic contract](semantic-contract.md)와 [개정 계약](protocol-reference.md)이다. 테스트는 기존 구현 형태의 보존보다 비즈니스가 관찰하는 보장을 확인한다. 기존 adapter suite는 legacy 대상이고 새 값 타입 회귀 검사는 PublicModelTest다. 아래 필수 공통 시나리오는 `harness-conformance`의 `HarnessConformanceCoreTest`/`HarnessConformanceCleanupTest`(합쳐 48개, 아래 "현재 검증 위치와 실행 명령" 표의 harness-conformance 행 참고)로 구현·실행됐다. 세 adapter(Codex/Gemini/Koog) 각각의 `HarnessFixture` 구현과 그 fixture로 이 suite를 상속·통과시키는 작업은 아직 후속이며, 지금은 참조용 in-memory `ReferenceFixture`(harness-conformance/src/test/.../reference)만 이 suite를 채워 실행 가능함을 증명한다.
+## 실제 adapter 전환 현황
+
+세 adapter의 새 Port 실행 검증은 `harness-native-integration`에서 수행한다. 실제 Codex App Server·Gemini SDK/core·Koog graph에 통제된 모델 경계를 연결하며, 실제 입력·지시·이력과 도구 효과를 확인한다. 준비·실행 결과·기존 시나리오에서 보완할 판정은 [실제 adapter 검증](native-port-validation.md)에 기록했다. factory·adapter·기존 회귀 suite·독립 Koog 실험 모두 현재 Port를 사용하며 구 실행 경로는 제거했다.
+
+임시 `ReferenceFixture`·참조 하네스·실행 subclass는 제거했다. `harness-conformance/src/testFixtures`에는 48개 시나리오 정의만 보존한다. 현재 실제 runtime 검사는 25개이며, 이 정의들의 개수를 실행·통과 수에 더하지 않는다. profile별 선택 기능, 실제 문맥 관찰, 정리 시간, 효과와 종결의 구별을 보완하면서 남은 시나리오를 실제 adapter에 적용한다.
+
+검증 기준은 [Semantic contract](semantic-contract.md)와 [개정 계약](protocol-reference.md)이다. 기본 동작의 실행 주체는 실제 세 adapter이며 모델 경계만 통제한다. 별도로 adapter suite는 현재 구현의 SDK 변환·transport 회귀를, PublicModelTest는 값 타입을 검사한다. 아래 목록은 계약상 검사해야 할 범위로서 이미 실행한 항목과 미검증 항목을 모두 포함한다. 항목이 코드나 목록에 존재하는 것과 실제 검증을 통과한 것은 구별한다.
 
 ## 공통 검사와 구현별 검사
 
@@ -70,23 +76,26 @@ TaskDiagnostics가 지원되면 진단 observer만 느리게 하거나 진단을
 
 ## 현재 검증 위치와 실행 명령
 
-다음은 아직 이전 API를 사용하는 구현별 검증 자산이다.
+현재 검증 자산은 다음과 같다. native·값 타입·SDK 경계 회귀와 실행되지 않는 시나리오 라이브러리를 구별한다.
 
 | 위치 | 현재 내용 / 전환 |
 |---|---|
-| harness-adapter-testkit | RecordingBridge, AgentHarnessContractTest, SpecSpace/IntentProjection. 공통 행동과 bridge 투영을 분리할 대상 |
+| harness-adapter-testkit | RecordingBridge, AgentHarnessContractTest, SpecSpace/IntentProjection. 현재 process adapter의 공통 회귀와 독립적 intent 투영 검사. TaskMappingProbe는 production ManagedTask의 mapper 출력을 관찰한다 |
 | harness-protocol/src/test | PublicModelTest: 미확인·부재·unknown 합산·독립 제약·명시 승인 범위의 값 타입 회귀 |
-| harness-conformance | HarnessConformanceCoreTest(29개)·HarnessConformanceCleanupTest(19개), 총 48개 필수 공통 시나리오. 참조용 in-memory ReferenceFixture로 구현·실행·통과 확인. Codex/Gemini/Koog 각각의 HarnessFixture 구현과 그 fixture로 이 suite를 상속·통과시키는 작업은 미구현 |
-| harness-codex/src/test, harness-gemini-cli/src/test | 기존 공통 suite와 mapper·정책·interaction 검사 |
-| harness-process-bridge/src/test | BridgeProtocolTest, ProcessLifecycleTest |
+| harness-conformance | main의 HarnessFixture seam, testFixtures의 Core 29개·Cleanup 19개 시나리오 정의. `testImplementation(testFixtures(project(":harness-conformance")))`로 소비한다. check에서 컴파일하며 독립 실행·통과 수는 0 |
+| harness-codex/src/test, harness-gemini-cli/src/test | 현재 Port 공통 suite, mapper·정책·interaction 검사. Gemini에는 실제 process를 구동하는 ProcessLifecycleTest도 포함 |
+| harness-process-bridge/src/test | BridgeProtocolTest |
+| harness-native-integration/src/test | 실제 세 adapter의 새 Port 동작. native 입력·문맥·취소·재개·관찰 및 Koog 실제 도구 효과 검사 |
 | bridges/tests | Python CodexClient + stub App Server, Node host 검사 |
 | experiments/koog-validation | Koog native/Port 실험. [재현 안내](../experiments/koog-validation/README.md) |
 
 ```powershell
 ./gradlew.bat test
+./gradlew.bat :harness-conformance:testFixturesClasses
 ./gradlew.bat hostTests
 ./gradlew.bat check -PstrictHostTests
 ./gradlew.bat -p experiments/koog-validation test
+./gradlew.bat test hostTests -PnativeHarnessTests -PstrictHostTests
 ```
 
 Host 검사의 현재 준비 사항은 Python 환경의 `bridges/requirements-codex.txt` 및 pytest 설치, Node 20+다. hostTests는 interpreter가 없으면 skip할 수 있으므로 전체 검증을 요구할 때 strictHostTests gate를 사용하고 실제 실행된 수를 확인한다.
@@ -97,7 +106,7 @@ Host 검사의 현재 준비 사항은 Python 환경의 `bridges/requirements-co
 
 Koog 실험 18개와 기존 회귀 71개의 [검증 기록](../experiments/koog-validation/evidence/verification.json)은 이전 계약의 baseline이다. 새 계약의 적합성 통과로 재사용하지 않는다. Python/Node host suite와 실모델은 해당 실험 작업에서 별도로 실행하지 않았다.
 
-새 Port 계약의 필수 공통 시나리오 48개(HarnessConformanceCoreTest 29개, HarnessConformanceCleanupTest 19개)는 참조용 in-memory ReferenceFixture(harness-conformance/src/test/.../reference)로 `./gradlew --offline :harness-conformance:test` 실행·통과를 반복 확인했다(연속 실행에서 skip·failure 없이 안정). 이는 새 seam(HarnessFixture)이 실제로 구동 가능하고 시나리오가 참조 구현 하나에서는 통과함을 입증한 것이며, Codex/Gemini/Koog 세 adapter가 이 계약을 지킨다는 증거가 아니다 — 각 adapter의 HarnessFixture 구현과 그 fixture로 이 suite를 상속·통과시키는 작업은 아직 하지 않았다. 기존 legacy adapter suite(harness-codex, harness-gemini-cli, harness-process-bridge)는 여전히 이전 API(dev.harnessprotocol.legacy.*)만 대상으로 하며, 새 Port 시나리오로 승격할 대상은 없었다 — 전량 SDK 특정 관심사(event mapper, process lifecycle, bridge protocol 등)로 확인했다.
+참조 하네스에서 얻었던 48개 통과는 제거 전의 이력이며 현재 검증 수에서 제외한다. 현재 집계와 제거 전 기록은 [native 검증 기록](native-port-validation.md#실행-결과)에서 구별한다. 이전 suite의 유효한 공통 행동과 SDK 특정 검사는 현재 adapter로 이전했다. 관찰 상실·정리 만료는 Unresolved, 재개는 명시적 persistence 요구, 범위 없는 지속 승인은 선택지 제외로 검증한다. `RecordingBridge`, stub App Server, 모델 응답 제어는 이 구현 경계 검사용이며 삭제한 임시 Port 구현과 역할이 다르다.
 
 실제 App Server 승인 payload 검증과 Gemini SDK build의 제약 확인은 남아 있다. 통합 결과는 세 구현별로 보고하며 일부 환경이 준비되지 않으면 부분 완료로 표시한다.
 
