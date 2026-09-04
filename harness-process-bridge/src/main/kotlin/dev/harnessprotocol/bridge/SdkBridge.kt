@@ -254,17 +254,26 @@ class JsonLineProcessBridge(
         val active = process
         // App Server is a child of the Python host. Destroying only the host leaves
         // its owned runtime alive and keeps native session files locked on Windows.
-        val descendants = active?.descendants()?.use { it.toList() }.orEmpty()
+        val owned = linkedSetOf<ProcessHandle>()
+        active?.toHandle()?.let { owned += it }
+        fun captureDescendants() {
+            // A runtime may spawn helpers during graceful shutdown. Revisit every
+            // known ancestor, including descendants whose original parent exited.
+            owned.toList().forEach { root -> root.descendants().use { owned.addAll(it.toList()) } }
+        }
+        captureDescendants()
         // Let the host execute its finally/client.close path before force cleanup.
         runCatching { activeWriter?.close() }
         active?.waitFor(500, java.util.concurrent.TimeUnit.MILLISECONDS)
-        descendants.asReversed().forEach { it.destroy() }
-        active?.destroy()
+        captureDescendants()
+        owned.toList().asReversed().forEach { it.destroy() }
         active?.waitFor(250, java.util.concurrent.TimeUnit.MILLISECONDS)
-        descendants.filter { it.isAlive }.forEach { it.destroyForcibly() }
-        if (active?.isAlive == true) active.destroyForcibly()
+        captureDescendants()
+        owned.toList().asReversed().filter { it.isAlive }.forEach { it.destroyForcibly() }
         runCatching {
-            java.util.concurrent.CompletableFuture.allOf(*descendants.map { it.onExit() }.toTypedArray())
+            // The parent host can still hold its working directory after destroyForcibly.
+            // Await it within the same final cleanup allowance as its descendants.
+            java.util.concurrent.CompletableFuture.allOf(*owned.map { it.onExit() }.toTypedArray())
                 .get(250, java.util.concurrent.TimeUnit.MILLISECONDS)
         }
         process = null
