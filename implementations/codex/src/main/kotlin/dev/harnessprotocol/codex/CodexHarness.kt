@@ -82,8 +82,15 @@ open class CodexHarness protected constructor(
         fun launch(options: CodexSdkOptions = CodexSdkOptions(), storageNamespace: StorageNamespace? = null): CodexHarness {
             val script = options.bridgeScript ?: EmbeddedBridgeResource.extract(CodexHarness::class.java,
                 "/dev/harnessprotocol/codex/codex_sdk_bridge.py", ".py")
-            return usingBridge(JsonLineProcessBridge(options.pythonCommand + script.toAbsolutePath().toString(),
-                options.processWorkingDirectory, options.hostEnvironment()), storageNamespace = storageNamespace)
+            return usingBridge(JsonLineProcessBridge(
+                command = options.pythonCommand + script.toAbsolutePath().toString(),
+                workingDirectory = options.processWorkingDirectory,
+                environment = options.hostEnvironment(),
+                environmentMode = when (options.environmentMode) {
+                    CodexSdkOptions.EnvironmentMode.INHERIT -> dev.harnessprotocol.bridge.ProcessEnvironmentMode.INHERIT
+                    CodexSdkOptions.EnvironmentMode.REPLACE -> dev.harnessprotocol.bridge.ProcessEnvironmentMode.REPLACE
+                },
+            ), storageNamespace = storageNamespace)
         }
         fun usingBridge(bridge: SdkBridge, scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default), storageNamespace: StorageNamespace? = null): CodexHarness =
             if (storageNamespace == null) CodexHarness(bridge, scope, null) else Persistent(bridge, scope, storageNamespace)

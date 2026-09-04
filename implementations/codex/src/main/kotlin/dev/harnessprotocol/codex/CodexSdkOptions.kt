@@ -12,7 +12,10 @@ data class CodexSdkOptions(
     val environment: Map<String, String> = emptyMap(),
     /** Specific Codex executable for the Python SDK; `null` uses its bundled runtime. */
     val codexExecutable: Path? = null,
-)
+    val environmentMode: EnvironmentMode = EnvironmentMode.INHERIT,
+) {
+    enum class EnvironmentMode { INHERIT, REPLACE }
+}
 
 internal const val CODEX_EXECUTABLE_ENV = "HARNESS_CODEX_EXECUTABLE"
 
@@ -21,4 +24,3 @@ internal fun CodexSdkOptions.hostEnvironment(): Map<String, String> = buildMap {
     remove(CODEX_EXECUTABLE_ENV)
     codexExecutable?.let { put(CODEX_EXECUTABLE_ENV, it.toAbsolutePath().normalize().toString()) }
 }
-

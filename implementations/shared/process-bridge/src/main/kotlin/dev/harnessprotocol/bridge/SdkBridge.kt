@@ -42,6 +42,15 @@ interface SdkBridge : AutoCloseable {
     fun release(executionId: String)
 }
 
+/** Controls whether an SDK host inherits the launcher process environment. */
+enum class ProcessEnvironmentMode {
+    /** Keep the parent environment and overlay explicitly supplied entries. */
+    INHERIT,
+
+    /** Start from an empty environment containing only explicitly supplied entries. */
+    REPLACE,
+}
+
 /** Transport evidence used by the new task port; ordinary failures do not prove non-delivery. */
 interface ConfirmedSdkBridge : SdkBridge {
     suspend fun requestConfirmed(method: String, params: JsonObject = JsonObject(emptyMap())): JsonObject
@@ -56,6 +65,7 @@ class JsonLineProcessBridge(
     private val command: List<String>,
     private val workingDirectory: Path? = null,
     private val environment: Map<String, String> = emptyMap(),
+    private val environmentMode: ProcessEnvironmentMode = ProcessEnvironmentMode.INHERIT,
     private val json: Json = DefaultBridgeJson,
 ) : ConfirmedSdkBridge {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -150,6 +160,7 @@ class JsonLineProcessBridge(
 
             val builder = ProcessBuilder(command)
             workingDirectory?.let { builder.directory(it.toFile()) }
+            if (environmentMode == ProcessEnvironmentMode.REPLACE) builder.environment().clear()
             builder.environment().putAll(environment)
             val started = builder.start()
             process = started
