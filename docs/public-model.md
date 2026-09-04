@@ -9,7 +9,7 @@
 | 영역 | 결정과 의미 |
 |---|---|
 | 요구와 선택 연산 | 요구는 SessionRequirements·TaskRequirements로 직접 전달한다. 영속 재개 연산은 PersistentSessions, 진단 관찰은 TaskDiagnostics로 분리한다. 조회 없이 요구할 수 있다. |
-| 구성 | SessionSpec은 지속 설정·session 요구, TaskRequest는 입력·작업 요구다. ExecutionConstraint의 filesystem과 network는 서로 독립적으로 요구하며 둘 다 생략하려면 ProviderDefault를 사용한다. |
+| 구성 | SessionSpec은 지속 설정·session 요구, TaskRequest는 입력·작업 요구와 provider별 reasoning effort 선택이다. `null` effort는 session/provider 기본값을 유지하며 adapter는 지정된 값을 보존하거나 작업 시작 전에 거절한다. ExecutionConstraint의 filesystem과 network는 서로 독립적으로 요구하며 둘 다 생략하려면 ProviderDefault를 사용한다. |
 | 종결과 산출물 | awaitOutcome은 sealed TaskOutcome을 반환한다. 네 outcome 모두 nullable output·usage·sessionUsage를 제공한다. Completed에서도 산출물이 없을 수 있으며 null을 빈 텍스트로 합성하지 않는다. |
 | 조건별 검증 | CompatibilityReport.status는 COMPATIBLE·INCOMPATIBLE·UNCONFIRMED다. 진단 kind는 ADVISORY·UNSUPPORTED·UNCONFIRMED이며 확인된 미지원이 있으면 거절하되 나머지 미확인 이유도 보존한다. |
 | 검증 fixture | 구성 profile과 구체적인 요구 사례를 제공한다. 명령은 native 경계에 사실을 유도하고, 입력·문맥·효과는 실제 경계에서 독립 관찰한다. public state/outcome을 직접 설정해서 통과시키지 않는다. |

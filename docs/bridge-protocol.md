@@ -17,7 +17,7 @@ Host는 stdin 요청과 stdout 응답·이벤트를 한 줄에 하나의 JSON �
 | cancel_execution | executionId | 빈 객체 |
 | respond_interaction | executionId, interactionId, response(decision) | 빈 객체 또는 error |
 
-현재 envelope는 instructions/model/workingDirectory, skills(name/path), filesystem/additionalWritableRoots/network/approval을 사용한다. 생략과 빈 문자열의 차이를 보존하며 Gemini 경로는 앞선 validation에서 지원하지 않는 policy를 거절한다. 현재 decision은 approve_once, approve_for_session, decline, cancel이다.
+현재 envelope는 instructions/model/reasoningEffort/workingDirectory, skills(name/path), filesystem/additionalWritableRoots/network/approval을 사용한다. Codex는 reasoningEffort를 `config.model_reasoning_effort`로 전달한다. Gemini 경로는 reasoning effort와 지원하지 않는 policy를 앞선 validation에서 거절한다. 생략과 빈 문자열의 차이를 보존한다. 현재 decision은 approve_once, approve_for_session, decline, cancel이다.
 
 ```json
 {"kind":"request","id":1,"method":"release_session","params":{"sessionId":"session-1"}}

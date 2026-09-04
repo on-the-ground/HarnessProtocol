@@ -26,6 +26,7 @@ class GeminiCliHarnessContractTest : AgentHarnessContractTest() {
     override fun projection() = IntentProjection { spec, sent ->
         sent.assertNullableString("instructions", spec.instructions)
         sent.assertNullableString("model", spec.model)
+        sent.assertAbsent("reasoningEffort", "unsupported reasoning-effort selections are rejected")
         sent.assertNullableString("workingDirectory", spec.workingDirectory)
         assertEquals(spec.skills.map { it.name to it.path }, sent.objects("skills").map { it.string("name") to it.string("path") })
         // The Gemini SDK exposes no policy surface. validate() rejects every non-default
@@ -56,6 +57,14 @@ class GeminiCliHarnessContractTest : AgentHarnessContractTest() {
 }
 
 class GeminiCliPolicyTest {
+    @Test
+    fun `reasoning effort is rejected where unsupported`() {
+        val harness = GeminiCliHarness.usingBridge(RecordingBridge())
+        val report = harness.validate(AgentSpec(reasoningEffort = "high"))
+        kotlin.test.assertFalse(report.isCompatible)
+        assertEquals("reasoningEffort", report.issues.single().path)
+    }
+
     @Test
     fun `caller decides is rejected where unsupported`() {
         val harness = GeminiCliHarness.usingBridge(RecordingBridge())

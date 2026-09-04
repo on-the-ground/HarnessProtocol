@@ -135,6 +135,12 @@ sealed interface DiagnosticsRequirement {
 data class TaskRequest(
     val input: TaskInput,
     val requirements: TaskRequirements = TaskRequirements(),
+    /**
+     * Provider가 이해하는 작업별 추론 강도 식별자. `null`은 session/provider 기본값을 유지한다.
+     *
+     * Adapter는 지정된 값을 그대로 보존하거나 작업을 시작하기 전에 호환성 오류로 거절해야 한다.
+     */
+    val reasoningEffort: String? = null,
 )
 
 data class TaskRequirements(

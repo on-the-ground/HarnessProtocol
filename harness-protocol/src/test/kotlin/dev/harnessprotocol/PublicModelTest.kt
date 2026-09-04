@@ -10,6 +10,13 @@ import kotlin.test.assertTrue
 /** 공개 모델에서 소실됐던 의미 구별과 잘못된 합산의 회귀 검사. */
 class PublicModelTest {
     @Test
+    fun `reasoning effort is a per-task provider selection`() {
+        val request = TaskRequest(TaskInput.Text("research"), reasoningEffort = "high")
+        assertEquals("high", request.reasoningEffort)
+        assertNull(TaskRequest(TaskInput.Text("research")).reasoningEffort)
+    }
+
+    @Test
     fun `unconfirmed requirement is neither compatible nor a confirmed rejection`() {
         val report = CompatibilityReport(listOf(
             CompatibilityIssue("requirements.persistence", "storage is unreachable", CompatibilityIssueKind.UNCONFIRMED),

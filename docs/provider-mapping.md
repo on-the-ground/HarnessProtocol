@@ -27,7 +27,7 @@
 
 Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`를 사용하며 requirements는 0.147.0을 고정한다. 근거는 [client 조사](spikes/2026-09-03-codex-low-level-client.md)다.
 
-- thread/start·resume의 developerInstructions, model, cwd와 정책 wire 필드를 구성한다.
+- thread/start·resume의 developerInstructions, model, `config.model_reasoning_effort`, cwd와 정책 wire 필드를 구성한다.
 - PROVIDER_DEFAULT는 approval 필드를 생략한다. SDK convenience default로 의미를 바꾸지 않는다.
 - CALLER_DECIDES는 caller 응답을 기다린다. reader thread를 막는 handler의 pending 대기를 먼저 풀고 interrupt/close한다.
 - 현재 handler는 DENY_ALL에서 decline하며, PROVIDER_DEFAULT/AGENT_REVIEWED 경로에 예상 밖 요청이 오면 decline과 경고를 사용한다.
@@ -45,6 +45,7 @@ Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`�
 | Network | workspace-write의 network 설정을 대응. 다른 조합은 거절 | 명시적 정책을 거절 |
 | Caller 승인 | handler 중재 | 명시적 요구 거절 |
 | 지시·모델 | developerInstructions/model | agent instructions/model |
+| 추론 강도 | config.model_reasoning_effort | 현재 adapter에서 명시적 선택 거절 |
 | 작업 위치·skills | cwd, skill 입력과 activation envelope | cwd, skillDir와 activation |
 
 개정에서는 문맥 설정·작업 요구·승인 중재·실행 환경 집행을 분리한다. 지원하지 않는 요구를 생략해 기본값으로 실행하지 않는다. 지시를 user prompt 앞에 붙이는 것과 지속 지시를 전달하는 것은 같은 보장이 아니다. skill 자료 제공과 실행별 활성화도 구별한다.

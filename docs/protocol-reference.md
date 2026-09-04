@@ -20,6 +20,8 @@
 
 `validate`는 요청한 의미를 보존할 수 있는지 진단한다. 검증 대상은 문맥 설정, 작업 요구, 선택 계약의 각 적용 범위에 맞춰 구성한다. 기존 `AgentSpec`을 그대로 받는 시그니처를 최종안으로 확정한 것은 아니다.
 
+`TaskRequest.reasoningEffort`는 provider가 이해하는 작업별 추론 강도 식별자다. `null`은 session/provider 기본값을 유지한다. 값이 지정되면 adapter는 그대로 전달하거나 작업을 수락하기 전에 호환성 오류로 거절하며, 조용히 기본값으로 대체하지 않는다.
+
 현재 선언은 harness의 `validate(SessionSpec)`과 session의 `validate(TaskRequest)`다. `CompatibilityReport.status`는 COMPATIBLE·INCOMPATIBLE·UNCONFIRMED를 구별한다. 미지원이 확인되면 `IncompatibleRequirementException`, 실제 수락 경계에서도 이행 여부를 확인할 수 없으면 `RequirementUnconfirmedException`으로 작업 전에 거절한다. 사전 검증의 미확인을 실제 경계에서 추가 확인해 수락할 수는 있다.
 
 지원 정보의 범위·유효 조건, 요청별 검증과 실제 수락의 관계는 [지원 탐색과 요구 수락](capability-candidates.md#지원-탐색과-요구-수락)을 따른다. 소비자는 기능 목록을 먼저 조회하지 않고도 필수 요구를 전달할 수 있어야 한다.

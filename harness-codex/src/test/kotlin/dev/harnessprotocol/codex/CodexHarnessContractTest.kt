@@ -28,6 +28,7 @@ class CodexHarnessContractTest : AgentHarnessContractTest() {
     override fun projection() = IntentProjection { spec, sent ->
         sent.assertNullableString("instructions", spec.instructions)
         sent.assertNullableString("model", spec.model)
+        sent.assertNullableString("reasoningEffort", spec.reasoningEffort)
         sent.assertNullableString("workingDirectory", spec.workingDirectory)
         assertEquals(spec.skills.map { it.name to it.path }, sent.objects("skills").map { it.string("name") to it.string("path") })
         val fs = spec.executionPolicy.filesystem
