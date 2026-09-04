@@ -58,6 +58,14 @@ Codex에 연결한 공통 [3개 검사](../harness-native-integration/evidence/g
 
 [G01 실행 증거](../harness-native-integration/evidence/requirement-admission.json)의 세 native 구성 × 검증 책임 두 종류 × preflight/direct = 12개 요구 검사가 이 조건을 검증한다. 다섯 profile의 지원 표 검사도 미지원을 확인한다. 기존 91개 실행에 포함된 검사이며 신규 12개로 더하지 않는다. 선택 기능을 새로 구현하거나, 미지원 선택 보장을 기본 계약으로 강제하지 않았다. 향후 schema 실행 경로를 추가하면 VALID/INVALID/NOT_VALIDATED와 부분 산출물의 실제 의미를 별도 실증해야 한다.
 
+## G11 — 사용량의 측정 범위와 보존
+
+공통 사용량 검사 2개를 세 runtime에 연결한 6개, Koog의 여러 모델 호출 구간 검사 1개, G05 산출물·사용량 회귀 18개가 [모두 통과](../harness-native-integration/evidence/g11-accounting.json)했다. 신규 실행은 7개이며 G05의 18개를 다시 더하지 않는다.
+
+같은 session의 세 Task에서 서로 다른 측정값과 실제 측정된 0을 제공해 Task 합계의 초기화와 마지막 UsageChanged/outcome 일치를 확인했다. Codex의 session 누적값은 Task 값과 구별되며, 같은 native 사용량 알림을 재전달해도 중복 합산하지 않는다. Gemini·Koog가 제공하지 않는 session 합계는 null이다. 첫 측정 전에 취소하면 Unknown을 유지한다.
+
+Koog의 실제 두 도구 호출을 포함한 세 모델 호출에서는 일부 구간의 output/total 측정이 누락되면 뒤의 측정된 0으로 합계를 복원하지 않는다. 네 종결 outcome에서 마지막 공개 사용량 snapshot을 보존하며, Koog에는 독립적으로 정한 부분 측정값 10/5/15도 대조했다. Process adapter의 실패·취소·미확정에는 수치 부분 측정을 새로 합성하지 않고 마지막 공개 snapshot과의 일치를 확인했다. 모든 provider의 모든 누락 구간을 같은 방식으로 주입했다고 주장하지 않는다. Port·production 수정은 필요하지 않았다.
+
 ## G12 — 영속 저장 장애와 설정 보존
 
 공통 3개 정의 × 두 영속 runtime = 6개와 G04 회귀 6개가 [모두 통과](../harness-native-integration/evidence/g12-persistence.json)했다. 모르는 참조를 새 session으로 바꾸지 않고 거절한다. 실제 임시 저장소의 이력 파일을 잠시 다른 이름으로 옮기면 reopen은 명시적으로 실패하며, 파일을 복원하면 원래 입력 문맥과 같은 영속 참조를 회수한다. fixture 밖의 파일은 변경하지 않는다.

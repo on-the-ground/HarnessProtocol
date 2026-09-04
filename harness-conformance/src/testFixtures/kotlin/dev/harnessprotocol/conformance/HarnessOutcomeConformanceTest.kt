@@ -22,8 +22,10 @@ abstract class HarnessOutcomeConformanceTest {
             val session = f.harness.createSession(f.spec)
             val task = session.startTask(TaskRequest(TaskInput.Text("partial-output-evidence")))
             val partialSeen = CompletableDeferred<Unit>()
+            var latestUsage = AgentUsage.Unknown
             val events = async(start = CoroutineStart.UNDISPATCHED) {
                 task.events.collect { event ->
+                    if (event is TaskEvent.UsageChanged) latestUsage = event.task
                     val text = when (event) { is TaskEvent.MessageDelta -> event.text; is TaskEvent.MessageCompleted -> event.text; else -> "" }
                     if (text.contains("retained-partial")) partialSeen.complete(Unit)
                 }
@@ -44,6 +46,8 @@ abstract class HarnessOutcomeConformanceTest {
             if (expected != TaskState.COMPLETED) assertFalse(output.complete)
             assertTrue(task.pendingInteractions.value.isEmpty())
             withTimeout(5_000) { events.await() }
+            assertEquals(latestUsage, outcome.usage, "Outcome must retain the last observed task accounting snapshot")
+            f.knownPartialUsage?.let { assertEquals(it, outcome.usage) }
             f.finishModel()
             f.beginModel()
             assertEquals(outcome, task.awaitOutcome())

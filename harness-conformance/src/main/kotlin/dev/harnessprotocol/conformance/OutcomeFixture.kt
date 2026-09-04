@@ -8,6 +8,8 @@ enum class OutputCase { PARTIAL, MISSING, EMPTY }
 interface OutcomeFixture : AutoCloseable {
     val harness: AgentHarness
     val spec: SessionSpec
+    /** Non-null only when the fixture supplies known measurements before the partial-output stop. */
+    val knownPartialUsage: AgentUsage? get() = null
     fun beginModel()
     fun finishModel()
     fun failModel()

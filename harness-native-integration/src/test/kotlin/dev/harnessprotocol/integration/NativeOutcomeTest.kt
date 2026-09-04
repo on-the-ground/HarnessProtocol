@@ -104,6 +104,7 @@ private class ProcessOutcomeFixture(factory: NativeHarnessFactory, directory: Pa
 }
 
 private class KoogOutcomeFixture(private val output: OutputCase) : OutcomeFixture {
+    override val knownPartialUsage = AgentUsage(inputTokens = 10, outputTokens = 5, totalTokens = 15)
     private val begin = CompletableDeferred<Unit>()
     private val finish = CompletableDeferred<Unit>()
     @Volatile private var failed = false
@@ -130,8 +131,9 @@ private class KoogOutcomeFixture(private val output: OutputCase) : OutcomeFixtur
                 OutputCase.MISSING -> Message.Assistant(emptyList<MessagePart.ResponsePart>(), ResponseMetaInfo.Empty)
                 OutputCase.EMPTY -> Message.Assistant("", ResponseMetaInfo.Empty)
                 OutputCase.PARTIAL -> if (calls.getAndIncrement() == 0) Message.Assistant(listOf(
-                    MessagePart.Text("retained-partial"), MessagePart.Tool.Call("wait-partial", "await_evidence", """{"marker":"partial"}""")), ResponseMetaInfo.Empty)
-                else Message.Assistant("retained-partial", ResponseMetaInfo.Empty)
+                    MessagePart.Text("retained-partial"), MessagePart.Tool.Call("wait-partial", "await_evidence", """{"marker":"partial"}""")),
+                    ResponseMetaInfo.Empty.copy(inputTokensCount = 10, outputTokensCount = 5, totalTokensCount = 15))
+                else Message.Assistant("retained-partial", ResponseMetaInfo.Empty.copy(inputTokensCount = 0, outputTokensCount = 0, totalTokensCount = 0))
             }
         }
         override fun executeStreaming(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): Flow<StreamFrame> = error("not used")
