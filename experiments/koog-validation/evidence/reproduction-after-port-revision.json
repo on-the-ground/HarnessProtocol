@@ -1,0 +1,32 @@
+{
+  "verifiedOn": "2026-09-04",
+  "reviewedRevision": "d3f66d0",
+  "protocolBaselineRevision": "d5733031a2533dfd0d56821d912442a08552b0fd",
+  "originalEvidence": "verification.json",
+  "change": "Extract the immutable protocol baseline from local Git history instead of compiling current HEAD protocol sources. Historical experiment Kotlin sources and original evidence are unchanged.",
+  "command": "./gradlew.bat -p experiments/koog-validation test --offline --rerun-tasks --console=plain",
+  "java": "Amazon Corretto 25.0.3; JVM target 21",
+  "buildFileSha256": "9095c386cdcc98a5cef4cc6726da1ffcf76036485f3645ab04d1ec5a997ee504",
+  "hashScope": "Raw working-tree bytes on the recorded Windows environment; line-ending conversion can change file hashes.",
+  "otherOriginalSourceHashesMatched": 10,
+  "externalModelCalls": 0,
+  "suites": [
+    {
+      "name": "experiment.NativeKoogTest",
+      "timestamp": "2026-09-04T05:07:38.175Z",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "experiment.PortScenariosTest",
+      "timestamp": "2026-09-04T05:07:40.095Z",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "limitations": "Historical AHP 0.1.0 experiment with real Koog runtime and scripted model boundary. This is not conformance of a new AgentTask adapter, real-model integration, or process-crash certification."
+}

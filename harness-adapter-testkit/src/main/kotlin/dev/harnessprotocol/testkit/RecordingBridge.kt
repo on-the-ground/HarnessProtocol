@@ -1,6 +1,6 @@
 package dev.harnessprotocol.testkit
 
-import dev.harnessprotocol.HarnessTransportException
+import dev.harnessprotocol.legacy.HarnessTransportException
 import dev.harnessprotocol.bridge.SdkBridge
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow

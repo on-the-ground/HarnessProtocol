@@ -29,7 +29,7 @@
 - 이벤트 유실로 소비자가 조립한 텍스트가 불완전해도 adapter가 전달할 canonical 산출물은 별도로 관리한다.
 - 확보한 업무 산출물은 [모든 outcome의 회수 계약](protocol-reference.md#산출물과-부가-관찰)을 따른다. 부분 산출물의 존재가 `Completed`나 업무 성공의 근거는 아니다.
 
-Provider가 호출자에게 공개하는 설명·요약은 메시지 표시 목적에 포함한다. 관찰 가능한 역할·phase를 보존하는 메시지 계약으로 통합하고, `ReasoningDelta`를 별도의 기본 이벤트 종류로 유지하지 않는다. 설명을 최종 산출물로 오인하거나 비공개 추론을 합성하지 않는다. 역할·phase를 알 수 없으면 unknown을 보존한다. 구체적인 message 식별·phase 타입은 결과·이벤트 API에서 확정한다. 내부 추론 진단은 선택적인 ProviderDiagnostic에 속한다.
+Provider가 호출자에게 공개하는 설명·요약은 메시지 표시 목적에 포함한다. `MessageId`와 `MessageRole`의 ANSWER·COMMENTARY·EXPLANATION·UNKNOWN으로 관찰 가능한 의미를 보존한다. `ReasoningDelta`를 별도의 기본 이벤트로 유지하지 않으며 설명을 최종 산출물로 오인하거나 비공개 추론을 합성하지 않는다. 내부 추론 진단은 선택적인 ProviderDiagnostic에 속한다.
 
 ## 도구와 외부 효과
 
@@ -58,7 +58,7 @@ Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요
 
 현재 답해야 할 요청은 `pendingInteractions` snapshot으로 확인한다. 놓친 요청 이벤트를 기다리느라 응답이 불가능해져서는 안 된다. `respond`는 요청 ID·종류·허용 값과 응답의 일회 처리를 검증한다.
 
-응답 없이 정리할 때 취소 요청, 작업 종결, provider 철회, supersede 등 실제 원인을 전달한다. `CANCELLATION_REQUESTED`는 실제 취소 완료와 다르다. `TASK_ENDED`는 handle의 종결에 따른 정리이며 미확정 작업의 물리적 종료를 주장하지 않는다. 최종 사유 enum은 interaction 모델과 함께 확정한다.
+응답 없이 정리할 때 취소 요청, 작업 종결, provider 철회, supersede 등 실제 원인을 전달한다. `CANCELLATION_REQUESTED`는 실제 취소 완료와 다르다. `TASK_ENDED`는 handle의 종결에 따른 정리이며 미확정 작업의 물리적 종료를 주장하지 않는다. `RESPONSE_UNCONFIRMED`는 수락 여부를 모르기 때문에 재응답 대상에서 제외한 것으로 provider의 거절을 뜻하지 않는다.
 
 종결 시 snapshot 정리와 늦은 응답 거절은 [Lifecycle](lifecycle-and-concurrency.md#상태와-outcome), 수락 확인 유실은 [응답 수락 계약](protocol-reference.md#interaction)을 따른다. 정리 의미 이벤트는 terminal 앞에 놓는다. 느린 observer가 이 이벤트를 놓쳐도 snapshot과 응답 거절 규칙은 유지된다.
 
@@ -68,7 +68,7 @@ Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요
 
 `UsageChanged`는 **그 시점까지의 Task 누적 snapshot**이다. 소비자는 이전 snapshot에 더하지 않고 새 값으로 갱신한다. provider의 증분은 adapter에서 누적하고, 이미 누적인 값은 반복 합산하지 않는다. Session 누적은 실제 관찰할 수 있을 때 별도 범위로 전달한다. 이전 Task의 사용량을 현재 Task에 섞지 않는다.
 
-일부 필드만 알려지면 알려진 필드만 제공한다. unknown을 0으로 만들거나 provider가 제공하지 않은 비용을 계산한 사실처럼 보고하지 않는다. provider 통계 reset·누락으로 Task 누적을 확정할 수 없으면 그 불확실성을 보존한다. outcome의 사용량은 같은 측정 범위의 최종 관찰과 일치해야 한다. nullable 필드의 병합과 공개 필드 배치는 후속 모델에서 정하되, 누적 snapshot이라는 의미를 provider별로 달리하지 않는다. 필수 측정을 요구한 선택 계약이 있다면 unknown으로 대체해 그 계약을 통과하지 않는다.
+일부 필드만 알려지면 알려진 필드만 제공한다. unknown을 0으로 만들거나 provider가 제공하지 않은 비용을 계산한 사실처럼 보고하지 않는다. provider 통계 reset·누락으로 Task 누적을 확정할 수 없으면 그 불확실성을 보존한다. outcome의 사용량은 같은 측정 범위의 최종 관찰과 일치해야 한다. AgentUsage.plus는 겹치지 않는 구간의 합이며 한쪽이 unknown이면 합도 unknown이다. 누적 snapshot은 교체하고, 실제 0을 아는 baseline에만 AgentUsage.Zero를 사용한다. 필수 측정을 요구한 선택 계약이 있다면 unknown으로 대체해 그 계약을 통과하지 않는다.
 
 경고는 유효한 요구가 유지되는 가운데 전달할 부가 정보다. 지원 불가, 필수 의미 손실, 확인된 실패를 warning으로 낮추지 않는다.
 
@@ -77,6 +77,8 @@ Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요
 `TaskCompleted`, `TaskFailed`, `TaskCancelled` 또는 종료 미확정에 대응하는 terminal 이벤트는 `awaitOutcome`과 같은 판정을 나타낸다. 종료 미확정 이벤트의 목표 명칭은 `TaskUnresolved`다. `COMPLETED`도 자연 종료·한도 중단 등의 사유를 보존한다.
 
 `ProviderDiagnostic`은 별도의 선택 관찰 경로다. 원본 SDK 객체 전체를 JSON으로 바꾸거나 모든 vendor 알림을 보존하는 것은 기본 적합성 조건이 아니다. 지원한 진단의 범위·buffering·민감정보 처리·업무 이벤트와의 상관관계는 해당 진단 계약에서 명시한다.
+
+공개 선언은 `TaskDiagnostics.diagnostics: Flow<DiagnosticEvent>`다. `ProviderDiagnostic`과 진단 유실의 `DiagnosticGap`은 TaskEvent에 속하지 않는다. 진단 요구를 수락한 Task는 이 선택 interface를 제공하며 의미 이벤트와 queue·유실 정책을 분리한다. 진단 과다·observer 지연이 기본 이벤트·state·pending·outcome을 방해하지 않아야 한다.
 
 알 수 없는 실패는 공통 메시지와 알려진 사실로 전달한다. 소비자에게 raw payload를 읽어야만 종결 판정을 해석할 수 있도록 요구하지 않는다.
 

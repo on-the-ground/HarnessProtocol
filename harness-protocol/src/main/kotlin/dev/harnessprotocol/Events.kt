@@ -1,440 +1,194 @@
 package dev.harnessprotocol
 
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-
-/** Monotonic lifecycle state of one [AgentExecution]. */
-enum class ExecutionState {
-    /** The provider accepted the request but has not reported active execution yet. */
-    STARTING,
-
-    /** The provider reported that the agent loop is active. */
-    RUNNING,
-
-    /**
-     * One or more [InteractionRequest]s are open; the provider waits for
-     * [AgentExecution.respond] or clears them itself. Returns to [RUNNING] when
-     * the last open request closes.
-     */
-    WAITING,
-
-    /** Terminal state indicating that [AgentExecution.awaitResult] returns successfully. */
-    COMPLETED,
-
-    /** Terminal state indicating that [AgentExecution.awaitResult] throws for a failure. */
-    FAILED,
-
-    /** Terminal state indicating that cancellation ended the execution. */
-    CANCELLED,
-}
-
-/** Lifecycle status of a named tool operation or observable effect. */
-enum class WorkStatus {
-    /** The work item was created or began running. */
-    STARTED,
-
-    /** Incremental progress or output is available; may occur zero or more times. */
-    UPDATED,
-
-    /** The work item finished successfully. */
-    COMPLETED,
-
-    /** The work item attempted to run and failed. */
-    FAILED,
-
-    /** The work item did not run because an approval or policy declined it. */
-    DECLINED,
-
-    /** The work item was stopped before completion because the execution was cancelled. */
-    CANCELLED,
-}
-
-/** Portable classification of why an execution failed, for retry and escalation decisions. */
-enum class FailureKind {
-    /** A retry may succeed: rate limit, overload, connection loss, provider 5xx. */
-    TRANSIENT,
-
-    /** Authentication or authorization failed; retrying is pointless. */
-    AUTHENTICATION,
-
-    /** Provider policy, sandbox, or a safety filter blocked the execution. */
-    POLICY_BLOCKED,
-
-    /** The conversation context exceeded the model window and could not proceed. */
-    CONTEXT_OVERFLOW,
-
-    /** A provider-imposed budget for the session or account was exhausted. */
-    BUDGET_EXCEEDED,
-
-    /** The provider received the request but reported a failure of its own. */
-    PROVIDER,
-
-    /** The SDK host process or its transport failed. */
-    TRANSPORT,
-
-    /** No portable classification could be made. Inspect [AgentEvent.ProviderEventObserved]. */
-    UNKNOWN,
-}
-
-/** Why a successful execution stopped. Only [FINISHED] means the agent chose to stop. */
-enum class StopReason {
-    /** The agent completed its work. */
-    FINISHED,
-
-    /** A provider turn or step limit was reached; [AgentResult.finalMessage] holds what exists so far. */
-    TURN_LIMIT,
-
-    /** The provider detected a repetitive loop and stopped the agent. */
-    LOOP_DETECTED,
-
-    /** The provider stopped the loop for another reason without reporting a failure. */
-    PROVIDER_STOPPED,
-}
-
-/** Portable classification of a [AgentEvent.Warning]. */
-enum class WarningKind {
-    /** Context is near its limit; compaction or failure may follow. */
-    CONTEXT_PRESSURE,
-
-    /** Provider configuration warning, including approval requests declined by adapter policy. */
-    CONFIGURATION,
-
-    /** A provider-reported condition the provider intends to recover from on its own. */
-    RECOVERABLE,
-
-    OTHER,
-}
-
-/** Portable classification of an externally observable agent effect. */
-enum class EffectKind {
-    /** A shell or process command. */
-    COMMAND,
-
-    /** A filesystem mutation or proposed mutation. */
-    FILE_CHANGE,
-
-    /** A web search or web retrieval operation. */
-    WEB_SEARCH,
-
-    /** Provider context compaction or equivalent context maintenance. */
-    CONTEXT_MANAGEMENT,
-
-    /** An effect known to exist but not covered by another portable category. */
-    OTHER,
-}
-
-/** Semantic role of an agent message in the execution result. */
-enum class MessagePhase {
-    /** Interim commentary or progress that is not the final answer. */
-    PROGRESS,
-
-    /** User-facing final-answer content. */
-    FINAL,
-}
-
 /**
- * Provider-neutral observation emitted while one [AgentExecution] runs.
+ * 한 Task 범위의 의미 이벤트.
  *
- * Events delivered by a single execution are ordered as observed by its adapter.
- * The stream is live and is not a durable history API. Exactly one of
- * [ExecutionCompleted], [ExecutionFailed], or [ExecutionCancelled] defines the
- * semantic terminal outcome of a conforming execution, but callers should use
- * [AgentExecution.state] or [AgentExecution.awaitResult] as the authoritative
- * completion mechanism because a late event collector may miss earlier events.
+ * 이벤트는 실시간 관찰 통로이며 영속 업무 이력이 아니다. state, pendingInteractions,
+ * awaitOutcome은 이벤트 구독 여부·속도와 독립이다. 이벤트별 소비 목적은
+ * docs/event-contract.md 의 목적표를 따른다.
  */
-sealed interface AgentEvent {
-    /** Execution to which this event belongs. */
-    val executionId: ExecutionId
+sealed interface TaskEvent {
+    val taskId: TaskId
+
+    /** 작업의 진행이 시작됐다. 대응하는 outcome은 없다. */
+    data class TaskStarted(override val taskId: TaskId) : TaskEvent
 
     /**
-     * Indicates that the provider has begun the agent loop.
+     * 진행 중 메시지의 조각. 같은 [messageId]의 조각을 이어 붙여 표시한다.
      *
-     * It corresponds to [ExecutionState.RUNNING], but consumers must not assume
-     * that observing the state and event is atomic.
-     */
-    data class ExecutionStarted(
-        override val executionId: ExecutionId,
-    ) : AgentEvent
-
-    /**
-     * Incremental agent-authored message text.
-     *
-     * @property text exact fragment to append for this message stream; it may be empty
-     * @property phase whether the fragment is interim progress or final-answer content
+     * @property role 관찰 가능한 역할. 알 수 없으면 [MessageRole.UNKNOWN]을 보존하고 최종
+     * 답변으로 꾸미지 않는다
      */
     data class MessageDelta(
-        override val executionId: ExecutionId,
+        override val taskId: TaskId,
+        val messageId: MessageId,
         val text: String,
-        val phase: MessagePhase = MessagePhase.PROGRESS,
-    ) : AgentEvent
+        val role: MessageRole = MessageRole.UNKNOWN,
+    ) : TaskEvent
 
     /**
-     * Canonical completed text for one agent-authored message.
+     * 한 메시지의 완료 snapshot. 앞선 delta에 이어 붙이는 값이 아니다.
      *
-     * This is a complete message snapshot rather than another append-only delta.
-     * An execution may produce multiple completed progress messages. Use
-     * [AgentResult.finalMessage] as the canonical final answer for the execution.
-     *
-     * @property text complete message text, possibly empty
-     * @property phase whether the completed message is progress or a final answer
+     * 이 이벤트는 표시를 확정할 뿐이며 작업의 [TaskOutput]과 같은 개념이 아니다.
      */
     data class MessageCompleted(
-        override val executionId: ExecutionId,
+        override val taskId: TaskId,
+        val messageId: MessageId,
         val text: String,
-        val phase: MessagePhase = MessagePhase.FINAL,
-    ) : AgentEvent
+        val role: MessageRole = MessageRole.UNKNOWN,
+    ) : TaskEvent
 
     /**
-     * Incremental provider-exposed reasoning text or reasoning summary.
+     * 이름 있는 도구 수행의 lifecycle.
      *
-     * Providers are not required to expose hidden chain-of-thought. The text must
-     * be treated as diagnostic progress rather than the final answer.
-     *
-     * @property text exact reasoning fragment exposed by the provider
-     */
-    data class ReasoningDelta(
-        override val executionId: ExecutionId,
-        val text: String,
-    ) : AgentEvent
-
-    /**
-     * Lifecycle observation for one named provider tool call.
-     *
-     * A started item may have zero or more updates and at most one work-terminal
-     * status. Execution cancellation or transport failure may end observation
-     * before a work-terminal event is available.
-     *
-     * @property workId identity correlating lifecycle events for this call
-     * @property name provider tool name; portable logic should prefer [EffectChanged]
-     * when an effect category is available
-     * @property status current lifecycle status
-     * @property arguments provider arguments, or [JsonNull] when unavailable
-     * @property result provider result, or [JsonNull] before or without a result
-     * @property error human-readable failure detail when available
+     * @property arguments provider 원본 인자. vendor별 schema이며 공통 산출물 schema가 아니다
      */
     data class ToolCallChanged(
-        override val executionId: ExecutionId,
+        override val taskId: TaskId,
         val workId: WorkId,
         val name: String,
         val status: WorkStatus,
-        val arguments: JsonElement = JsonNull,
-        val result: JsonElement = JsonNull,
+        val arguments: String? = null,
+        val result: String? = null,
         val error: String? = null,
-    ) : AgentEvent
+    ) : TaskEvent
 
     /**
-     * Lifecycle observation of an external effect relevant across providers.
+     * 관찰한 외부 효과 또는 명시된 효과 시도.
      *
-     * One provider work item may emit both [ToolCallChanged] and this event. When
-     * they describe the same work they share [workId]; consumers must not count
-     * those as two independent operations.
-     *
-     * @property workId identity correlating lifecycle observations
-     * @property kind portable effect category
-     * @property status current lifecycle status
-     * @property description concise command, query, or provider description
-     * @property output incremental or aggregate textual output when available
-     * @property exitCode command exit code when the provider exposes one
-     * @property changedPaths provider-reported paths affected by a file operation;
-     * absence does not prove that no path changed
+     * 같은 실제 작업이 [ToolCallChanged]와 함께 발생할 수 있고, 그 관계를 입증할 수 있을 때만
+     * 같은 [workId]를 사용한다. [WorkStatus.STARTED]가 실제 변경을 뜻하지는 않는다.
      */
     data class EffectChanged(
-        override val executionId: ExecutionId,
+        override val taskId: TaskId,
         val workId: WorkId,
         val kind: EffectKind,
         val status: WorkStatus,
         val description: String? = null,
         val output: String? = null,
         val exitCode: Int? = null,
+        /** provider가 보고한 경로. 빈 목록이 변경 없음의 증명은 아니다. */
         val changedPaths: List<String> = emptyList(),
-    ) : AgentEvent
+    ) : TaskEvent
 
-    /**
-     * Indicates that the provider compacted or otherwise managed session context.
-     *
-     * @property beforeTokens context size before management, or `null` if unavailable
-     * @property afterTokens context size after management, or `null` if unavailable
-     */
-    data class ContextManaged(
-        override val executionId: ExecutionId,
-        val beforeTokens: Long? = null,
-        val afterTokens: Long? = null,
-    ) : AgentEvent
-
-    /**
-     * Latest usage snapshot known for this execution.
-     *
-     * Neither field is a delta to add to the previous event; later snapshots
-     * replace earlier ones.
-     *
-     * @property execution cumulative usage of this execution only
-     * @property session cumulative usage of the whole session when the provider reports it
-     */
-    data class UsageChanged(
-        override val executionId: ExecutionId,
-        val execution: AgentUsage,
-        val session: AgentUsage? = null,
-    ) : AgentEvent
-
-    /**
-     * Recoverable or advisory condition that does not itself terminate execution.
-     *
-     * @property kind portable classification
-     * @property message human-readable warning text
-     */
-    data class Warning(
-        override val executionId: ExecutionId,
-        val kind: WarningKind,
-        val message: String,
-    ) : AgentEvent
-
-    /**
-     * Successful terminal event carrying the same semantic result returned by
-     * [AgentExecution.awaitResult].
-     *
-     * @property result final message and latest available usage
-     */
-    data class ExecutionCompleted(
-        override val executionId: ExecutionId,
-        val result: AgentResult,
-    ) : AgentEvent
-
-    /**
-     * Failed terminal event.
-     *
-     * [AgentExecution.awaitResult] throws [AgentExecutionFailedException] for
-     * this outcome instead of returning an [AgentResult].
-     *
-     * @property kind portable failure classification
-     * @property message human-readable provider or adapter failure description
-     */
-    data class ExecutionFailed(
-        override val executionId: ExecutionId,
-        val kind: FailureKind,
-        val message: String,
-    ) : AgentEvent
-
-    /**
-     * Cancelled terminal event.
-     *
-     * Cancellation may have been requested by the caller, provider, or owning
-     * runtime; this event does not encode the initiator.
-     */
-    data class ExecutionCancelled(
-        override val executionId: ExecutionId,
-    ) : AgentEvent
-
-    /**
-     * The provider asked the caller to decide something and paused the loop.
-     * [AgentExecution.pendingInteractions] is the authoritative snapshot; this
-     * event may be dropped for a slow collector like any non-terminal event.
-     */
+    /** 외부 판단·정보 요청이 열렸다. 응답 대상의 진실은 [AgentTask.pendingInteractions]다. */
     data class InteractionRequested(
-        override val executionId: ExecutionId,
+        override val taskId: TaskId,
         val request: InteractionRequest,
-    ) : AgentEvent
+    ) : TaskEvent
 
-    /** An open request closed, by a caller answer or a provider clear. */
+    /** 요청이 응답되거나 응답 없이 정리됐다. */
     data class InteractionResolved(
-        override val executionId: ExecutionId,
+        override val taskId: TaskId,
         val interactionId: InteractionId,
         val resolution: InteractionResolution,
-    ) : AgentEvent
+    ) : TaskEvent
 
     /**
-     * Delivery to this collector fell behind and [droppedEvents] non-terminal
-     * events were discarded for it.
+     * 그 시점까지의 사용량 snapshot. 이전 값에 더하지 않고 새 값으로 갱신한다.
      *
-     * The gap is per collector: other collectors and [AgentExecution.state],
-     * [AgentExecution.awaitResult] are unaffected. Terminal events are never
-     * dropped and always follow any gap.
+     * @property task 이 Task의 누적. 이전 Task의 사용량을 섞지 않는다
+     * @property session provider가 session 누적을 보고할 때만 존재한다
+     */
+    data class UsageChanged(
+        override val taskId: TaskId,
+        val task: AgentUsage,
+        val session: AgentUsage? = null,
+    ) : TaskEvent
+
+    /**
+     * 요구가 그대로 유지되는 상태에서 구성이나 사용 방식을 고칠 수 있는 사실.
      *
-     * @property droppedEvents number of events not delivered to this collector
+     * 지원 불가·필수 의미 손실·확인된 실패를 이 이벤트로 낮추지 않는다.
+     */
+    data class Warning(
+        override val taskId: TaskId,
+        val kind: WarningKind,
+        val message: String,
+    ) : TaskEvent
+
+    /**
+     * 이 collector에 대해 [droppedEvents]개의 non-terminal 이벤트가 전달되지 못했다.
+     *
+     * 다른 collector와 state·pending·outcome은 영향을 받지 않으며 terminal은 유실되지 않는다.
      */
     data class ObservationGap(
-        override val executionId: ExecutionId,
+        override val taskId: TaskId,
         val droppedEvents: Long,
-    ) : AgentEvent
+    ) : TaskEvent
 
-    /**
-     * Provider event preserved as an observability escape hatch.
-     *
-     * "Preserved" means the adapter does not intentionally reduce the event's
-     * provider-specific payload when constructing this value; it does not promise
-     * durable delivery or replay. Payload schemas may change with provider SDK
-     * versions, so portable business logic must not depend on this event.
-     *
-     * @property provider provider that produced the event
-     * @property name provider event method or type
-     * @property payload provider-specific event body
-     */
-    data class ProviderEventObserved(
-        override val executionId: ExecutionId,
-        val provider: ProviderId,
-        val name: String,
-        val payload: JsonElement,
-    ) : AgentEvent
-}
-
-/**
- * Cumulative token usage snapshot for one execution.
- *
- * Every nullable field uses `null` to mean that the provider did not expose a
- * trustworthy value; `0` is a real reported count. [totalTokens] may be a
- * provider-reported total and consumers must not assume that it equals a simple
- * sum of the other fields.
- *
- * @property inputTokens input tokens, including cached tokens when the provider counts them
- * @property cachedInputTokens input tokens served from a provider cache
- * @property outputTokens generated output tokens according to provider accounting
- * @property reasoningTokens reasoning tokens when reported separately
- * @property totalTokens provider-reported total token count
- */
-data class AgentUsage(
-    val inputTokens: Long? = null,
-    val cachedInputTokens: Long? = null,
-    val outputTokens: Long? = null,
-    val reasoningTokens: Long? = null,
-    val totalTokens: Long? = null,
-) {
-    /** Field-wise sum where `null + n = n` and `null + null = null`. */
-    operator fun plus(other: AgentUsage): AgentUsage = AgentUsage(
-        inputTokens = add(inputTokens, other.inputTokens),
-        cachedInputTokens = add(cachedInputTokens, other.cachedInputTokens),
-        outputTokens = add(outputTokens, other.outputTokens),
-        reasoningTokens = add(reasoningTokens, other.reasoningTokens),
-        totalTokens = add(totalTokens, other.totalTokens),
-    )
-
-    /** Field-wise difference; `null` wherever either side is unknown. */
-    operator fun minus(other: AgentUsage): AgentUsage = AgentUsage(
-        inputTokens = sub(inputTokens, other.inputTokens),
-        cachedInputTokens = sub(cachedInputTokens, other.cachedInputTokens),
-        outputTokens = sub(outputTokens, other.outputTokens),
-        reasoningTokens = sub(reasoningTokens, other.reasoningTokens),
-        totalTokens = sub(totalTokens, other.totalTokens),
-    )
-
-    private fun add(a: Long?, b: Long?): Long? = if (a == null) b else if (b == null) a else a + b
-    private fun sub(a: Long?, b: Long?): Long? = if (a == null || b == null) null else a - b
-
-    companion object {
-        /** A usage snapshot with no known values. */
-        val Unknown = AgentUsage()
+    /** 종결 이벤트. [outcome]은 [AgentTask.awaitOutcome]이 회수하는 판정과 같은 의미다. */
+    sealed interface Terminal : TaskEvent {
+        val outcome: TaskOutcome
     }
+
+    data class TaskCompleted(
+        override val taskId: TaskId,
+        override val outcome: TaskOutcome.Completed,
+    ) : Terminal
+
+    data class TaskFailed(
+        override val taskId: TaskId,
+        override val outcome: TaskOutcome.Failed,
+    ) : Terminal
+
+    data class TaskCancelled(
+        override val taskId: TaskId,
+        override val outcome: TaskOutcome.Cancelled,
+    ) : Terminal
+
+    data class TaskUnresolved(
+        override val taskId: TaskId,
+        override val outcome: TaskOutcome.Unresolved,
+    ) : Terminal
 }
 
 /**
- * Successful terminal value of an [AgentExecution].
+ * 메시지의 관찰 가능한 역할.
  *
- * @property finalMessage canonical user-facing final answer, possibly empty
- * @property stopReason why the execution stopped; only [StopReason.FINISHED] means the agent chose to
- * @property usage cumulative usage of this execution, or `null` when unavailable
- * @property sessionUsage cumulative usage of the session when the provider reports it
+ * provider가 공개하는 설명·요약은 [EXPLANATION]으로 전달한다. 노출되지 않은 추론을 합성하지
+ * 않으며 역할을 알 수 없으면 [UNKNOWN]을 보존한다.
  */
-data class AgentResult(
-    val finalMessage: String,
-    val stopReason: StopReason = StopReason.FINISHED,
-    val usage: AgentUsage? = null,
-    val sessionUsage: AgentUsage? = null,
-)
+enum class MessageRole { ANSWER, COMMENTARY, EXPLANATION, UNKNOWN }
+
+/** 하위 작업의 상태. 부모 Task의 취소나 미확정을 근거로 전부 [CANCELLED]로 바꾸지 않는다. */
+enum class WorkStatus {
+    STARTED,
+    UPDATED,
+    COMPLETED,
+    FAILED,
+    /** 승인·정책 거절로 대상 행위를 수행하지 않았다. */
+    DECLINED,
+    /** 해당 작업의 취소에 따른 종료를 확인했다. */
+    CANCELLED,
+}
+
+/** 외부 효과의 portable 분류. */
+enum class EffectKind { COMMAND, FILE_CHANGE, WEB_SEARCH, OTHER }
+
+enum class WarningKind {
+    /** context가 한도에 가까워 관리나 실패가 뒤따를 수 있다. */
+    CONTEXT_PRESSURE,
+    /** 구성 문제. 해당 정책에서 오지 않아야 할 요청이 도착해 거절한 경우를 포함한다. */
+    CONFIGURATION,
+    /** provider가 스스로 복구를 시도하는 오류. */
+    RECOVERABLE,
+    OTHER,
+}
+
+/** Task handle이 관찰·확정한 상태. */
+enum class TaskState {
+    /** 작업이 수락됐으나 실제 진행은 아직 확인하지 못했다. */
+    STARTING,
+    RUNNING,
+    /** 유효한 외부 응답을 기다린다. */
+    AWAITING_RESPONSE,
+    COMPLETED,
+    FAILED,
+    CANCELLED,
+    /** 관찰·제어를 종결하면서 실제 결과를 확인하지 못했다. */
+    UNRESOLVED,
+    ;
+
+    val isTerminal: Boolean get() = this == COMPLETED || this == FAILED || this == CANCELLED || this == UNRESOLVED
+}

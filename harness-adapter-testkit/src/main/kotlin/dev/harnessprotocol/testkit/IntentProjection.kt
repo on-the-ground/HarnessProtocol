@@ -1,6 +1,6 @@
 package dev.harnessprotocol.testkit
 
-import dev.harnessprotocol.AgentSpec
+import dev.harnessprotocol.legacy.AgentSpec
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject

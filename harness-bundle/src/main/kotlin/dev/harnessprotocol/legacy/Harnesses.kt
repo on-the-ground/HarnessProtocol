@@ -1,4 +1,4 @@
-package dev.harnessprotocol
+package dev.harnessprotocol.legacy
 
 import dev.harnessprotocol.codex.CodexHarness
 import dev.harnessprotocol.codex.CodexSdkOptions

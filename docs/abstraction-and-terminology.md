@@ -1,7 +1,7 @@
 # AHP 추상 개정과 용어
 
 작성일: 2026-09-04  
-상태: README와 docs가 따르는 개정 설계 기준과 목표 용어. 코드·KDoc·adapter 전환은 후속 통합 단계에서 수행한다.  
+상태: 공개 Port·KDoc은 dev.harnessprotocol에 선언됐으며 adapter·factory의 legacy 전환은 후속 통합 단계다.
 최상위 기준: [AHP 설계 선언](../AHP_CHARTER.md)  
 실험 근거: [Koog 검증 결과](koog-abstraction-validation-results.md)
 
@@ -32,7 +32,7 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 
 ## 3. 이름 전환표
 
-다음은 후속 공개 API의 목표 이름이다. 동작이 달라지는 행은 호환 alias나 기계적인 치환으로 구현하지 않는다.
+다음은 공개 Port의 개정 이름이다. 동작이 달라지는 행은 호환 alias나 기계적인 치환으로 구현하지 않는다.
 
 | 0.1.0 | 새 이름 / 배치 | 변경 이유 |
 |---|---|---|
@@ -55,7 +55,7 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 
 `TaskOutcome`으로 결과를 통합할 때 현재 실행 실패·취소 예외를 이름만 바꾸어 중복 계약으로 남기지 않는다. handle 생성 전 호출 실패와 handle을 받은 작업의 outcome을 구분한다. 코루틴 waiter 자체의 취소는 여전히 작업 취소와 별개다.
 
-`TURN_COMPLETED`, `TURN_INTERRUPTED` 같은 public 세부 용어도 provider turn을 전제하지 않도록 전환한다. 특히 취소 요청, 작업 종결, handle 해제는 서로 다른 원인이므로 모두 `TASK_CANCELLED`로 치환하지 않는다. 예를 들어 요청에 의한 interaction 정리는 `CANCELLATION_REQUESTED`, 종결로 인한 정리는 `TASK_ENDED`처럼 관찰한 원인을 사용한다. 최종 enum 목록은 상태·interaction 계약과 함께 확정한다.
+`TURN_COMPLETED`, `TURN_INTERRUPTED` 같은 이전 public 용어도 provider turn을 전제하지 않도록 전환한다. 반복 한도는 `ITERATION_LIMIT`, 취소 요청에 의한 interaction 정리는 `CANCELLATION_REQUESTED`, 종결 정리는 `TASK_ENDED`, 응답 수락 확인 유실은 `RESPONSE_UNCONFIRMED`다. 서로 다른 원인을 모두 취소 완료로 치환하지 않는다.
 
 ## 4. 이름을 유지할 것과 개념을 분리할 것
 
@@ -68,11 +68,11 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 | `ToolCallChanged`, `EffectChanged` | 유지. 도구 수행과 외부 효과의 차이는 업무 관찰에 의미가 있다. graph node와 tool을 동일시하지 않는다. |
 | `MessageDelta`, `MessageCompleted`, `UsageChanged`, `ObservationGap`, `Warning` | 유지. 메시지 표시·누적 사용량·관찰 누락·부가 정보의 목적과 조건은 [Event contract](event-contract.md#이벤트를-남기는-목적)를 따른다. |
 | `validate`, `CompatibilityReport` | 유지. 요구를 지킬 수 있는지 판단하고, 불가능한 요구를 실제 호출 경계에서도 거절한다. |
-| `AgentSpec`, `ExecutionPolicy` | 필드의 책임을 먼저 분리한다. session 설정, 작업 요구, 승인 중재, 실행 환경 제약을 그대로 둔 채 `TaskSpec`/`TaskPolicy`로 치환하지 않는다. |
+| `AgentSpec`, `ExecutionPolicy` | SessionSpec·SessionRequirements·TaskRequest·TaskRequirements로 책임을 나눈다. 실행 제약 안의 filesystem·network도 독립적으로 요구한다. |
 | `workingDirectory`, 로컬 skill 경로, FS/network 집행 | 명시적인 실행 환경·자원 관련 선택 계약으로 옮긴다. 실제 계약 없이 범용 `Resource`나 임의 options map으로 바꾸지 않는다. |
 | `SdkBridge`, `RecordingBridge` | process adapter 구현·테스트에서 유지. 공통 Port와 공통 적합성 검사의 필수 전제에서 제거한다. |
 
-선택 계약은 보장을 약하게 만드는 장치가 아니다. 요구한 영속성, 권한 제한, 질문 대응, 출력 형태를 지원한다고 선언했다면 정확히 이행해야 한다. 필수 요구를 조용히 무시하거나 기본값으로 대체하지 않는다. 지원 탐색과 요구 전달의 구체적 API는 계약 확정 단계에서 설계한다.
+선택 계약은 보장을 약하게 만드는 장치가 아니다. 요구한 영속성, 권한 제한, 질문 대응, 출력 형태를 지원한다고 선언했다면 정확히 이행해야 한다. 지원 탐색·요구 검증·진단 분리의 공개 형태는 [공개 모델](public-model.md)을 따른다.
 
 명명은 개념의 주어를 따른다. Task 자체의 입력·상태·outcome·종결 이벤트는 `Task*`, 도구·메시지·interaction은 각 대상의 이름을 사용한다. `TaskEvent`에 속한다는 이유로 모든 하위 이벤트에 Task를 덧붙이지 않는다. 타입 충돌은 AHP package·타입 qualification으로 구별하고, 정확한 Kotlin nesting은 공개 모델 단계에서 정한다. 이름을 유지하는 이벤트도 위 목적 심사를 거친 것이며 기존 존재 자체가 존치 근거는 아니다.
 
@@ -85,18 +85,18 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 - `Cancelled`: 취소에 따른 실행 종료가 확인됐다. 이미 발생한 효과의 rollback을 뜻하지 않는다.
 - `Unresolved`: 관찰·제어를 끝내는 시점에 실제 종료 결과를 확인하지 못했다. 이후에도 작업이나 효과가 발생할 수 있다.
 
-이 네 가지는 결과 의미의 분류다. 대응 상태와 전이·정리 규칙은 [Lifecycle](lifecycle-and-concurrency.md)을 따른다. 공개 sealed 타입의 최종 필드와 세부 오류 분류는 [전환 계획](port-revision-plan.md)에서 확정한다. `Unresolved`도 호출자가 유한하게 회수할 수 있는 outcome이어야 하며 무한 대기로 대신하지 않는다. 한 handle의 종결 판정 이후 추가 확인을 어떻게 제공할지는 별도 검토하고, 새 enum 하나로 재접속 기능까지 지원한다고 간주하지 않는다.
+이 네 가지는 결과 의미의 분류다. 대응 상태와 전이·정리 규칙은 [Lifecycle](lifecycle-and-concurrency.md)을 따른다. 공개 sealed 타입의 필드는 [공개 모델](public-model.md)에 선언됐다. Unresolved도 유한하게 회수할 수 있는 outcome이며 이후 확인·재접속은 별도 계약이다.
 
 `close`와 `release`는 자원·handle 정리라는 익숙한 이름을 유지한다. 명시적 취소 요청과 bounded cleanup을 수행하더라도, 유예 시간 경과만으로 `Cancelled`를 합성하지 않는다. 차단·복구와 독립된 문맥으로의 이동은 [Lifecycle의 범위](lifecycle-and-concurrency.md#문맥-차단과-복구-범위)를 따른다.
 
-구조화 산출물은 요청한 schema와 검증 책임을 명시하는 선택 계약으로 다룬다. 텍스트 전달은 계속 지원하고, 진단 payload나 tool의 vendor별 result에서 업무 결과를 추출하도록 소비자에게 요구하지 않는다. [모든 outcome의 산출물·사용량 회수](protocol-reference.md#산출물과-부가-관찰)는 확정된 보장이며 구체적인 필드 배치는 결과 모델 설계에 포함한다.
+구조화 산출물은 요청한 schema와 검증 책임을 명시하는 선택 계약으로 다룬다. [모든 outcome의 산출물·사용량 회수](protocol-reference.md#산출물과-부가-관찰)는 공통 nullable output·usage로 표현한다. 산출물 없는 완료도 null로 보존하며 빈 텍스트를 합성하지 않는다.
 
 ## 6. 전환 범위
 
-후속 통합에서는 위 책임 분리와 상태·결과 의미에 따라 미확정 공개 필드·선택 계약 API를 구체화하고 이름을 코드에 적용한다. 공개 interface뿐 아니라 식별자, 이벤트, 실패 모델, KDoc, 컴파일 가능한 예제와 공통 테스트의 용어를 일치시킨다. README와 reference 문서는 개정된 계약 기준이며 구현이 이를 따라간다. 내부 SDK의 thread/turn, Koog graph 등의 이름은 각 adapter에서 필요에 따라 유지한다.
+후속 통합에서는 위 책임 분리와 공개 모델을 실제 adapter에 적용한다. 식별자·이벤트·실패·KDoc·소비 예제·공통 검사를 같은 의미로 맞춘다. 내부 SDK의 thread/turn, Koog graph 등의 이름은 각 adapter에서 필요에 따라 유지한다.
 
 0.1.0의 강한 보장과 새 계약이 다를 때 typealias로 호환되는 척하지 않는다. 특히 영속성, `awaitOutcome`의 결과 전달, 종료 미확정 처리는 소비자 migration이 필요한 의미 변경이다. 이전 사용 사례가 요구한 보장을 새 계약에서 어떻게 명시할지 함께 제공한다.
 
 실험 코드·실행 기록은 검증 당시 0.1.0의 재현 자료이므로 소급 rename하지 않는다. 새 계약에 맞춘 Koog 구현과 검증은 후속 통합의 산출물로 관리한다. 세 adapter의 공통 행동 검사는 `AgentHarness`/`AgentTask` 등 공개 계약을 기준으로 하고 provider별 준비 방식은 fixture로 분리한다.
 
-본 문서는 현재 공개 API 사용법이 아니다. 기존 구현을 바꾸는 작업의 기준이며, 미확정 항목을 해결하기 전까지 세 구현의 통합 완료나 새 계약의 실행 검증을 주장하지 않는다.
+본 문서는 개정의 근거와 용어다. 선언의 존재만으로 세 adapter 통합 완료나 새 계약의 실행 검증을 주장하지 않는다.

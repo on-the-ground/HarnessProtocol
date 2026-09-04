@@ -1,6 +1,6 @@
 # Lifecycle and concurrency
 
-개정된 `AgentHarness`, `AgentSession`, `AgentTask`의 수명·상태·동시성 계약이다. 현재 코드와 KDoc은 후속 구현에서 맞춘다. [Protocol reference](protocol-reference.md), [Event contract](event-contract.md), [설계 기준](semantic-contract.md)을 함께 따른다.
+개정된 `AgentHarness`, `AgentSession`, `AgentTask`의 수명·상태·동시성 계약이다. 공개 선언·KDoc은 마련됐고 실제 adapter를 후속 구현에서 맞춘다. [Protocol reference](protocol-reference.md), [Event contract](event-contract.md), [설계 기준](semantic-contract.md)을 함께 따른다.
 
 ## 소유와 문맥
 

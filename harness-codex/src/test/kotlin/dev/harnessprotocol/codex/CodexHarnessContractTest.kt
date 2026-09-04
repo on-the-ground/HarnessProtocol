@@ -1,10 +1,10 @@
 package dev.harnessprotocol.codex
 
-import dev.harnessprotocol.AgentHarness
-import dev.harnessprotocol.AgentSpec
-import dev.harnessprotocol.ApprovalPolicy
-import dev.harnessprotocol.FilesystemAccess
-import dev.harnessprotocol.NetworkAccess
+import dev.harnessprotocol.legacy.AgentHarness
+import dev.harnessprotocol.legacy.AgentSpec
+import dev.harnessprotocol.legacy.ApprovalPolicy
+import dev.harnessprotocol.legacy.FilesystemAccess
+import dev.harnessprotocol.legacy.NetworkAccess
 import dev.harnessprotocol.testkit.AgentHarnessContractTest
 import dev.harnessprotocol.testkit.Envelope.assertAbsent
 import dev.harnessprotocol.testkit.Envelope.assertNullableString

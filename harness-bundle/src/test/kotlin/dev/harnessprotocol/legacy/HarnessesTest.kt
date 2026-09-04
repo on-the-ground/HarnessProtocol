@@ -1,4 +1,4 @@
-package dev.harnessprotocol
+package dev.harnessprotocol.legacy
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -14,7 +14,11 @@ Koog 1.2.0, Kotlin 2.3.10, JVM target 21을 사용한다. 의존성 버전은 `g
 
 테스트 결과는 `%TEMP%/harness-protocol-koog-validation/reports/tests/test/index.html`, JUnit XML은 같은 build 디렉터리의 `test-results/test`에 생긴다. 이 고정 build 디렉터리를 쓰는 여러 checkout의 실험을 동시에 실행하지 않는다.
 
-루트 `settings.gradle.kts`, production adapter, 배포 bundle에는 연결하지 않았다. `harness-protocol/src/main/kotlin`의 **기존 소스 자체**를 실험 빌드에 포함하므로 공개 Port의 사본을 변형해서 맞추지 않는다. 이 실험의 Kotlin 버전이 production 빌드의 버전 변경을 요구하는 것은 아니다.
+루트 `settings.gradle.kts`, production adapter, 배포 bundle에는 연결하지 않았다. `prepareBaselineProtocol`이 기존 기록의 revision `d5733031a2533dfd0d56821d912442a08552b0fd`에서 protocol Kotlin 소스를 build 디렉터리로 추출한다. HEAD나 임시 legacy package를 참조하지 않으므로 이후 공개 Port 변경·legacy 제거에도 같은 실험을 재현한다. Kotlin 소스와 기존 verification.json은 당시 의미로 유지한다.
+
+Git 실행 파일과 위 revision의 object가 로컬 저장소에 있어야 한다. shallow clone 등으로 해당 이력이 없으면 먼저 필요한 revision을 가져온다. 빌드는 네트워크로 Git 이력을 자동 조회하거나 다른 revision으로 대체하지 않는다. 최초 Gradle/Maven 의존성 준비와 이 Git 이력 준비는 별개다.
+
+패키지 이동 후 재현 복구의 실행 결과와 변경된 빌드 파일 해시는 [재현 복구 기록](evidence/reproduction-after-port-revision.json)에 남긴다. 기존 verification.json의 build.gradle.kts 해시는 당시 빌드에 대한 기록이며 현재 준비 방식과 다르다.
 
 ## 무엇이 실제이고 무엇이 fixture인가
 

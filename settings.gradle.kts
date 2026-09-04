@@ -21,4 +21,5 @@ include(
     "harness-gemini-cli",
     "harness-bundle",
     "harness-adapter-testkit",
+    "harness-conformance",
 )

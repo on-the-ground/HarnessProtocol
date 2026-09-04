@@ -1,6 +1,6 @@
 # Protocol reference
 
-이 문서는 **개정된 AHP의 의미와 목표 명칭**을 정의한다. 현재 Kotlin API와 KDoc은 전환 전이며 아래 예시는 새 계약을 설명하는 개념 예시다. 미확정 시그니처·필드는 [전환 계획](port-revision-plan.md)에서 관리한다. 최상위 기준은 [설계 선언](../AHP_CHARTER.md)과 [Semantic contract](semantic-contract.md)다.
+이 문서는 **개정된 AHP의 의미와 공개 명칭**을 정의한다. Kotlin 선언·KDoc은 dev.harnessprotocol에 있으며 실제 adapter는 아직 legacy를 사용한다. [공개 모델](public-model.md)이 선언을, [전환 계획](port-revision-plan.md)이 남은 adapter·실증 작업을 관리한다. 최상위 기준은 [설계 선언](../AHP_CHARTER.md)과 [Semantic contract](semantic-contract.md)다.
 
 ## 기본 모델
 
@@ -20,6 +20,8 @@
 
 `validate`는 요청한 의미를 보존할 수 있는지 진단한다. 검증 대상은 문맥 설정, 작업 요구, 선택 계약의 각 적용 범위에 맞춰 구성한다. 기존 `AgentSpec`을 그대로 받는 시그니처를 최종안으로 확정한 것은 아니다.
 
+현재 선언은 harness의 `validate(SessionSpec)`과 session의 `validate(TaskRequest)`다. `CompatibilityReport.status`는 COMPATIBLE·INCOMPATIBLE·UNCONFIRMED를 구별한다. 미지원이 확인되면 `IncompatibleRequirementException`, 실제 수락 경계에서도 이행 여부를 확인할 수 없으면 `RequirementUnconfirmedException`으로 작업 전에 거절한다. 사전 검증의 미확인을 실제 경계에서 추가 확인해 수락할 수는 있다.
+
 지원 정보의 범위·유효 조건, 요청별 검증과 실제 수락의 관계는 [지원 탐색과 요구 수락](capability-candidates.md#지원-탐색과-요구-수락)을 따른다. 소비자는 기능 목록을 먼저 조회하지 않고도 필수 요구를 전달할 수 있어야 한다.
 
 - 필수 요구를 보존하지 못하면 error로 거절한다. warning이나 provider default로 대체하지 않는다.
@@ -33,7 +35,7 @@
 
 식별자는 비어 있지 않은 opaque 값이다. consumer가 native ID의 구조를 해석하거나 임의로 합성하지 않는다. `TaskId`는 소유 harness 안에서 작업을 구별하고, `WorkId`와 `InteractionId`는 해당 Task 안에서 대상을 구별한다. 서로 다른 Task에서 같은 하위 ID가 나타나도 섞이지 않아야 한다. provider가 같은 작업의 tool/effect를 식별한 경우 같은 WorkId로 연결한다.
 
-기본 `SessionId`는 발급한 harness의 논리 session을 구별한다. 같은 ID 문자열이 다른 harness에 있더라도 같은 문맥이라는 뜻은 아니다. 영속 문맥을 참조하려면 선택 계약이 정한 저장 namespace와 그 안의 opaque 식별자가 필요하다. namespace는 계정·endpoint·저장소 구성을 구별할 수 있어야 하며 자격 증명 자체를 식별자에 담지 않는다. 구체적 참조 타입은 미확정이지만 provider 종류와 ID 문자열만으로 전역 동일성을 추정하지 않는다는 의미는 확정한다.
+기본 `SessionId`는 발급한 harness의 논리 session을 구별한다. 같은 ID 문자열이 다른 harness에 있더라도 같은 문맥이라는 뜻은 아니다. 영속 문맥은 `PersistentSessionRef(provider, namespace, id)`로 참조한다. `StorageNamespace`는 계정·endpoint·저장소 구성을 구별할 수 있어야 하며 자격 증명 자체를 식별자에 담지 않는다. provider 종류와 ID 문자열만으로 전역 동일성을 추정하지 않는다.
 
 `TaskInput.Text`는 빈 문자열을 거절하되 공백만 있는 문자열을 임의로 trim하거나 다른 값으로 바꾸지 않는다. caller 입력과 지속 지시의 의미를 유지한다. 요청한 skill 활성화 등 provider별 envelope를 구성할 수 있지만 다른 지시나 업무 입력으로 조용히 대체하지 않는다.
 
@@ -49,7 +51,7 @@
 
 ### 영속성 선택 계약
 
-영속성은 기본 `AgentSession`에 포함되지 않는 [선택 계약](capability-candidates.md)이다. `reopenSession`은 그 계약을 제공하는 진입점의 연산이며 기본 Session의 필수 메서드가 아니다. 구체적인 소유 interface는 구현 전 확정한다. 보관 범위·수명·저장 성공·재개 조건과 조정 범위를 명시해야 한다. 지원한 경우 release나 harness 재생성 이후에도 약속한 범위에서 문맥을 다시 열 수 있어야 한다.
+영속성은 기본 `AgentSession`에 포함되지 않는 [선택 계약](capability-candidates.md)이다. 지원하는 harness는 `PersistentSessions.reopenSession(ref, spec)`을 제공한다. 보관 범위·수명·저장 성공·재개 조건과 조정 범위를 명시해야 한다. 지원한 경우 release나 harness 재생성 이후에도 약속한 범위에서 문맥을 다시 열 수 있어야 한다.
 
 `reopenSession`은 보관된 문맥의 새 handle을 얻는다. 모르는 ID나 다른 저장 namespace의 참조는 거절하며 새 session으로 바꾸지 않는다. 재개 설정은 이후 적용할 desired configuration이며 의미를 보존할 수 없는 변경을 거절한다. checkpoint 복원·Task 재접속·외부 효과의 복원은 포함하지 않는다. 차단된 문맥을 reopen했다는 이유로 작업 가능하다고 보고하지 않는다.
 
@@ -67,16 +69,16 @@
 | `requestCancellation()` | 실제 중단을 요청한다. 반환이 중단 완료를 뜻하지 않는다. |
 | `awaitOutcome()` | 모든 waiter가 같은 종결 판정을 회수한다. |
 
-개념 예시이며 session 구성과 outcome의 최종 필드 배치는 생략했다.
+공개 선언을 사용하는 예시이며 실제 adapter의 생성은 포함하지 않는다.
 
 ```kotlin
-val task = session.startTask(TaskInput.Text("요청을 검토하고 처리안을 작성해줘."))
+val task = session.startTask(TaskRequest(TaskInput.Text("요청을 검토하고 처리안을 작성해줘.")))
 val outcome = task.awaitOutcome()
 ```
 
 Handle 생성 전의 검증·시작 실패는 호출 실패다. handle을 받은 이후 작업의 실패·취소·종료 미확정은 outcome으로 전달한다. waiter 자체의 coroutine 취소는 작업 중단을 의미하지 않는다.
 
-시작 요청을 보낸 뒤 응답을 잃은 호출 실패는 작업이 실행되지 않았다는 증거가 아니다. 수락 여부를 모르는 경우를 확정적인 사전 거절과 구별해 전달하고, 같은 문맥의 다음 작업이나 재시도로 중복 실행하지 않는다. 전달 수락 여부와 작업 identity를 회수할 구체적 API는 [전환 계획](port-revision-plan.md)에서 확정한다.
+시작 요청을 보낸 뒤 응답을 잃은 경우는 `TaskStartUnconfirmedException(UnconfirmedStart)`로 구별한다. session과 요청 identity를 보존하며 같은 문맥의 다음 시작·무조건 재시도로 중복 실행하지 않는다. 이후 원격 조회·복구 연산까지 기본 지원하는 것은 아니다.
 
 ## Interaction
 
@@ -92,6 +94,10 @@ Handle 생성 전의 검증·시작 실패는 호출 실패다. handle을 받은
 필요한 interaction 지원은 작업 전에 요구·검증한다. 미지원 질문을 승인으로 위장하지 않는다. 중복·만료·잘못된 응답은 거절하며 provider가 그 사이 요청을 닫은 경쟁도 처리한다. 요청 취소·대체·작업 종결은 응답 없는 정리 사유로 구별한다.
 
 `respond`의 성공 반환은 응답 전달·수락이 확인됐음을 뜻하며, 모든 요청의 해결이나 작업 재개 완료까지 뜻하지 않는다. 잘못된 종류·허용되지 않은 결정·다른 Task의 ID는 전달 전에 거절한다. 응답 후 acknowledgement를 잃었다면 확정적인 미전달로 보고 재전송하지 않는다. 요청 상태 확인이나 명시적인 중복 제거 없이 이중 응답·효과를 만들지 않는다.
+
+수락 확인 유실은 `InteractionResponseUnconfirmedException(UnconfirmedResponse(taskId, interactionId))`로 전달한다. 해당 요청을 pending에서 제외하고 `RESPONSE_UNCONFIRMED` 사유로 정리한 뒤 재응답을 거절한다. 이미 닫힌 요청을 중복 정리하지 않는다. 이 사유는 provider의 거절이나 Task 종결을 뜻하지 않는다. caller의 응답 coroutine을 취소해도 미전달이 증명되지는 않으므로 같은 불확실성·재전송 차단을 유지한다.
+
+`APPROVE_FOR_SESSION`은 `SessionApprovalGrant`를 함께 제시한 경우에만 제공한다. grant는 같은 논리 session의 허용 대상·조건을 구별하는 `ApprovalScopeId`와 설명을 갖고 session 종료·철회까지 그 범위에만 적용된다. 같은 ID의 권한을 넓히거나 다른 session으로 자동 확장하지 않는다. 범위를 설명·집행할 수 없으면 이 선택지를 생략한다. 영속 문맥 재개는 승인 보관의 증거가 아니다.
 
 ## 상태와 종결 판정
 
@@ -109,7 +115,7 @@ Handle 생성 전의 검증·시작 실패는 호출 실패다. handle을 받은
 
 어떤 outcome이든 waiter 반환 전 terminal state·pending 정리는 [Lifecycle의 확정 순서](lifecycle-and-concurrency.md#상태와-outcome)를 따른다.
 
-`Completed`도 반복 한도 등 종료 사유를 보존한다. 자연 종료와 한도·반복 감지·provider 중단을 구별하되 내부 step/turn을 보편적 업무 단위로 승격하지 않는다. 기존 `StopReason` 세부 enum의 전환은 결과 모델과 함께 확정한다.
+`Completed`도 종료 사유를 보존한다. StopReason은 FINISHED·ITERATION_LIMIT·LOOP_DETECTED·PROVIDER_STOPPED를 구별하며 내부 step/turn을 보편적 업무 단위로 승격하지 않는다.
 
 확인된 실패에는 인증, 정책, 문맥 한도, 예산, 일시적 오류 등 후속 판단에 필요한 분류를 제공한다. 통신 오류만 관찰했다면 원격 작업의 실패·취소를 추정하지 않는다. 재시도 가능성과 이미 발생한 효과의 중복 위험은 별개다.
 
@@ -121,7 +127,7 @@ Handle 생성 전의 검증·시작 실패는 호출 실패다. handle을 받은
 
 `Completed`·`Failed`·`Cancelled`·`Unresolved` 모두 확정 시점까지 확보한 산출물과 사용량을 `awaitOutcome()`의 결과를 통해 회수할 수 있어야 한다. observer가 없거나 이벤트를 잃었어도 이 정보는 보존한다. 산출물의 완료·부분 상태와 알려진 검증 결과를 구별하고, unknown을 빈 결과·0 또는 검증 성공으로 합성하지 않는다. 여기서 산출물은 호출자에게 전달할 업무 결과이며 모든 내부 도구 payload를 보관하라는 뜻은 아니다. Unresolved의 산출물·사용량은 그 시점의 관찰이며 실제 실행의 최종값임을 보장하지 않는다. 이후 추가 정보를 얻는 것은 별도 계약이다.
 
-구조화 산출물을 요구한 경우 schema·검증 책임·검증 실패의 처리까지 선택 계약으로 정의한다. JSON 문자열 하나를 반환하는 것만으로 schema 지원을 선언하지 않는다. 모든 outcome에서 확보한 정보를 회수한다는 보장은 확정이며 공통 envelope·variant별 필드 등 Kotlin 배치만 미확정이다.
+구조화 산출물을 요구한 경우 schema·검증 책임·검증 실패의 처리까지 선택 계약으로 정의한다. JSON 문자열 하나를 반환하는 것만으로 schema 지원을 선언하지 않는다. 네 outcome의 공통 `output: TaskOutput?`·`usage`·`sessionUsage`로 확보한 정보를 회수한다. Completed도 산출물이 없으면 null이며 실제 빈 텍스트와 구별한다.
 
 공통 `UsageChanged`는 해당 Task의 누적 snapshot이며 이전 값에 더하지 않는다. provider의 증분·누적 표현 차이는 adapter가 번역한다. Session 누적은 실제 제공할 수 있을 때 별도로 전달한다. 모르는 값은 unknown이며 0으로 합성하지 않는다. 내부 문맥 관리 관찰은 기본 이벤트가 아니라 선택 진단이며 문맥 상한 집행의 보장도 아니다. `ProviderDiagnostic`은 별도 진단 경로이며 기본 결과나 실패 분류를 대신하지 않는다.
 

@@ -1,4 +1,4 @@
-package dev.harnessprotocol
+package dev.harnessprotocol.legacy
 
 /**
  * Provider-neutral intent used to configure a durable agent session.

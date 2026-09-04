@@ -16,7 +16,7 @@
 | Filesystem/network 집행 | 제한의 범위와 실제 집행 또는 사전 거절. provider default의 정확한 의미 | 로컬 도구 환경의 제약을 공통 실행 그 자체와 분리한다. 승인 기능과도 구별한다. |
 | Provider 진단 | 선언한 원본 관찰 범위와 전달·유실 정책 | `ProviderDiagnostic`으로 분리. 모든 내부 객체·wire 알림 보존을 core 조건으로 삼지 않는다. |
 
-위 목적의 분리와 아래 요구 수락 의미는 설계 기준이며 최종 interface와 필드 목록은 [전환 계획](port-revision-plan.md)에서 확정한다. 외부 판단을 위한 공통 interaction lifecycle은 Port에 남는다.
+위 목적의 분리와 아래 요구 수락 의미는 설계 기준이다. 공개 형태는 [공개 모델](public-model.md)에 선언돼 있으며 실제 adapter의 이행은 [전환 계획](port-revision-plan.md)에서 검증한다. 외부 판단을 위한 공통 interaction lifecycle은 Port에 남는다.
 
 ## 지원 탐색과 요구 수락
 
@@ -32,6 +32,10 @@
 정적 선언과 런타임 조회는 함께 사용할 수 있다. 지원 정보에는 적용 구성·scope와 유효 조건이 있어야 하며, 이를 지원 보장으로 사용하는 기간이나 고정된 구성의 수명을 명시한다. 정적 정보만으로 판단할 수 없는 인증·자원 상태 등을 확인했다고 주장하지 않는다. 사전 검증은 실행 성공의 보장이 아니며, 종결 판정은 [Lifecycle](lifecycle-and-concurrency.md#종결-확인의-근거)을 따른다.
 
 영속성 지원에는 저장 namespace·재개 가능한 수명 경계와 [문맥 조정 범위](lifecycle-and-concurrency.md#문맥-차단과-복구-범위)를 포함한다. 다른 harness·process의 접근 요구를 이행할 수 없으면 그 구성을 거절한다. 단일 소유 조건을 문서화한 것만으로 임의의 동시 접근을 조정한다고 주장하지 않는다.
+
+## 실행 환경 요구의 독립성
+
+`ExecutionConstraint.Required`의 filesystem과 network는 독립적으로 선택한다. 네트워크만 금지하는 요청 때문에 파일 권한까지 고르도록 강제하지 않는다. 둘 다 요구하지 않으면 ProviderDefault를 사용한다. 지원할 수 없는 조합은 구체적인 요구 검증에서 거절한다.
 
 ## 추가 실증이 필요한 목적
 

@@ -61,7 +61,7 @@ Interaction은 외부 판단·정보를 받아 작업을 계속하는 계약이�
 
 승인·질문 지원, 영속성, 작업 자원, filesystem/network 집행, 구조화 산출물은 명시적으로 요구하고 지원을 확인한다. 선택 계약은 약한 보장이 아니다. 지원을 선언한 구현은 전체 의미를 충족해야 한다. 도구 하나의 승인 gate가 전체 실행 환경의 권한 집행을 뜻하지 않는다.
 
-지시·모델 선택·문맥 설정·작업별 요구·실행 환경 제약은 각 적용 범위를 정의한 뒤 공개 모델에 배치한다. 기존 `AgentSpec`/`ExecutionPolicy`를 이름만 바꾸어 그대로 유지하지 않는다. 공개 field 구성은 [전환 계획](port-revision-plan.md)의 계약 확정 항목이다.
+지시·모델 선택·문맥 설정·작업별 요구·실행 환경 제약은 적용 범위를 구별한다. 기존 AgentSpec/ExecutionPolicy를 이름만 바꾸어 유지하지 않으며 [공개 모델](public-model.md)의 SessionSpec·TaskRequest와 독립된 filesystem/network 요구를 따른다.
 
 ## 관찰과 결과
 

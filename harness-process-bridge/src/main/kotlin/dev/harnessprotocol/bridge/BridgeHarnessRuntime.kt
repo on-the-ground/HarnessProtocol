@@ -1,8 +1,8 @@
 package dev.harnessprotocol.bridge
 
-import dev.harnessprotocol.AgentEvent
-import dev.harnessprotocol.ExecutionId
-import dev.harnessprotocol.SessionId
+import dev.harnessprotocol.legacy.AgentEvent
+import dev.harnessprotocol.legacy.ExecutionId
+import dev.harnessprotocol.legacy.SessionId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonObject

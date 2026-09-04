@@ -1,6 +1,6 @@
 package dev.harnessprotocol.bridge
 
-import dev.harnessprotocol.HarnessTransportException
+import dev.harnessprotocol.legacy.HarnessTransportException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -1,10 +1,10 @@
 package dev.harnessprotocol.gemini
 
-import dev.harnessprotocol.AgentHarness
-import dev.harnessprotocol.AgentSpec
-import dev.harnessprotocol.ApprovalPolicy
-import dev.harnessprotocol.FilesystemAccess
-import dev.harnessprotocol.NetworkAccess
+import dev.harnessprotocol.legacy.AgentHarness
+import dev.harnessprotocol.legacy.AgentSpec
+import dev.harnessprotocol.legacy.ApprovalPolicy
+import dev.harnessprotocol.legacy.FilesystemAccess
+import dev.harnessprotocol.legacy.NetworkAccess
 import dev.harnessprotocol.testkit.AgentHarnessContractTest
 import dev.harnessprotocol.testkit.Envelope.assertAbsent
 import dev.harnessprotocol.testkit.Envelope.assertNullableString
@@ -60,7 +60,7 @@ class GeminiCliPolicyTest {
     fun `caller decides is rejected where unsupported`() {
         val harness = GeminiCliHarness.usingBridge(RecordingBridge())
         val report = harness.validate(
-            AgentSpec(executionPolicy = dev.harnessprotocol.ExecutionPolicy(approval = ApprovalPolicy.CALLER_DECIDES)),
+            AgentSpec(executionPolicy = dev.harnessprotocol.legacy.ExecutionPolicy(approval = ApprovalPolicy.CALLER_DECIDES)),
         )
         kotlin.test.assertFalse(report.isCompatible)
         assertEquals("executionPolicy.approval", report.issues.single().path)

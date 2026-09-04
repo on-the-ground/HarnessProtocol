@@ -1,12 +1,12 @@
 package dev.harnessprotocol.codex
 
-import dev.harnessprotocol.AgentEvent
-import dev.harnessprotocol.AgentUsage
-import dev.harnessprotocol.ExecutionId
-import dev.harnessprotocol.FailureKind
-import dev.harnessprotocol.MessagePhase
-import dev.harnessprotocol.WarningKind
-import dev.harnessprotocol.WorkStatus
+import dev.harnessprotocol.legacy.AgentEvent
+import dev.harnessprotocol.legacy.AgentUsage
+import dev.harnessprotocol.legacy.ExecutionId
+import dev.harnessprotocol.legacy.FailureKind
+import dev.harnessprotocol.legacy.MessagePhase
+import dev.harnessprotocol.legacy.WarningKind
+import dev.harnessprotocol.legacy.WorkStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

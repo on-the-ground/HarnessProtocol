@@ -1,14 +1,14 @@
 package dev.harnessprotocol.bridge
 
-import dev.harnessprotocol.AgentEvent
-import dev.harnessprotocol.AgentExecutionException
-import dev.harnessprotocol.AgentExecutionFailedException
-import dev.harnessprotocol.FailureKind
-import dev.harnessprotocol.AgentResult
-import dev.harnessprotocol.ExecutionId
-import dev.harnessprotocol.ExecutionState
-import dev.harnessprotocol.HarnessTransportException
-import dev.harnessprotocol.SessionId
+import dev.harnessprotocol.legacy.AgentEvent
+import dev.harnessprotocol.legacy.AgentExecutionException
+import dev.harnessprotocol.legacy.AgentExecutionFailedException
+import dev.harnessprotocol.legacy.FailureKind
+import dev.harnessprotocol.legacy.AgentResult
+import dev.harnessprotocol.legacy.ExecutionId
+import dev.harnessprotocol.legacy.ExecutionState
+import dev.harnessprotocol.legacy.HarnessTransportException
+import dev.harnessprotocol.legacy.SessionId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

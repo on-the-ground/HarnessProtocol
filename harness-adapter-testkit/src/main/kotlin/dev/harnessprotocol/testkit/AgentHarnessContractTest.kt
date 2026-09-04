@@ -1,17 +1,17 @@
 package dev.harnessprotocol.testkit
 
-import dev.harnessprotocol.AgentEvent
-import dev.harnessprotocol.AgentExecution
-import dev.harnessprotocol.AgentExecutionCancelledException
-import dev.harnessprotocol.AgentExecutionException
-import dev.harnessprotocol.AgentExecutionFailedException
-import dev.harnessprotocol.FailureKind
-import dev.harnessprotocol.AgentHarness
-import dev.harnessprotocol.AgentInput
-import dev.harnessprotocol.AgentSession
-import dev.harnessprotocol.AgentSpec
-import dev.harnessprotocol.ExecutionState
-import dev.harnessprotocol.IncompatibleAgentSpecException
+import dev.harnessprotocol.legacy.AgentEvent
+import dev.harnessprotocol.legacy.AgentExecution
+import dev.harnessprotocol.legacy.AgentExecutionCancelledException
+import dev.harnessprotocol.legacy.AgentExecutionException
+import dev.harnessprotocol.legacy.AgentExecutionFailedException
+import dev.harnessprotocol.legacy.FailureKind
+import dev.harnessprotocol.legacy.AgentHarness
+import dev.harnessprotocol.legacy.AgentInput
+import dev.harnessprotocol.legacy.AgentSession
+import dev.harnessprotocol.legacy.AgentSpec
+import dev.harnessprotocol.legacy.ExecutionState
+import dev.harnessprotocol.legacy.IncompatibleAgentSpecException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -342,7 +342,7 @@ abstract class AgentHarnessContractTest {
     fun `resume uses the session id returned by the host`() = runBlocking {
         withHarness { bridge, h ->
             bridge.respondTo("resume_session") { buildJsonObject { put("sessionId", "normalized-42") } }
-            val session = h.resumeSession(dev.harnessprotocol.SessionId("raw-42"), compatibleSpec())
+            val session = h.resumeSession(dev.harnessprotocol.legacy.SessionId("raw-42"), compatibleSpec())
             assertEquals("normalized-42", session.id.value)
         }
     }

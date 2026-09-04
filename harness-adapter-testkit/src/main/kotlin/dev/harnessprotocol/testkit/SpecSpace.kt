@@ -1,11 +1,11 @@
 package dev.harnessprotocol.testkit
 
-import dev.harnessprotocol.AgentSpec
-import dev.harnessprotocol.ApprovalPolicy
-import dev.harnessprotocol.ExecutionPolicy
-import dev.harnessprotocol.FilesystemAccess
-import dev.harnessprotocol.NetworkAccess
-import dev.harnessprotocol.SkillReference
+import dev.harnessprotocol.legacy.AgentSpec
+import dev.harnessprotocol.legacy.ApprovalPolicy
+import dev.harnessprotocol.legacy.ExecutionPolicy
+import dev.harnessprotocol.legacy.FilesystemAccess
+import dev.harnessprotocol.legacy.NetworkAccess
+import dev.harnessprotocol.legacy.SkillReference
 
 /**
  * Exhaustive enumeration of [AgentSpec] values used by the intent-projection contract.

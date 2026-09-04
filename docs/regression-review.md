@@ -75,3 +75,11 @@ TaskOutcome의 필드와 호출 실패 모델, 수락 미확정·응답 확인 �
 | 기존 핵심 보장 누락 | terminal 유일성, waiter 이전 state·pending 정리, observer 독립성·gap, 누적 usage, 입력 공백·지시, 승인 전 효과 차단·일회 응답, 정규화된 재개 ID를 유지 |
 
 문서의 로컬 링크·절 anchor·fence와 Git diff 공백 검사를 수행했다. 실험 소스·빌드 파일 SHA-256 11개는 기존 verification.json과 모두 일치했다. 실험 파일은 Git 누락을 정리하는 대상이며 그 코드나 검증 기록의 내용은 변경하지 않았다. 기존 tracked 구현·KDoc·host·빌드 설정의 수정은 없었다. 이번에 보강한 의미의 세 adapter 실행 적합성은 여전히 후속 작업이다.
+
+## 공개 Port 리뷰 수정의 후속 검증
+
+위 내용은 문서 개편 당시 기록이다. 이후 공개 Port를 선언한 d3f66d0을 리뷰하고 값 타입·KDoc·fixture를 수정한 결과는 [공개 모델과 실행 결과](public-model.md)에 있다. 이 후속 단계에서는 기존 Kotlin 71개와 새 공개 모델 검사 9개, Koog 실험 18개를 실행해 모두 통과했다.
+
+패키지 이동 후 Koog 실험의 컴파일 실패를 재현하고 현재 소스 의존을 고정 revision의 소스 추출로 바꿨다. 실험 Kotlin 소스·기존 verification.json은 유지했고 build.gradle.kts 변경 및 실행 기록은 [별도 재현 증거](../experiments/koog-validation/evidence/reproduction-after-port-revision.json)에 남겼다. 이전의 ‘해시 11개 일치’는 당시 기록이며 현재는 빌드 파일을 제외한 10개가 기존 해시와 일치한다.
+
+수락 미확정과 미지원, 산출물 부재와 빈 텍스트, 미측정 구간의 합산, 독립적인 network 요구, 명시적 세션 승인 범위, 별도 진단 경로를 공개 계약에서 구별했다. 값 타입 검사만으로 실제 응답 중복 방지·권한 집행·문맥 연속성·진단 queue 격리까지 검증됐다고 주장하지 않는다. 그 행동은 새 공통 suite와 실제 adapter fixture에서 검증해야 한다.

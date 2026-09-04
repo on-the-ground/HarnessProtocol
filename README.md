@@ -32,7 +32,7 @@ AgentHarness                   하네스 제공 경계
 
 ## 문서와 구현 상태
 
-**README와 `docs/`의 계약 설명은 개정된 설계 기준이다. 코드와 KDoc은 아직 기존 API를 사용하며 후속 구현에서 함께 전환한다.** 새 명칭을 사용하는 예시는 설계 예시다. 현재 artifact에서 그대로 컴파일되는 사용 예로 제시하지 않는다.
+**공개 Port와 KDoc은 `dev.harnessprotocol`에 선언돼 있다. 실제 adapter·factory는 아직 `legacy` API를 사용한다.** 새 Port 예시는 현재 adapter를 그대로 실행하는 사용법이 아니다. 공개 모델의 결정과 리뷰 반영은 [공개 모델](docs/public-model.md)을 따른다.
 
 | 읽는 순서 | 문서 |
 |---|---|
@@ -40,7 +40,7 @@ AgentHarness                   하네스 제공 경계
 | 개념과 이름 | [추상 개정과 용어](docs/abstraction-and-terminology.md) |
 | 동작 계약 | [Protocol reference](docs/protocol-reference.md), [Lifecycle](docs/lifecycle-and-concurrency.md), [Event contract](docs/event-contract.md) |
 | 추가로 요구할 보장 | [선택 계약과 검토 항목](docs/capability-candidates.md) |
-| 구현 전환 | [Port revision plan](docs/port-revision-plan.md), [Provider mapping](docs/provider-mapping.md), [Testing](docs/testing.md) |
+| 구현 전환 | [공개 모델](docs/public-model.md), [Port revision plan](docs/port-revision-plan.md), [Provider mapping](docs/provider-mapping.md), [Testing](docs/testing.md) |
 | 배포와 구현 세부 | [Distribution](docs/distribution.md), [Bridge protocol](docs/bridge-protocol.md) |
 | 실증 근거 | [Koog 검증 계획](docs/koog-abstraction-validation-plan.md), [검증 결과](docs/koog-abstraction-validation-results.md) |
 | 회귀 검토 | [문서 개편 후 회귀 검토](docs/regression-review.md): 복원한 보장, 새 설계의 경계 조건, 기존 suite 재실행 결과 |
@@ -53,10 +53,11 @@ AgentHarness                   하네스 제공 경계
 
 | 위치 | 역할과 전환 상태 |
 |---|---|
-| `harness-protocol` | 공개 Port와 값 타입. 기존 이름과 결과 모델을 개정해야 한다. |
+| `harness-protocol` | `dev.harnessprotocol`에 확정된 공개 Port. 기존 구현이 쓰는 타입은 `dev.harnessprotocol.legacy`에 남아 있으며 전환 후 제거한다. |
 | `harness-codex`, `harness-gemini-cli` | 기존 provider adapter. 새 필수 계약과 지원하는 선택 계약에 맞춰 수정한다. |
 | `harness-process-bridge`, `bridges` | 두 process adapter의 내부 transport와 host. 모든 하네스의 필수 기반이 아니다. |
 | `harness-adapter-testkit` | 기존 bridge 기반 검사. 공개 Port의 행동 검사와 구현별 투영 검사를 분리한다. |
+| `harness-conformance` | 새 Port의 적합성 검사와 그 fixture seam. 구현과 독립적으로 작성한다. |
 | `harness-bundle` | 현재 adapter 선택·배포 편의 모듈. Koog 실험은 아직 포함하지 않는다. |
 | `experiments/koog-validation` | 실제 Koog 런타임과 통제된 모델 응답을 사용한 격리 실험. 새 계약에 적합한 production adapter는 아니다. |
 
