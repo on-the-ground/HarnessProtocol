@@ -105,6 +105,7 @@ object KoogNativeFactory : NativeHarnessFactory {
 
 /** Model protocol server, never a harness or Port implementation. No external model calls. */
 class ModelBoundary(val overrideResponse: ((String) -> String?)? = null) : dev.harnessprotocol.conformance.RuntimeObservation {
+    var streamResponse: ((com.sun.net.httpserver.HttpExchange, String) -> Boolean)? = null
     override val observedContexts: List<String> get() = requests
     val requests = CopyOnWriteArrayList<String>()
     private val workers = Executors.newCachedThreadPool()
@@ -121,6 +122,7 @@ class ModelBoundary(val overrideResponse: ((String) -> String?)? = null) : dev.h
                 val body = exchange.requestBody.bufferedReader().readText()
                 requests += body
                 gate?.await(75, TimeUnit.SECONDS)
+                if (streamResponse?.invoke(exchange, body) == true) return@createContext
                 val response = overrideResponse?.invoke(body) ?: if (exchange.requestURI.path.contains("responses")) codexResponse() else geminiResponse()
                 exchange.responseHeaders.set("Content-Type", "text/event-stream")
                 exchange.sendResponseHeaders(200, 0)

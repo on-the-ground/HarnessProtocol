@@ -23,3 +23,11 @@
 첫 실행에서 두 adapter 모두 원래 핸들의 `release`가 아직 살아 있는 별칭의 native 세션을 지우는 결함이 드러났다. 공통 process runtime이 문맥의 살아 있는 핸들 수를 관리하고 마지막 핸들 해제에만 native 자원을 반납하도록 수정했다. 이미 해제된 핸들은 계속 거절하며, 다른 핸들의 정상 시작은 보존한다.
 
 [최초 실패 2개](../harness-native-integration/evidence/g04-context-first-run.json), [수정 후 6개 통과](../harness-native-integration/evidence/g04-context.json). Koog 기본 구성은 영속 재개를 지원하지 않아 G01 거절 검증이 적용된다. 애플리케이션 프로세스 재시작·동시 writer까지 보장 범위를 넓히지 않았다.
+
+## G05 — 네 outcome의 산출물 보존
+
+공통 6개 정의를 세 runtime에 연결해 [18개 통과](../harness-native-integration/evidence/g05-outcome.json). 모델이 보낸 부분 텍스트를 실제 runtime이 공개한 다음 완료·실패·취소·종료 미확정을 유도하고 동일 텍스트를 outcome에서 회수한다. 실패·취소·미확정의 부분 산출물은 `complete=false`다. Process adapter의 미확정은 실제 stream 관찰의 차단, Koog는 실제 graph 도구가 취소에 협조하지 않는 상태에서 bounded release로 유도했다.
+
+빈 응답은 native API가 받는 것과 adapter가 확보하는 것을 구별한다. Codex는 산출물 없는 Completed와 실제 빈 텍스트 Completed를 각각 제공한다. Koog는 빈 텍스트를 제공하지만 조각이 전혀 없는 응답은 graph에서 실패한다. Gemini SDK는 빈/무내용 모델 응답을 실패로 처리하고 empty content 이벤트를 제공하지 않는다. 이 경우 Failed와 null output을 보존하며 빈 텍스트를 합성하지 않는다.
+
+[최초 실행](../harness-native-integration/evidence/g05-outcome-first-run.json)의 5개 실패 중 2개는 native 재시도마다 fixture가 같은 텍스트를 다시 보냈기 때문이었다. 재시도에는 출력 전 HTTP 400을 반환하도록 유도 경계를 수정했다. 나머지 3개는 모든 runtime이 빈 응답을 정상 완료로 받는다는 잘못된 fixture 가정이었다. Port/production 구현은 바꾸지 않았다. 수치 사용량의 구간 합산·누락·snapshot 검증은 G11에서 별도로 다룬다.
