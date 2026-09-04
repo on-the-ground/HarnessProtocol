@@ -110,13 +110,13 @@ internal class NativeResponseFixture(directory: Path) : InteractionRaceFixture {
     override fun close() { releaseResponse(); try { harness.close() } finally { observation.close() } }
 }
 
-private fun processHarness(factory: NativeHarnessFactory, bridge: SdkBridge): AgentHarness = when (factory) {
-    CodexNativeFactory -> CodexHarness.usingBridge(bridge)
-    GeminiNativeFactory -> GeminiCliHarness.usingBridge(bridge)
+internal fun processHarness(factory: NativeHarnessFactory, bridge: SdkBridge, namespace: StorageNamespace? = null): AgentHarness = when (factory) {
+    CodexNativeFactory -> CodexHarness.usingBridge(bridge, storageNamespace = namespace)
+    GeminiNativeFactory -> GeminiCliHarness.usingBridge(bridge, storageNamespace = namespace)
     else -> error("No request/acknowledgement bridge exists in the configured local graph adapter")
 }
 
-private fun nativeBridge(factory: NativeHarnessFactory, model: ModelBoundary, directory: Path): JsonLineProcessBridge = when (factory) {
+internal fun nativeBridge(factory: NativeHarnessFactory, model: ModelBoundary, directory: Path): JsonLineProcessBridge = when (factory) {
     CodexNativeFactory -> {
         val options = CodexNativeFactory.options(model, directory)
         val script = EmbeddedBridgeResource.extract(CodexHarness::class.java, "/dev/harnessprotocol/codex/codex_sdk_bridge.py", ".py")
@@ -131,7 +131,7 @@ private fun nativeBridge(factory: NativeHarnessFactory, model: ModelBoundary, di
 }
 
 /** Delivery fault decoration around the real SDK host. It never manufactures a Port handle or event. */
-private class NativeDeliveryBridge(private val delegate: ConfirmedSdkBridge) : ConfirmedSdkBridge {
+internal class NativeDeliveryBridge(private val delegate: ConfirmedSdkBridge) : ConfirmedSdkBridge {
     private var responseGate: CompletableDeferred<Unit>? = null
     val responseSubmitted = CompletableDeferred<Unit>()
     fun holdResponse() { responseGate = CompletableDeferred() }

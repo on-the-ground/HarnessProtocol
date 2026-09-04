@@ -9,6 +9,7 @@ import kotlinx.serialization.json.*
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 
 /** Native process adapter plumbing. EOF is observation loss, not proof that remote work stopped. */
@@ -59,6 +60,7 @@ abstract class ProcessTaskHarness(
         val id = SessionId(result.getValue("sessionId").jsonPrimitive.content)
         sessionOpened(id, spec, resumed)
         val context = contexts.computeIfAbsent(id) { Context(id) }
+        context.handles.incrementAndGet()
         val ref = if (spec.requirements.persistence is PersistenceRequirement.Required)
             PersistentSessionRef(provider, requireNotNull(storageNamespace), id.value) else null
         return Session(context, spec, ref)
@@ -67,6 +69,7 @@ abstract class ProcessTaskHarness(
     private class Context(val id: SessionId) {
         val mutex = Mutex()
         val blocked = AtomicBoolean(false)
+        val handles = AtomicInteger()
         @Volatile var active: ManagedTask? = null
     }
 
@@ -149,11 +152,15 @@ abstract class ProcessTaskHarness(
 
         override suspend fun release() {
             if (!released.compareAndSet(false, true)) return
+            context.handles.decrementAndGet()
             withContext(NonCancellable) {
                 withTimeoutOrNull(cleanupBudget.total) {
                     context.mutex.withLock {
                         settle(context.active)
-                        runCatching { call("release_session", buildJsonObject { put("sessionId", id.value) }) }
+                        // Reopened handles share a native context. Releasing one handle must not
+                        // discard the context still owned by another live handle.
+                        if (context.handles.get() == 0)
+                            runCatching { call("release_session", buildJsonObject { put("sessionId", id.value) }) }
                     }
                 }
                 context.active?.takeUnless { it.isTerminal }?.unresolved(UnresolvedReason.CLEANUP_BOUND_EXCEEDED, "Session release reached its time bound")
