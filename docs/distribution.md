@@ -33,7 +33,7 @@ dependencies {
 | Gemini CLI | Node와 SDK build entrypoint. 기존 조사에서는 외부 build 경로를 사용했으며 현재 설치 가능한 release는 후속 연동 때 재확인 |
 | Koog 실험 | [독립 빌드](../experiments/koog-validation/README.md)의 JDK·Kotlin·lockfile. 모델 경계는 fixture이며 실모델 인증 불필요 |
 
-현재 JAR은 bridge script와 requirements를 포함하고 factory가 script를 추출한다. Python/Node 실행 파일과 provider 인증은 운영 환경이 제공한다. 현재 실행 파일 override는 HARNESS_CODEX_PYTHON, HARNESS_GEMINI_NODE이고 Gemini SDK 경로는 GEMINI_CLI_SDK_MODULE로 지정할 수 있다.
+현재 JAR은 bridge script와 requirements를 포함하고 factory가 script를 추출한다. Python/Node 실행 파일과 provider 인증은 운영 환경이 제공한다. host 실행 파일 override는 HARNESS_CODEX_PYTHON, HARNESS_GEMINI_NODE이고 Gemini SDK 경로는 GEMINI_CLI_SDK_MODULE로 지정할 수 있다. `CodexSdkOptions.codexExecutable`은 Python host와 별개로 Python SDK가 실행할 Codex binary를 지정하며, 생략하면 SDK에 고정된 runtime을 사용한다.
 
 모델 인증 정보를 artifact에 포함하지 않는다. 운영 환경을 self-contained하게 제공하려면 별도의 runner image·sidecar·runtime packaging 등 배포 구성이 필요하다. 이것은 각 adapter의 제공 방식이다.
 
