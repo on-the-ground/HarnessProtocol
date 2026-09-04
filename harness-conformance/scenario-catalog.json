@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "stage": "1: scenario consolidation and gap inventory",
-  "countingRule": "Definitions and purpose overlap are not execution counts. An SDK boundary binding is not a native runtime binding. The 48 C/K definitions remain unattached.",
+  "stage": "2a: independent requirement profiles and native admission",
+  "countingRule": "76 original inventory identities are retained. C20/C21 have been replaced by requirement cases; 46 original C/K definitions remain unattached. Dynamic cases and support checks are counted from JUnit, separately from definitions.",
   "entries": [
     {
       "id": "C01",
@@ -191,24 +191,30 @@
     {
       "id": "C20",
       "title": "an incompatible session requirement is rejected before any handle is issued",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
-      "bindings": [],
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRequirementsConformanceTest.kt",
+      "layer": "replaced-by-requirement-cases",
+      "bindings": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
       "relatedPurposeIds": [],
       "beforeBinding": [
-        "Select a declared incompatible case; persistence is not universally unsupported."
-      ]
+        "The fixed provider assumption was removed. Actual configured rejection cases run through the replacement factory."
+      ],
+      "replacementFactory": "declared requirements match support validation and actual admission"
     },
     {
       "id": "C21",
       "title": "an unconfirmed session requirement is distinguished from a confirmed rejection",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRequirementsConformanceTest.kt",
+      "layer": "unexercised-requirement-branch",
       "bindings": [],
       "relatedPurposeIds": [],
       "beforeBinding": [
-        "Select a real unconfirmed case; network=ALLOWED is not universally unconfirmed."
-      ]
+        "The fixed network=UNCONFIRMED assumption was removed. The factory distinguishes this decision, but current native profiles have no truthful UNCONFIRMED case; this branch is not counted as executed."
+      ],
+      "replacementFactory": "declared requirements match support validation and actual admission"
     },
     {
       "id": "C22",
@@ -913,7 +919,8 @@
     {
       "id": "G01",
       "purpose": "Independent support/validate/call decisions across accepted, rejected and unconfirmed requirement cases; no baseline-name assumptions",
-      "priority": 1
+      "priority": 1,
+      "progress": "Independent profiles and admission are connected to all three native runtimes. Fixed C20/C21 assumptions removed. Actual UNCONFIRMED cases and profile selection in the remaining effect-control definitions are still unverified."
     },
     {
       "id": "G02",
@@ -970,5 +977,18 @@
       "purpose": "Persistence failures, desired configuration, runtime support revocation and declared restart coordination",
       "priority": 2
     }
-  ]
+  ],
+  "requirementAdmission": {
+    "source": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeRequirementsTest.kt",
+    "profiles": 5,
+    "cases": 43,
+    "modes": [
+      "preflight",
+      "direct"
+    ],
+    "supportChecks": 5,
+    "expectedExecutions": 91,
+    "unconfirmedNativeCaseAvailable": false,
+    "evidence": "../harness-native-integration/evidence/requirement-admission.json"
+  }
 }

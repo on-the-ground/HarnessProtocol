@@ -13,7 +13,7 @@
 | 완료 | 새 공개 Port·KDoc, Codex/Gemini/Koog 연결, factory·bundle·소비 예제 컴파일, 실제 runtime 검사 25개 |
 | 이전 실증 | Koog native·부분 adapter 실험 18개. [당시 기록](../experiments/koog-validation/evidence/verification.json) |
 | 문서 기준 | README와 docs를 새 추상의 규범으로 갱신. 실험 사실과 현 구현 상태는 구분해 기록 |
-| 정리 완료 | 임시 ReferenceHarness 계열과 실행 subclass 제거. 48개 시나리오 정의는 testFixtures로 보존, 실행·통과 수에서 제외 |
+| 정리 완료 | 임시 ReferenceHarness 계열과 실행 subclass 제거. 기존 48개 중 C20/C21은 독립 요구 사례로 대체, 남은 46개는 testFixtures에 보존하고 실행·통과 수에서 제외 |
 | 남은 작업 | 현재 native 검사에서 빠진 계약·경쟁 시나리오 추가, 선택 계약 구현·검증, 실모델 연동, artifact 발행 |
 
 ## 1. 확정할 공개 모델
@@ -64,9 +64,9 @@
 
 ## 4. 공통 적합성과 회귀
 
-시나리오 통합 단계에서 순수 lifecycle 9개와 native 공통/선택 8개를 conformance로 모으고 SDK 경계 검사 11개를 분리했다. [전체 대응표](conformance-scenarios.md)는 기존 48개 정의의 중복 목적·잘못된 고정 가정·미검증 조건과 실제 binding을 구별한다. 다음 단계는 독립 profile/RequirementCase 선택과 남은 실제 adapter binding이다.
+시나리오 통합 단계에서 순수 lifecycle 9개와 native 공통/선택 8개를 conformance로 모으고 SDK 경계 검사 11개를 분리했다. [전체 대응표](conformance-scenarios.md)는 기존 48개 정의의 중복 목적·잘못된 고정 가정·미검증 조건과 실제 binding을 구별한다. 이후 [독립 요구 사례 검증](requirement-admission-validation.md)을 세 실제 구현체에 연결했다. 다음 묶음은 수락/응답 확인 유실과 남은 효과·종결 제어다.
 
-공통 7개 시나리오는 이미 세 adapter에 적용했고 구현별 4개를 더해 25개가 통과했다. [Testing](testing.md)의 나머지 조건을 이 실제 경계에 추가한다. testFixtures에 보존한 48개 정의는 profile의 고정 가정 등을 보완하여 재사용한다. 준비·입력 유도·효과 관찰은 provider별 fixture가 맡으며 공통 판정은 provider wire·Koog node ID를 알지 않는다.
+공통 7개 시나리오는 이미 세 adapter에 적용했고 구현별 4개를 더해 25개가 통과했다. [Testing](testing.md)의 나머지 조건을 이 실제 경계에 추가한다. 기존 48개 중 C20/C21은 독립 요구 판정으로 대체했다. 남은 46개 정의는 profile의 고정 가정 등을 보완하여 재사용한다. 준비·입력 유도·효과 관찰은 provider별 fixture가 맡으며 공통 판정은 provider wire·Koog node ID를 알지 않는다.
 
 필수 계약은 세 구현이 모두 통과해야 한다. 선택 계약은 지원하면 해당 의미를 검증하고 미지원이면 사전 거절을 검증한다. 기존 spec→SDK 투영, bridge EOF, mapper 같은 검사는 구현별 회귀로 보존한다. close 강제 취소 등 잘못된 기존 기대값은 변경한다.
 

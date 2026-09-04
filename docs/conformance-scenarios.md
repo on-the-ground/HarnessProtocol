@@ -1,5 +1,7 @@
 # 공통 시나리오 통합과 남은 검증
 
+현재 요구 사례 연결은 [단계 2 G01 기록](requirement-admission-validation.md)을 따른다. C20/C21은 독립 요구 사례 판정으로 대체했고, 남은 미연결 정의는 46개다. 아래 단계 1 실행 수는 당시의 검증 기록이다.
+
 2026-09-04. 단계 1은 검사 위치·목적·실행 증거를 통합하는 작업이다. 공개 Port의 의미를 변경하지 않는다. [기계 판독 목록](../harness-conformance/scenario-catalog.json)에 기존 48개 정의, SDK 공통/전용 20개, native 8개를 모두 대응시켰다. 76개 항목은 고유 업무 목적의 수나 통과 수가 아니다.
 
 ## 코드 배치
@@ -8,7 +10,8 @@
 - HarnessRuntimeConformanceTest: 필수 runtime 5개. 실제 입력·지시·문맥, 중첩/독립 waiter, 정리, 확인된 취소를 검사한다.
 - HarnessRuntimeProfileConformanceTest: 현재 선택한 세 구성의 진단 지원·구조화 요구 거절 2개. 모든 adapter에 이 지원 조합을 강제하는 기본 계약이 아니다.
 - HarnessRuntimePersistenceConformanceTest: Codex/Gemini에 연결된 실제 영속 문맥 재개 1개.
-- HarnessConformanceCoreTest/CleanupTest: 기존 29+19개는 아직 전체 HarnessFixture에 연결되지 않은 정의다. 아래 가정을 고치고 실제 경계에 연결해야 한다.
+- HarnessRequirementsConformanceTest: 독립 profile별 지원·preflight·직접 호출을 실제 세 adapter에서 검사하는 동적 factory. 5개 profile·43개 요구 사례의 실행 기록은 G01 문서를 따른다.
+- HarnessConformanceCoreTest/CleanupTest: 기존 29+19개 중 C20/C21을 요구 사례 판정으로 대체했다. 남은 27+19개는 아직 전체 HarnessFixture에 연결되지 않은 정의다. 아래 가정을 고치고 실제 경계에 연결해야 한다.
 - SdkAdapterContractTest: 요청 전송·설정 투영·mailbox 해제·EOF·ID 정규화 등 SDK 경계 검사 11개와 lifecycle binding만 남겼다. 기존 AgentHarnessContractTest는 제거했다.
 
 공통 판정은 conformance의 testFixtures에 있고 provider 설정·SDK JSON·모델 서버는 외부 binding에 있다. TaskLifecycleControl은 기존 TaskControl의 lifecycle 부분을 공유한다. 어떤 binding도 AgentTask state/outcome을 직접 설정하지 않는다.
@@ -26,17 +29,17 @@
 7. 승인 응답 전에 효과를 즉시 단정하거나 예상 답변을 주입해 문맥을 검증한다. 실제 수락·효과와 후속 모델 입력을 관찰해야 한다.
 8. 임의 사용량 값을 모든 native runtime에 주입할 수 있다고 가정한다. 공통 회계 의미와 SDK 변환 검사의 증거를 구별해야 한다.
 
-코드 목록의 beforeBinding에 해당 ID별 조건을 기록했다. 이 단계에서는 미연결 정의의 기대값을 성급히 고쳐 통과로 만들지 않았다.
+코드 목록의 beforeBinding에 해당 ID별 조건을 기록했다. 단계 1에서는 미연결 정의의 기대값을 고쳐 통과로 만들지 않았다. 이후 C20/C21은 특정 기능의 고정 상태 가정을 제거하고 독립 요구 사례 판정으로 대체했다.
 
 ## 다음 실행 순서
 
-먼저 G01의 독립 profile/case 선택과 결과 보고를 구성한다. 그다음 수락/응답 확인 유실(G02), interaction 경쟁(G03), 문맥 차단(G04), 부분 산출물·사용량(G05), 정리·후속 효과(G06)를 실제 세 adapter에서 검증한다. 이후 진단·권한·자원·구조화·usage·영속 조건(G07–G12)을 지원 시 이행/미지원 시 사전 거절로 검증한다.
+G01의 독립 profile/case 선택과 실제 수락 검사를 연결했다. 미확인 요구의 실제 사례와 나머지 기존 본문의 profile 전환은 남아 있다. 다음은 수락/응답 확인 유실(G02), interaction 경쟁(G03), 문맥 차단(G04), 부분 산출물·사용량(G05), 정리·후속 효과(G06)를 실제 세 adapter에서 검증한다. 이후 진단·권한·자원·구조화·usage·영속 조건(G07–G12)을 지원 시 이행/미지원 시 사전 거절로 검증한다.
 
 통과한 기본 목적을 반복 구현하지 않고 아래 related ID의 실행본을 재사용한다. 지원하지 않는 선택 기능의 성공 시나리오를 강제로 만들지 않으며, 필수 동작이나 지원한다고 선언한 기능을 skip하여 완료하지 않는다. 실행마다 provider × scenario × profile × 증거 경계 × 결과를 기록한다.
 
 ## 전체 대응표
 
-S는 이전 AgentHarnessContractTest의 원래 순번, R은 이전 NativeHarnessTest의 순번이다. C/K는 기존 Core/Cleanup 순번이다. related는 목적 중첩을 뜻하며 해당 C/K의 모든 조건을 이미 통과했다는 표시가 아니다. 모든 C/K의 전체 fixture 연결 상태는 미연결이다. S는 Codex/Gemini SDK 경계에 연결돼 있고, R01–R07은 세 runtime, R08은 Codex/Gemini에 연결돼 있다.
+S는 이전 AgentHarnessContractTest의 원래 순번, R은 이전 NativeHarnessTest의 순번이다. C/K는 기존 Core/Cleanup 순번이다. related는 목적 중첩을 뜻하며 해당 C/K의 모든 조건을 이미 통과했다는 표시가 아니다. C20/C21은 요구 사례 factory로 대체했으며 나머지 C/K의 전체 fixture 연결 상태는 미연결이다. S는 Codex/Gemini SDK 경계에 연결돼 있고, R01–R07은 세 runtime, R08은 Codex/Gemini에 연결돼 있다.
 
 | ID | 검사 | 현재 경계 | 관련 목적 |
 |---|---|---|---|
@@ -59,8 +62,8 @@ S는 이전 AgentHarnessContractTest의 원래 순번, R은 이전 NativeHarness
 | C17 | an actual empty string output is distinct from no output | 미연결 정의 | — |
 | C18 | completion's null output does not erase output already captured earlier | 미연결 정의 | — |
 | C19 | completion does not imply schema-valid structured output | 미연결 정의 | — |
-| C20 | an incompatible session requirement is rejected before any handle is issued | 미연결 정의 | — |
-| C21 | an unconfirmed session requirement is distinguished from a confirmed rejection | 미연결 정의 | — |
+| C20 | an incompatible session requirement is rejected before any handle is issued | 실제 요구 사례로 대체 | G01 |
+| C21 | an unconfirmed session requirement is distinguished from a confirmed rejection | 공통 분기 존재, 실제 사례 미확보 | G01 |
 | C22 | a request-level rejection is distinguished from a post-handle failure | 미연결 정의 | — |
 | C23 | the same work key in two different tasks does not cross-contaminate effect counts | 미연결 정의 | — |
 | C24 | whitespace-only input text is preserved verbatim, not trimmed | 미연결 정의 | — |

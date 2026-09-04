@@ -32,7 +32,7 @@ AgentHarness                   하네스 제공 경계
 
 ## 문서와 구현 상태
 
-**Codex·Gemini CLI·Koog adapter와 `Harnesses` factory는 새 `dev.harnessprotocol` Port를 사용한다.** 공통 시나리오 7개를 세 실제 runtime에 적용한 21개와 구현별 4개, 총 25개가 통과했다. 임시 참조 하네스는 제거했다. 전체 계약 인증과 실모델 검증은 별도이며, 구현 범위·발견한 결함·남은 gate는 [실제 adapter 검증](docs/native-port-validation.md), 공개 모델은 [공개 모델](docs/public-model.md)을 따른다.
+**Codex·Gemini CLI·Koog adapter와 `Harnesses` factory는 새 `dev.harnessprotocol` Port를 사용한다.** 공통 시나리오 7개를 세 실제 runtime에 적용한 21개와 구현별 4개, 총 25개가 통과했다. 임시 참조 하네스는 제거했다. 전체 계약 인증과 실모델 검증은 별도이며, 구현 범위·발견한 결함·남은 gate는 [실제 adapter 검증](docs/native-port-validation.md), 공개 모델은 [공개 모델](docs/public-model.md)을 따른다. 독립 profile별 지원·수락 검증은 [요구 사례 검증](docs/requirement-admission-validation.md)에 기록한다.
 
 | 읽는 순서       | 문서                                                                                                                                                        |
 |-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -60,7 +60,7 @@ AgentHarness                   하네스 제공 경계
 | `harness-runtime` | adapter가 선택하여 사용하는 Task 수명·관찰 구현. 공개 Port의 필수 기반이 아니다. |
 | `harness-process-bridge`, `bridges` | 두 process adapter의 내부 transport와 host. 모든 하네스의 필수 기반이 아니다. |
 | `harness-adapter-testkit` | 현재 process adapter의 공통 회귀, 독립적인 설정 투영, SDK 이벤트 매핑 검사. |
-| `harness-conformance` | 공통 lifecycle·runtime 판정과 fixture seam. 실행 binding이 있는 정의 17개와 미연결 정의 48개를 구별한다. [시나리오 대응표](docs/conformance-scenarios.md)를 따른다. |
+| `harness-conformance` | 공통 lifecycle·runtime 판정과 fixture seam. 실행 binding이 있는 정의 17개·요구 사례 factory와 미연결 정의 46개를 구별한다. [시나리오 대응표](docs/conformance-scenarios.md)를 따른다. |
 | `harness-bundle` | Codex·Gemini·Koog adapter 구성 편의. Koog의 executor·model을 명시적으로 받는다. |
 | `harness-native-integration` | 세 실제 runtime과 통제된 모델 경계로 공개 동작을 검증한다. `-PnativeHarnessTests`로 실행한다. |
 | `experiments/koog-validation` | 현재 Port를 사용하는 별도 Koog 승인·질문·파일 보관 구성의 격리 실험. production 기본 구성과 구별한다. |

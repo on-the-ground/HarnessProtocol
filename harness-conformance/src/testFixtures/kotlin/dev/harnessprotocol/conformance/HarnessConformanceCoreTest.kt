@@ -5,8 +5,6 @@ package dev.harnessprotocol.conformance
 import dev.harnessprotocol.AgentUsage
 import dev.harnessprotocol.FailureKind
 import dev.harnessprotocol.HarnessTransportException
-import dev.harnessprotocol.IncompatibleRequirementException
-import dev.harnessprotocol.RequirementUnconfirmedException
 import dev.harnessprotocol.SchemaValidation
 import dev.harnessprotocol.SessionRequirements
 import dev.harnessprotocol.SessionSpec
@@ -17,7 +15,6 @@ import dev.harnessprotocol.TaskOutcome
 import dev.harnessprotocol.TaskOutput
 import dev.harnessprotocol.TaskRequirements
 import dev.harnessprotocol.TaskState
-import dev.harnessprotocol.PersistenceRequirement
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -428,32 +425,6 @@ abstract class HarnessConformanceCoreTest : ConformanceTestSupport() {
     }
 
     // -------------------------------------------------------------------------------- 잘못된 요구 vs handle 이후 실패
-
-    @Test
-    fun `an incompatible session requirement is rejected before any handle is issued`(): Unit = runBlocking {
-        val h = harnessFor()
-        try {
-            val spec = SessionSpec(requirements = SessionRequirements(persistence = PersistenceRequirement.Required()))
-            assertFailsWith<IncompatibleRequirementException> { h.createSession(spec) }
-        } finally {
-            h.close()
-        }
-    }
-
-    @Test
-    fun `an unconfirmed session requirement is distinguished from a confirmed rejection`(): Unit = runBlocking {
-        val h = harnessFor()
-        try {
-            val spec = SessionSpec(
-                requirements = SessionRequirements(
-                    execution = dev.harnessprotocol.ExecutionConstraint.Required(network = dev.harnessprotocol.NetworkAccess.ALLOWED),
-                ),
-            )
-            assertFailsWith<RequirementUnconfirmedException> { h.createSession(spec) }
-        } finally {
-            h.close()
-        }
-    }
 
     @Test
     fun `a request-level rejection is distinguished from a post-handle failure`(): Unit = runBlocking {

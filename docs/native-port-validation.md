@@ -113,3 +113,9 @@ legacy 이전과 임시 참조 구현 제거 뒤 `test :harness-conformance:test
 공통 runtime 판정 7개와 영속 재개 판정 1개는 conformance의 testFixtures로 이동했다. native 모듈은 실제 provider 구성·모델 경계·실행 subclass와 Koog 전용 도구 검사 2개를 소유한다. SDK testkit의 순수 lifecycle 9개도 conformance로 이동했고 SDK 전용 검사 11개는 남겼다. 상세 중복 관계와 연결 전 수정 사항은 [시나리오 대응표](conformance-scenarios.md)를 따른다. 이 이동으로 미연결 Core/Cleanup 48개를 새로 실행했다고 집계하지 않는다.
 
 통합 후 전체 JVM 검사도 105개(실제 runtime 25개 포함), 실패·오류·건너뜀 0개로 통과했다. 공통 정의 17개의 consumer 실행 41회는 이 105개에 포함되며 추가 합산하지 않는다. 정리 유예 중 새로 생긴 Codex의 git 하위 process가 최초 종료 목록에서 빠지는 문제를 실제 실행에서 찾아 보완했다. 실패 이력·원인 관찰·최종 실행 대응은 [단계 1 결과](conformance-scenarios.md#단계-1-검증-결과)를 따른다. 이 단계에서는 host·독립 실험·sample을 다시 실행하지 않았다.
+
+## 독립 요구 사례 연결
+
+[요구 사례 검증](requirement-admission-validation.md)을 세 실제 adapter의 다섯 구성에 연결했다. 지원 선언 검사 5개와 요구 사례 43개의 preflight/direct 호출 86개, 총 91개가 통과했다. 기존 C20/C21의 고정 거절·미확인 전제를 제거해 이 판정으로 대체했으며 나머지 미연결 정의는 46개다. 수락·거절 검사를 승인 효과·sandbox·자원 접근 등의 전체 의미 검증으로 해석하지 않는다. 실제 미확인 요구 사례가 없는 범위도 별도로 남겼다.
+
+현재 합산 JVM 결과는 기존 105개와 요구 검사 91개를 합한 **196개**, 실패·오류·건너뜀 0개다. 두 실행의 범위와 소스 일치 확인은 [G01 실행 결과](requirement-admission-validation.md#실행-결과), 개별 suite는 [현재 검증 기록](../harness-native-integration/evidence/verification.json)에 있다. 위 legacy 이전·단계 1의 105개 집계는 당시 결과로 보존한다.

@@ -36,9 +36,27 @@ abstract class NativePersistentHarnessTest : dev.harnessprotocol.conformance.Har
     override fun boundary() = ModelBoundary()
 }
 
+interface NativeHarnessFactory {
+    val provider: ProviderId
+    fun spec() = SessionSpec(instructions = "AHP_NATIVE_INSTRUCTION")
+    fun create(model: ModelBoundary, directory: Path, persistent: Boolean = true): AgentHarness
+}
+
 class CodexNativeHarnessTest : NativePersistentHarnessTest() {
     override val supportsChangedInstructionsOnReopen = false
-    override fun harness(model: ModelBoundary): AgentHarness {
+    override fun harness(model: ModelBoundary) = CodexNativeFactory.create(model, directory)
+}
+class GeminiNativeHarnessTest : NativePersistentHarnessTest() {
+    override fun spec() = GeminiNativeFactory.spec()
+    override fun harness(model: ModelBoundary) = GeminiNativeFactory.create(model, directory)
+}
+class KoogNativeHarnessTest : NativeHarnessTest() {
+    override fun harness(model: ModelBoundary) = KoogNativeFactory.create(model, directory)
+}
+
+object CodexNativeFactory : NativeHarnessFactory {
+    override val provider = ProviderId("codex")
+    override fun create(model: ModelBoundary, directory: Path, persistent: Boolean): AgentHarness {
         val repo = Path.of(System.getProperty("ahp.repository"))
         val home = Files.createDirectories(directory.resolve("codex-home"))
         Files.writeString(home.resolve("config.toml"), """
@@ -52,23 +70,25 @@ class CodexNativeHarnessTest : NativePersistentHarnessTest() {
         """.trimIndent())
         val python = System.getenv("HARNESS_CODEX_PYTHON") ?: repo.resolve(".venv/Scripts/python.exe").toString()
         return CodexHarness.launch(CodexSdkOptions(pythonCommand = listOf(python), processWorkingDirectory = directory,
-            environment = mapOf("CODEX_HOME" to home.toString())), storageNamespace = StorageNamespace(directory.toString()))
+            environment = mapOf("CODEX_HOME" to home.toString())), storageNamespace = if (persistent) StorageNamespace(directory.toString()) else null)
     }
 }
-class GeminiNativeHarnessTest : NativePersistentHarnessTest() {
+object GeminiNativeFactory : NativeHarnessFactory {
+    override val provider = ProviderId("gemini-cli")
     override fun spec() = SessionSpec(instructions = "AHP_NATIVE_INSTRUCTION", model = "gemini-2.5-flash")
-    override fun harness(model: ModelBoundary): AgentHarness {
+    override fun create(model: ModelBoundary, directory: Path, persistent: Boolean): AgentHarness {
         val repo = Path.of(System.getProperty("ahp.repository"))
         val module = System.getenv("GEMINI_CLI_SDK_MODULE") ?: repo.resolve("_stage/gemini-cli-runtime/packages/sdk/dist/index.js").toString()
         check(Files.exists(Path.of(module))) { "Build the official Gemini SDK and set GEMINI_CLI_SDK_MODULE" }
         return GeminiCliHarness.launch(GeminiCliSdkOptions(sdkModule = module, processWorkingDirectory = directory,
             environment = mapOf("GOOGLE_GEMINI_BASE_URL" to model.url, "GEMINI_API_KEY" to "local-fixture-key", "GEMINI_TELEMETRY_ENABLED" to "false",
                 "USERPROFILE" to Files.createDirectories(directory.resolve("gemini-home")).toString(), "HOME" to directory.resolve("gemini-home").toString())),
-            storageNamespace = StorageNamespace(directory.toString()))
+            storageNamespace = if (persistent) StorageNamespace(directory.toString()) else null)
     }
 }
-class KoogNativeHarnessTest : NativeHarnessTest() {
-    override fun harness(model: ModelBoundary): AgentHarness = KoogHarness({ object : PromptExecutor() {
+object KoogNativeFactory : NativeHarnessFactory {
+    override val provider = ProviderId("koog")
+    override fun create(model: ModelBoundary, directory: Path, persistent: Boolean): AgentHarness = KoogHarness({ object : PromptExecutor() {
         override suspend fun execute(prompt: Prompt, modelDescriptor: LLModel, tools: List<ToolDescriptor>): Message.Assistant {
             model.requests += prompt.messages.joinToString { it.textContent() }
             model.awaitRelease()

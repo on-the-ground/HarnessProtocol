@@ -11,7 +11,7 @@ import dev.harnessprotocol.*
  *
  * 검사는 provider wire·SDK·bridge를 알지 않는다. 실제 모델 호출도 요구하지 않는다.
  */
-interface HarnessFixture {
+interface ProfileFixture {
     val provider: ProviderId
 
     /** 조건별 구성과 지원·거절·미확인 요청 사례. 정상 기본 작업을 수락하는 사례가 반드시 있다. */
@@ -19,6 +19,10 @@ interface HarnessFixture {
 
     /** 같은 profile은 같은 저장 namespace를 사용하되 독립된 harness handle을 만든다. */
     fun createHarness(profileId: String): AgentHarness
+}
+
+/** Full evidence controls, layered over the same independent profile declarations. */
+interface HarnessFixture : ProfileFixture {
 
     /** startTask 반환 직후 제어 가능하며 기본 fixture는 명시한 종결 전까지 작업을 유지한다. */
     fun control(task: AgentTask): TaskControl
