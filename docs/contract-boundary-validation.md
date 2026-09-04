@@ -51,3 +51,9 @@ Koog에서는 네 실제 도구를 NonCancellable 상태로 보류하고 200ms p
 현재 Codex 연결은 native acceptForSession의 허용 범위를 공통 필드로 설명·집행할 수 없으므로 세션 승인 선택지를 제공하지 않는다. Gemini·Koog는 승인 채널 자체를 지원하지 않는다(G01). 세션 grant의 범위 안/밖 허용 실증은 이 구성에 존재하지 않는 기능이며 통과로 세지 않는다.
 
 Codex에 연결한 공통 [3개 검사](../harness-native-integration/evidence/g08-approval-scope.json)가 통과했다. sessionGrant와 APPROVE_FOR_SESSION이 노출되지 않으며 억지로 제출해도 native 전달 전에 거절된다. APPROVE_ONCE로 실제 파일 효과를 한 번 허용한 뒤 같은 session의 다음 Task와 독립 session에서 같은 명령이 다시 승인을 요구한다. 두 번째 요청을 거절하면 파일 효과 수는 한 번으로 유지되고 Task 자체는 정상 완료할 수 있다. `APPROVE_FOR_SESSION`의 공개 계약을 삭제하거나 일회 승인을 세션 권한으로 확대하지 않았다.
+
+## G10 — 구조화 산출물 요구의 적용 범위
+
+현재 세 production 구성은 schema를 집행하는 실행 경로를 제공하지 않는다. 따라서 이 단계의 적합성 조건은 JSON처럼 보이는 텍스트를 Structured로 포장하는 것이 아니라, 구조화 산출물 요구를 작업 시작 전에 거절하는 것이다. `validatedByHarness=false`도 산출물 형태 요구를 제거하지 않는다.
+
+[G01 실행 증거](../harness-native-integration/evidence/requirement-admission.json)의 세 native 구성 × 검증 책임 두 종류 × preflight/direct = 12개 요구 검사가 이 조건을 검증한다. 다섯 profile의 지원 표 검사도 미지원을 확인한다. 기존 91개 실행에 포함된 검사이며 신규 12개로 더하지 않는다. 선택 기능을 새로 구현하거나, 미지원 선택 보장을 기본 계약으로 강제하지 않았다. 향후 schema 실행 경로를 추가하면 VALID/INVALID/NOT_VALIDATED와 부분 산출물의 실제 의미를 별도 실증해야 한다.
