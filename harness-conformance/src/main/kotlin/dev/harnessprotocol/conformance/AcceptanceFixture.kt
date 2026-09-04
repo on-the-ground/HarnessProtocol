@@ -21,3 +21,10 @@ interface ResponseAcceptanceFixture : AcceptanceFixture {
     val response: ResponseControl
     fun effectCount(): Int
 }
+
+/** Hold a submitted response before native delivery, without replacing the native interaction. */
+interface InteractionRaceFixture : ResponseAcceptanceFixture {
+    fun holdResponse()
+    suspend fun awaitResponseSubmission()
+    fun releaseResponse()
+}

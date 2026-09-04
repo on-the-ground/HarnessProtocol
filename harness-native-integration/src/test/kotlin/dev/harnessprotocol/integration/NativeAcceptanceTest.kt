@@ -59,7 +59,7 @@ class CodexNativeResponseAcceptanceTest : HarnessResponseAcceptanceConformanceTe
     override fun responseFixture(): ResponseAcceptanceFixture = NativeResponseFixture(directory)
 }
 
-private class NativeResponseFixture(directory: Path) : ResponseAcceptanceFixture {
+internal class NativeResponseFixture(directory: Path) : InteractionRaceFixture {
     private val target = directory.resolve("approved-effect.txt")
     private val calls = AtomicInteger()
     override val observation: ModelBoundary = createModel()
@@ -70,7 +70,6 @@ private class NativeResponseFixture(directory: Path) : ResponseAcceptanceFixture
             val names = tools.mapNotNull { it["name"]?.jsonPrimitive?.content }
             val name = names.firstOrNull { it in setOf("exec_command", "shell_command", "shell") }
                 ?: error("No command tool in the real model request: $names")
-            println("Native approval fixture uses tool $name")
             observation.hold() // The post-tool model response must not overtake the caller's acknowledgement.
             val command = "[System.IO.File]::AppendAllText('${target.toString().replace("'", "''")}', 'effect')"
             val args = if (name == "exec_command") buildJsonObject {
@@ -98,6 +97,9 @@ private class NativeResponseFixture(directory: Path) : ResponseAcceptanceFixture
     ))
     private val delivery = NativeDeliveryBridge(nativeBridge(CodexNativeFactory, observation, directory))
     override val response = delivery.responseControl
+    override fun holdResponse() = delivery.holdResponse()
+    override suspend fun awaitResponseSubmission() = delivery.responseSubmitted.await()
+    override fun releaseResponse() = delivery.releaseResponse()
     override val harness = processHarness(CodexNativeFactory, delivery)
     override fun effectCount(): Int {
         if (!Files.exists(target)) return 0
@@ -105,7 +107,7 @@ private class NativeResponseFixture(directory: Path) : ResponseAcceptanceFixture
         check(markers.all { it == "effect" }) { "Unexpected content in the native effect resource" }
         return markers.size
     }
-    override fun close() { try { harness.close() } finally { observation.close() } }
+    override fun close() { releaseResponse(); try { harness.close() } finally { observation.close() } }
 }
 
 private fun processHarness(factory: NativeHarnessFactory, bridge: SdkBridge): AgentHarness = when (factory) {
@@ -130,6 +132,10 @@ private fun nativeBridge(factory: NativeHarnessFactory, model: ModelBoundary, di
 
 /** Delivery fault decoration around the real SDK host. It never manufactures a Port handle or event. */
 private class NativeDeliveryBridge(private val delegate: ConfirmedSdkBridge) : ConfirmedSdkBridge {
+    private var responseGate: CompletableDeferred<Unit>? = null
+    val responseSubmitted = CompletableDeferred<Unit>()
+    fun holdResponse() { responseGate = CompletableDeferred() }
+    fun releaseResponse() { responseGate?.complete(Unit) }
     private enum class Mode { NORMAL, NOT_DELIVERED, LOST_ACCEPTED, LOST_NOT_ACCEPTED }
     @Volatile private var startMode = Mode.NORMAL
     @Volatile private var responseMode = Mode.NORMAL
@@ -160,7 +166,12 @@ private class NativeDeliveryBridge(private val delegate: ConfirmedSdkBridge) : C
                 startReferences += UnconfirmedStart(SessionId(params["sessionId"]!!.jsonPrimitive.content), params["requestId"]!!.jsonPrimitive.content)
                 startMode
             }
-            "respond_interaction" -> { responses.incrementAndGet(); responseMode }
+            "respond_interaction" -> {
+                responses.incrementAndGet()
+                responseSubmitted.complete(Unit)
+                responseGate?.await()
+                responseMode
+            }
             else -> Mode.NORMAL
         }
         if (mode == Mode.NOT_DELIVERED) throw BridgeNotDeliveredException("No request was forwarded to the native host")
