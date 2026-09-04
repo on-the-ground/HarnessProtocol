@@ -10,6 +10,8 @@ package dev.harnessprotocol.legacy
  * @property instructions persistent system/developer-level guidance; `null` asks
  * the provider to use its default instructions
  * @property model exact provider model identifier; `null` selects the provider default
+ * @property reasoningEffort exact provider reasoning-effort identifier; `null`
+ * preserves the provider default
  * @property workingDirectory provider-visible working directory; `null` selects
  * the adapter or provider default
  * @property skills skill contexts made available and explicitly activated for
@@ -22,6 +24,7 @@ data class AgentSpec(
     val workingDirectory: String? = null,
     val skills: List<SkillReference> = emptyList(),
     val executionPolicy: ExecutionPolicy = ExecutionPolicy(),
+    val reasoningEffort: String? = null,
 )
 
 /**

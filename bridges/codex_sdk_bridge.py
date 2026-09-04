@@ -346,6 +346,10 @@ def common_thread_params(spec: dict[str, Any]) -> dict[str, Any]:
 
     result.update(approval_params(spec.get("approval", "provider_default")))
 
+    config: dict[str, Any] = {}
+    if "reasoningEffort" in spec:
+        config["model_reasoning_effort"] = spec["reasoningEffort"]
+
     sandbox_config: dict[str, Any] = {}
     network = spec.get("network", "provider_default")
     if network != "provider_default":
@@ -354,7 +358,9 @@ def common_thread_params(spec: dict[str, Any]) -> dict[str, Any]:
     if roots:
         sandbox_config["writable_roots"] = roots
     if sandbox_config:
-        result["config"] = {"sandbox_workspace_write": sandbox_config}
+        config["sandbox_workspace_write"] = sandbox_config
+    if config:
+        result["config"] = config
     return result
 
 

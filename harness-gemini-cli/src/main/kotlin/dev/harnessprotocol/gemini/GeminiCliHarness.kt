@@ -38,6 +38,9 @@ class GeminiCliHarness private constructor(
 
     override fun validate(spec: AgentSpec): CompatibilityReport {
         val issues = buildList {
+            if (spec.reasoningEffort != null) {
+                add(CompatibilityIssue("reasoningEffort", SDK_REASONING_EFFORT_LIMITATION))
+            }
             if (spec.executionPolicy.filesystem !is FilesystemAccess.ProviderDefault) {
                 add(CompatibilityIssue("executionPolicy.filesystem", SDK_POLICY_LIMITATION))
             }
@@ -164,3 +167,6 @@ private fun JsonObject.string(name: String): String =
 
 private const val SDK_POLICY_LIMITATION =
     "Gemini CLI has this policy purpose, but the current SDK does not expose a policy/approval bridge; refusing silent degradation"
+
+private const val SDK_REASONING_EFFORT_LIMITATION =
+    "Gemini CLI reasoning-effort selection is not mapped by the current adapter; refusing silent degradation"

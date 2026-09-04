@@ -59,11 +59,24 @@ def test_null_instructions_are_omitted_and_empty_string_is_sent():
     assert thread_start_params({"instructions": ""})["developerInstructions"] == ""
 
 
+def test_reasoning_effort_maps_to_codex_config_and_null_is_omitted():
+    assert "config" not in thread_start_params({})
+    assert thread_start_params({"reasoningEffort": "high"})["config"] == {"model_reasoning_effort": "high"}
+
+
 def test_network_intent_rides_on_workspace_write_config_only():
     params = thread_start_params({"filesystem": "workspace_write", "network": "denied", "additionalWritableRoots": ["/x"]})
     assert params["sandbox"] == "workspace-write"
     assert params["config"]["sandbox_workspace_write"] == {"network_access": False, "writable_roots": ["/x"]}
     # The Kotlin validate() rejects network intent outside workspace-write; the host stays a dumb translator.
+
+
+def test_reasoning_effort_and_sandbox_share_the_config_envelope():
+    params = thread_start_params({"reasoningEffort": "xhigh", "filesystem": "workspace_write", "network": "allowed"})
+    assert params["config"] == {
+        "model_reasoning_effort": "xhigh",
+        "sandbox_workspace_write": {"network_access": True},
+    }
 
 
 def test_skill_activation_envelope_keeps_user_text():
@@ -173,6 +186,21 @@ def test_end_to_end_completion_with_provider_default(stub_log):
     assert started["executionId"].startswith("turn-")
     methods = [e[1] for e in bridge.captured]
     assert methods[-1] == "turn/completed"
+
+
+def test_end_to_end_reasoning_effort_reaches_app_server(stub_log):
+    client = _stub_client("complete", stub_log, lambda _method, _params: {})
+    bridge = _CapturingBridge(client)
+
+    async def scenario():
+        await bridge.dispatch("create_session", {"reasoningEffort": "high"})
+
+    try:
+        _run(scenario())
+    finally:
+        client.close()
+    thread_start = next(e for e in _read_log(stub_log) if e["received"] == "thread/start")
+    assert thread_start["params"]["config"]["model_reasoning_effort"] == "high"
 
 
 def test_caller_decides_round_trip_respond_resumes(stub_log):

@@ -139,6 +139,7 @@ private class CodexSession(
 private fun AgentSpec.toBridgeJson(): JsonObject = buildJsonObject {
     instructions?.let { put("instructions", it) }
     model?.let { put("model", it) }
+    reasoningEffort?.let { put("reasoningEffort", it) }
     workingDirectory?.let { put("workingDirectory", it) }
     put("skills", buildJsonArray {
         skills.forEach { skill ->
