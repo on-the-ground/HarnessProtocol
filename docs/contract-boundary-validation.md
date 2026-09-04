@@ -45,3 +45,9 @@ Koog에서는 네 실제 도구를 NonCancellable 상태로 보류하고 200ms p
 공통 1개 정의를 세 runtime에 연결해 [3개 통과](../harness-native-integration/evidence/g07-observation.json). Codex·Gemini는 실제 모델 스트림 700조각, Koog는 실제 graph 도구 400회를 수행한다. 의미/진단의 빠른 구독자와 첫 이벤트에서 멈춘 구독자를 동시에 연결한다. 느린 두 구독자가 모두 멈춰 있어도 작업은 Completed에 도달하고, 각각의 전달 건수와 gap 건수 합은 빠른 구독자의 관측과 일치한다. 의미 terminal은 마지막에 정확히 한 번 남는다.
 
 [최초 실행](../harness-native-integration/evidence/g07-observation-first-run.json)은 Gemini의 반복 감지와 Koog graph의 텍스트 종결 우선 규칙에 의해 부하 생성이 조기 종료됐다. Gemini 조각을 구별 가능한 값으로 만들고, Koog 공식 singleRunStrategy의 중간 응답을 tool-only로 구성했다. 그래프의 반복 상한도 충분히 설정했다. runtime의 정상 종료 규칙을 바꾸거나 Port에 인위적인 이벤트를 주입하지 않았다.
+
+## G08 — 승인 범위
+
+현재 Codex 연결은 native acceptForSession의 허용 범위를 공통 필드로 설명·집행할 수 없으므로 세션 승인 선택지를 제공하지 않는다. Gemini·Koog는 승인 채널 자체를 지원하지 않는다(G01). 세션 grant의 범위 안/밖 허용 실증은 이 구성에 존재하지 않는 기능이며 통과로 세지 않는다.
+
+Codex에 연결한 공통 [3개 검사](../harness-native-integration/evidence/g08-approval-scope.json)가 통과했다. sessionGrant와 APPROVE_FOR_SESSION이 노출되지 않으며 억지로 제출해도 native 전달 전에 거절된다. APPROVE_ONCE로 실제 파일 효과를 한 번 허용한 뒤 같은 session의 다음 Task와 독립 session에서 같은 명령이 다시 승인을 요구한다. 두 번째 요청을 거절하면 파일 효과 수는 한 번으로 유지되고 Task 자체는 정상 완료할 수 있다. `APPROVE_FOR_SESSION`의 공개 계약을 삭제하거나 일회 승인을 세션 권한으로 확대하지 않았다.

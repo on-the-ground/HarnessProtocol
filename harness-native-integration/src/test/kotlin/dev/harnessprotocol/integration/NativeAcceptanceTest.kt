@@ -59,9 +59,10 @@ class CodexNativeResponseAcceptanceTest : HarnessResponseAcceptanceConformanceTe
     override fun responseFixture(): ResponseAcceptanceFixture = NativeResponseFixture(directory)
 }
 
-internal class NativeResponseFixture(directory: Path) : InteractionRaceFixture {
+internal class NativeResponseFixture(directory: Path) : InteractionRaceFixture, RepeatedApprovalFixture {
     private val target = directory.resolve("approved-effect.txt")
     private val calls = AtomicInteger()
+    override fun prepareNextEffect() { calls.set(0) }
     override val observation: ModelBoundary = createModel()
     private fun createModel() = ModelBoundary { body ->
         if (calls.getAndIncrement() == 0) {

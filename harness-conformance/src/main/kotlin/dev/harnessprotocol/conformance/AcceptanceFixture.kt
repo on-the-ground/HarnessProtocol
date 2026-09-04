@@ -28,3 +28,8 @@ interface InteractionRaceFixture : ResponseAcceptanceFixture {
     suspend fun awaitResponseSubmission()
     fun releaseResponse()
 }
+
+/** Ask the actual runtime to attempt the same guarded effect in a subsequent task. */
+interface RepeatedApprovalFixture : ResponseAcceptanceFixture {
+    fun prepareNextEffect()
+}
