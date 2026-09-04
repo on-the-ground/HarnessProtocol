@@ -124,11 +124,13 @@ private fun cDecision(value: String?): ApprovalDecision? = when (value) {
 }
 private fun JsonObject.cString(key: String) = (this[key] as? JsonPrimitive)?.contentOrNull
 private fun JsonObject.cUsage() = AgentUsage(
-    (this["inputTokens"] as? JsonPrimitive)?.longOrNull,
-    (this["cachedInputTokens"] as? JsonPrimitive)?.longOrNull,
-    (this["outputTokens"] as? JsonPrimitive)?.longOrNull,
-    (this["reasoningOutputTokens"] as? JsonPrimitive)?.longOrNull,
-    (this["totalTokens"] as? JsonPrimitive)?.longOrNull,
+    inputTokens = (this["inputTokens"] as? JsonPrimitive)?.longOrNull,
+    cachedInputTokens = (this["cachedInputTokens"] as? JsonPrimitive)?.longOrNull,
+    outputTokens = (this["outputTokens"] as? JsonPrimitive)?.longOrNull,
+    reasoningTokens = (this["reasoningOutputTokens"] as? JsonPrimitive)?.longOrNull,
+    totalTokens = (this["totalTokens"] as? JsonPrimitive)?.longOrNull,
+    cacheWriteInputTokens = (this["cacheWriteInputTokens"] as? JsonPrimitive)?.longOrNull
+        ?: (this["cache_write_input_tokens"] as? JsonPrimitive)?.longOrNull,
 )
 private fun JsonObject.cFailureKind(): FailureKind {
     val info = this["codexErrorInfo"] ?: this["codex_error_info"]
