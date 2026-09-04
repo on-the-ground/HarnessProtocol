@@ -93,6 +93,10 @@ class CodexHarness private constructor(
                 command = options.pythonCommand + bridgeScript.toAbsolutePath().toString(),
                 workingDirectory = options.processWorkingDirectory,
                 environment = options.environment,
+                environmentMode = when (options.environmentMode) {
+                    CodexSdkOptions.EnvironmentMode.INHERIT -> dev.harnessprotocol.bridge.ProcessEnvironmentMode.INHERIT
+                    CodexSdkOptions.EnvironmentMode.REPLACE -> dev.harnessprotocol.bridge.ProcessEnvironmentMode.REPLACE
+                },
             )
             return CodexHarness(bridge, CoroutineScope(SupervisorJob() + Dispatchers.Default))
         }
@@ -111,7 +115,10 @@ data class CodexSdkOptions(
     ),
     val processWorkingDirectory: Path? = null,
     val environment: Map<String, String> = emptyMap(),
-)
+    val environmentMode: EnvironmentMode = EnvironmentMode.INHERIT,
+) {
+    enum class EnvironmentMode { INHERIT, REPLACE }
+}
 
 private class CodexSession(
     private val state: BridgeHarnessRuntime.SessionState,
