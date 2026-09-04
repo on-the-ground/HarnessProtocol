@@ -1,6 +1,6 @@
 # 시작·응답의 수락 확인 유실 검증
 
-G02는 실제 요청의 미전달과, 전달 후 수락 여부를 확인하지 못하는 상황을 구별한다. 요구 이행 가능성의 `RequirementUnconfirmedException`과도 다른 계약이다. 기준은 [설계 선언](../AHP_CHARTER.md), [시작·interaction 계약](protocol-reference.md), [생명주기](lifecycle-and-concurrency.md)다.
+G02는 실제 요청의 미전달과, 전달 후 수락 여부를 확인하지 못하는 상황을 구별한다. 요구 이행 가능성의 `RequirementUnconfirmedException`과도 다른 계약이다. 기준은 [설계 선언](../AHP_CHARTER.md), [시작·interaction 계약](protocol-reference.md), [생명주기](lifecycle-and-concurrency.md)다. 아래 결과와 후속 계획은 G02 시점의 기록이며 현재 상태는 [G03–G12 검증](contract-boundary-validation.md)을 따른다.
 
 ## 실제 경계와 공통 판정
 

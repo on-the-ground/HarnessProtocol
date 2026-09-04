@@ -1,6 +1,6 @@
 # 공통 시나리오 통합과 남은 검증
 
-현재 연결은 [G01 요구 판정](requirement-admission-validation.md)과 [G02 수락 확인 유실](acceptance-loss-validation.md)을 따른다. C20/C21과 K13/K14를 실제 판정으로 대체했고, 남은 미연결 정의는 44개다. 아래 단계 1 실행 수는 당시의 검증 기록이다.
+현재 연결은 [G01 요구 판정](requirement-admission-validation.md), [G02 수락 확인 유실](acceptance-loss-validation.md), [G03–G12 계약 경계 검증](contract-boundary-validation.md)을 따른다. G09는 계약 결정과 구현 수정이 남아 있다. C20/C21과 K13/K14를 실제 판정으로 대체했고, 원래 Core/Cleanup의 미연결 본문은 44개다. 아래 단계 1 실행 수는 당시의 검증 기록이다.
 
 2026-09-04. 단계 1은 검사 위치·목적·실행 증거를 통합하는 작업이다. 공개 Port의 의미를 변경하지 않는다. [기계 판독 목록](../harness-conformance/scenario-catalog.json)에 기존 48개 정의, SDK 공통/전용 20개, native 8개를 모두 대응시켰다. 76개 항목은 고유 업무 목적의 수나 통과 수가 아니다.
 
@@ -32,9 +32,22 @@
 
 코드 목록의 beforeBinding에 해당 ID별 조건을 기록했다. 단계 1에서는 미연결 정의의 기대값을 고쳐 통과로 만들지 않았다. 이후 C20/C21은 특정 기능의 고정 상태 가정을 제거하고 독립 요구 사례 판정으로 대체했다.
 
-## 다음 실행 순서
+## 후속 단계의 연결 상태
 
-G01의 독립 profile/case 선택과 실제 수락 검사를 연결했다. 미확인 요구의 실제 사례와 나머지 기존 본문의 profile 전환은 남아 있다. G02의 실제 적용 가능한 경계를 검증했다. 다음은 interaction 경쟁(G03), 문맥 차단(G04), 부분 산출물·사용량(G05), 정리·후속 효과(G06)를 실제 세 adapter에서 검증한다. 이후 진단·권한·자원·구조화·usage·영속 조건(G07–G12)을 지원 시 이행/미지원 시 사전 거절로 검증한다.
+아래는 원래 C/K 정의와 새 실제 검사의 목적 대응이다. 원래 본문의 전체 실행 여부는 바꾸지 않는다. 세부 assertion·provider 적용 범위·실행 수는 단계별 증거를 따른다. 기계 판독 목록의 `boundaryVerification`과 `relatedValidationGates`에도 같은 구별을 남겼다.
+
+| 단계 | 실제 공통 판정 / 관련 원래 목적 | 현재 한계 |
+|---|---|---|
+| G03 | Interaction 5개 / C06·C15·K18 | Codex 승인 경쟁. 독립 철회·supersession·질문 채널은 미실증 |
+| G04 | Context 3개 / C11–C13·K07·K08 | Codex/Gemini 동일 프로세스 문맥·핸들 범위 |
+| G05 | Outcome 6개 / C03·C04·C16–C18·C27–C29·K10 | 세 runtime. 빈 응답 수락 차이와 관찰 상실/종료 미확정의 유도 경계 명시 |
+| G06 | CleanupBudget 3개와 Koog 도구 / K01·K02·K04–K06·K18 | 세 runtime 정리 상한, 실제 비협조 도구 후속 효과는 Koog |
+| G07 | ObservationLoad 1개 / C09·C10·K18 | 세 runtime의 독립 의미/진단 gap·terminal 보존 |
+| G08 | ApprovalScope 3개 | Codex 일회 승인 범위. 집행 가능한 session grant는 미제공 |
+| G09 | Workspace·ExecutionConstraint 작성 중 / C26 | 실제 활성화·실행 제약 검증 실패, 계약 결정 필요 |
+| G10 | 기존 G01 구조화 요구 거절 재사용 / C19 | 세 구성 미지원. 실제 schema 검증 성공/실패 분기는 미실증 |
+| G11 | Accounting 2개 + Sequence 1개 / K15–K17, G05 회귀 | 세 runtime 회계·일반 메시지 ID/역할. 구간 누락·도구 ID는 Koog, 승인/효과 ID는 Codex. 다른 native 변형은 별도 범위 |
+| G12 | PersistenceFailure 3개 / K07·K08·K19 | Codex/Gemini 저장 장애·설정. 별도 지원 철회 채널·재시작 조정은 제공하지 않음 |
 
 통과한 기본 목적을 반복 구현하지 않고 아래 related ID의 실행본을 재사용한다. 지원하지 않는 선택 기능의 성공 시나리오를 강제로 만들지 않으며, 필수 동작이나 지원한다고 선언한 기능을 skip하여 완료하지 않는다. 실행마다 provider × scenario × profile × 증거 경계 × 결과를 기록한다.
 

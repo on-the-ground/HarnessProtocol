@@ -2,7 +2,7 @@
 
 기준일: 2026-09-04. [설계 선언](../AHP_CHARTER.md) → [Semantic contract](semantic-contract.md) → [추상과 용어](abstraction-and-terminology.md) 및 상세 계약을 구현의 기준으로 삼는다.
 
-공개 Port·KDoc·fixture 선언에 이어 실제 세 adapter와 factory를 새 Port에 연결했다. native 실행 검증과 기존 회귀를 병행하며, 기존 회귀와 독립 Koog 실험까지 현재 Port로 이전하고 legacy를 제거했다. 전체 적합성 gate와 발행은 남아 있다. 현재 증거는 [실제 adapter 검증](native-port-validation.md), 이전 개정 이력은 Git에서 확인한다.
+공개 Port·KDoc·fixture 선언에 이어 실제 세 adapter와 factory를 새 Port에 연결했다. 기존 회귀와 독립 Koog 실험도 현재 Port로 이전하고 legacy를 제거했다. 기본 검증 이후 G03–G12의 실제 계약 경계 검사를 추가했고 문맥 핸들의 자원 수명과 설정 보존 결함을 수정했다. G09의 skill 활성화·실행 제약/승인 의미와 최종 적합성 정리는 남아 있다. [현재 단계별 증거](contract-boundary-validation.md), [기본 연결 기록](native-port-validation.md)을 구별하며 이전 개정 이력은 Git에서 확인한다.
 
 ## 목표
 
@@ -14,7 +14,8 @@
 | 이전 실증 | Koog native·부분 adapter 실험 18개. [당시 기록](../experiments/koog-validation/evidence/verification.json) |
 | 문서 기준 | README와 docs를 새 추상의 규범으로 갱신. 실험 사실과 현 구현 상태는 구분해 기록 |
 | 정리 완료 | 임시 ReferenceHarness 계열과 실행 subclass 제거. 기존 48개 중 C20/C21·K13/K14는 실제 요구·수락 검사로 대체, 남은 44개는 testFixtures에 보존하고 실행·통과 수에서 제외 |
-| 남은 작업 | 현재 native 검사에서 빠진 계약·경쟁 시나리오 추가, 선택 계약 구현·검증, 실모델 연동, artifact 발행 |
+| 현재 작업 | G09 계약 결정·실제 집행 수정과 재검증, 원래 정의와 실제 증거의 최종 대응 검토 |
+| 별도 후속 범위 | 미지원 선택 기능의 구현 확장, 외부 실모델 연동, artifact 발행. G12까지의 현재 구성 검증과 구별 |
 
 ## 1. 확정할 공개 모델
 
@@ -22,21 +23,21 @@
 
 목적과 의미는 아래 연결 문서를 따른다.
 
-| 결정 항목 | 공개 모델의 결정 | 남은 구현·실증 |
+| 결정 항목 | 공개 모델의 결정 | 현재 검증과 남은 범위 |
 |---|---|---|
-| Task lifecycle | AgentTask·TaskRequest, 시작·응답 수락 미확정의 별도 예외와 identity | 실제 수락/종결 경계, 전달 확인 유실·중복 방지·다중 waiter와 정리 경쟁 |
-| 상태 / outcome | 네 outcome과 공통 nullable output·usage | 세 adapter의 Task 범위와 종결 증거, 부분 결과 회수 |
-| Session | SessionSpec, PersistentSessionRef·PersistentSessions | 저장 namespace·영속 조정 범위·차단 전달·복구와 접근 소유권 |
-| Interaction | typed 승인·질문, SessionApprovalGrant, RESPONSE_UNCONFIRMED | grant 범위 안/밖 실제 효과, 수락 유실·철회·중복 처리 |
-| 구성 | SessionRequirements·TaskRequirements, 독립된 filesystem/network 요구 | adapter별 지시·모델·문맥·정책 투영과 조건별 거절 |
-| 선택 계약 | SupportReport, CompatibilityStatus 세 판정 | profile별 실제 지원·미지원·미확인 및 수락 시 추가 확인 |
-| 산출물 | TaskOutput.Text/Structured, complete·SchemaValidation | provider가 주지 않은 결과를 합성하지 않고 네 outcome에서 회수 |
-| 관찰 | MessageId·MessageRole, TaskDiagnostics와 별도 DiagnosticEvent | 메시지 변환, 누적 usage·unknown, 진단 queue 격리 |
-| 정리 | close/release와 outcome 회수의 bounded 보장 | 전체 시간 상한·적용 범위·설정 노출, 다중 자원 정리와 확인 절차의 예산 배분 |
+| Task lifecycle | AgentTask·TaskRequest, 시작·응답 수락 미확정의 별도 예외와 identity | G02·G03 수락 유실·중복·경쟁, 기본 runtime의 다중 waiter 검증. 없는 native 채널의 오류 주입은 미실증 |
+| 상태 / outcome | 네 outcome과 공통 nullable output·usage | G05·G11에서 실제 종결별 부분 산출물과 마지막 usage 보존 |
+| Session | SessionSpec, PersistentSessionRef·PersistentSessions | G04·G12 문맥 공유·차단·저장 장애·설정 보존. 재시작/동시 writer 요구는 G01 거절 |
+| Interaction | typed 승인·질문, SessionApprovalGrant, RESPONSE_UNCONFIRMED | G02·G03·G08에서 Codex 일회 승인·효과·경쟁 검증. session grant·질문 성공 경로는 현재 미지원 |
+| 구성 | SessionRequirements·TaskRequirements, 독립된 filesystem/network 요구 | G09 실제 skill 적용과 승인/실행 제약 관계 미해결 |
+| 선택 계약 | SupportReport, CompatibilityStatus 세 판정 | G01 독립 profile별 수락/거절 검증. 실제 미확인 요구 사례는 미확보 |
+| 산출물 | TaskOutput.Text/Structured, complete·SchemaValidation | G05 실제 텍스트/부재 보존, G10 구조화 요구 거절. schema 실행은 현재 미지원 |
+| 관찰 | MessageId·MessageRole, TaskDiagnostics와 별도 DiagnosticEvent | G07 진단 queue 격리·gap, G11 사용량·일반 메시지 ID/역할·선택 native 도구/효과 상관관계 검증 |
+| 정리 | close/release와 outcome 회수의 bounded 보장 | G06 다중 자원 전체 상한, 호출자 취소, 비협조 도구의 실제 후속 효과 검증 |
 
 `Unresolved`를 기존 TRANSPORT 실패로 감춰서는 안 된다. 통신 실패가 확인된 작업 실패인지, 종료를 모르는 상황인지를 판정할 근거가 필요하다. 현재 구현의 강제 취소를 문서상 이름만 바꾸어 유지하지 않는다.
 
-시작 수락·응답 수락 확인 유실의 공개 예외와 identity는 선언됐다. public handle이 없다는 이유로 작업 미실행을 단정하지 않으며, 응답 미확정 요청을 재전송하지 않는다. 실제 native 경계의 이행과 별도의 복구 수단은 후속 검증 대상이다.
+시작 수락·응답 수락 확인 유실의 공개 예외와 identity는 G02의 실제 전달 경계에서 검증했다. public handle이 없다는 이유로 작업 미실행을 단정하지 않으며, 응답 미확정 요청을 재전송하지 않는다. 제공하지 않는 별도 복구 수단까지 검증한 것으로 확장하지 않는다.
 
 다음 작업은 이미 연결된 실제 adapter에서 미검증 조건을 유도하고 계약 판정을 확장하는 것이다. 공통 7개 시나리오와 구현별 검사의 실증은 [현재 결과](native-port-validation.md)에 있다. 문맥 연속성과 영속성의 목적 차이, 모든 outcome의 부분 결과 보존을 구현 편의로 낮추지 않는다.
 
@@ -56,15 +57,15 @@
 
 | 대상 | 연결·검증한 범위 | 남은 구현·검증 |
 |---|---|---|
-| Codex | 새 Task/outcome, 실제 지시·문맥·취소·정리·재개, 설정 변경 불가의 사전 거절 | 실제 승인 효과·수락 확인 유실, 권한·skills 집행, 사용량·관찰 경계 |
-| Gemini CLI | 새 Task/outcome, native SDK 지시 보완, 실제 문맥·취소·재개와 desired 지시 반영 | SDK 버전 호환, skills·사용량·관찰 경계. 미지원 선택 요구는 계속 사전 거절 |
-| Koog | production 모듈·bundle 연결, 실제 graph 문맥·취소·비협조적 효과·실패 후 부분 결과 | 선택 저장소·승인·질문·출력 등 구성 확장과 전체 계약 검증 |
+| Codex | 기본 Task·문맥에 이어 승인 효과·확인 유실·경쟁·별칭·저장 장애·usage·관찰 부하 검증 | G09 권한·skills와 최종 적합성 정리 |
+| Gemini CLI | native SDK 지시 보완, 실제 문맥·취소·재개·별칭 설정 보존·부분 결과·usage·관찰 부하 검증 | G09 skills. 현재 고정한 SDK 밖의 버전 호환은 별도 범위 |
+| Koog | 실제 graph 문맥·다중 정리·비협조적 후속 효과·네 outcome·누락 구간 usage·관찰 부하 검증 | 최종 적합성 정리. 미지원 선택 기능 확장은 별도 범위 |
 
 독립 Koog 실험도 현재 Port로 이전됐지만 production 기본 구성과 구별한다. 과거 로그는 당시 증거이며 실험의 선택 기능 통과를 production 구성의 통과로 가져오지 않는다.
 
 ## 4. 공통 적합성과 회귀
 
-시나리오 통합 단계에서 순수 lifecycle 9개와 native 공통/선택 8개를 conformance로 모으고 SDK 경계 검사 11개를 분리했다. [전체 대응표](conformance-scenarios.md)는 기존 48개 정의의 중복 목적·잘못된 고정 가정·미검증 조건과 실제 binding을 구별한다. 이후 [독립 요구 사례 검증](requirement-admission-validation.md)을 세 실제 구현체에 연결했다. [G02 수락 확인 유실](acceptance-loss-validation.md)도 실제 경계에 연결했다. 다음 묶음은 interaction 경쟁과 남은 효과·종결 제어다.
+시나리오 통합 단계에서 순수 lifecycle 9개와 native 공통/선택 8개를 conformance로 모으고 SDK 경계 검사 11개를 분리했다. [전체 대응표](conformance-scenarios.md)는 원래 정의의 중복 목적·잘못된 고정 가정·미검증 조건과 실제 binding을 구별한다. 이후 독립 요구 수락, 시작·응답 확인 유실, interaction 경쟁, 문맥 공유, 네 outcome, 다중 정리, 관찰 부하, 승인 범위, 회계, 저장 장애 검사를 실제 경계에 연결했다. 검증 범위와 미해결 사항은 [현재 기록](contract-boundary-validation.md)을 따른다.
 
 공통 7개 시나리오는 이미 세 adapter에 적용했고 구현별 4개를 더해 25개가 통과했다. [Testing](testing.md)의 나머지 조건을 이 실제 경계에 추가한다. 기존 48개 중 C20/C21·K13/K14는 실제 요구·수락 판정으로 대체했다. 남은 44개 정의는 profile의 고정 가정 등을 보완하여 재사용한다. 준비·입력 유도·효과 관찰은 provider별 fixture가 맡으며 공통 판정은 provider wire·Koog node ID를 알지 않는다.
 

@@ -2,6 +2,8 @@
 
 이 기록은 [기존 계획](port-revision-plan.md)의 후속 단계다. 실제 SDK/runtime에 통제된 모델 응답을 공급하며, 전달 지연·유실은 명시한 경계에만 주입한다. 검증 수는 JUnit 실행 결과이며 미지원 기능이나 실행되지 않은 공통 정의를 통과로 세지 않는다. 전체 회귀 수는 최종 전체 실행에서 다시 산정한다.
 
+현재 G09는 미해결이며 전체 계약 적합성 완료를 선언하지 않는다. 각 단계의 통과는 아래 명시한 구성과 경계의 증거다. 기존 Core/Cleanup 본문 44개와의 목적 대응은 [시나리오 목록](conformance-scenarios.md)을 따른다.
+
 ## G03 — 상호작용 경쟁
 
 실제 Codex 명령 승인을 발생시키고 격리된 파일의 효과를 관찰했다. 공통 `HarnessInteractionConformanceTest`의 5개 정의를 연결했다.
@@ -52,6 +54,21 @@ Koog에서는 네 실제 도구를 NonCancellable 상태로 보류하고 200ms p
 
 Codex에 연결한 공통 [3개 검사](../harness-native-integration/evidence/g08-approval-scope.json)가 통과했다. sessionGrant와 APPROVE_FOR_SESSION이 노출되지 않으며 억지로 제출해도 native 전달 전에 거절된다. APPROVE_ONCE로 실제 파일 효과를 한 번 허용한 뒤 같은 session의 다음 Task와 독립 session에서 같은 명령이 다시 승인을 요구한다. 두 번째 요청을 거절하면 파일 효과 수는 한 번으로 유지되고 Task 자체는 정상 완료할 수 있다. `APPROVE_FOR_SESSION`의 공개 계약을 삭제하거나 일회 승인을 세션 권한으로 확대하지 않았다.
 
+## G09 — 활성화와 실행 제약: 결정 대기
+
+[첫 실행 5개 중 4개 실패](../harness-native-integration/evidence/g09-environment-first-run.json)를 보존한다. Codex·Gemini에 active/inactive skill을 함께 제공했지만 실제 모델 문맥에서 active skill의 본문을 찾지 못했다. 현재 `$name` envelope를 전달했다는 것과 skill 본문이 실제 적용됐다는 것은 다른 증거다. Gemini SDK의 skill 활성화는 실제 도구 실행을 거치므로, 그 절차의 승인·적용 의미도 보존해야 한다.
+
+Codex의 파일/네트워크 검사는 workspace·추가 허용 root·바깥 경로의 쓰기를 한 명령에 묶었다. native 정책이 명령 전체를 거절하여 허용 대상의 쓰기도 발생하지 않았다. 따라서 ReadOnly 검사의 녹색 결과도 sandbox 집행의 독립 증거가 아니다. 허용·거절 효과를 분리하고 실행 경계를 관찰하는 보완이 필요하다.
+
+별도로 G02/G08의 실제 승인 fixture는 ReadOnly와 CallerDecides를 함께 요구하고, 명시적인 권한 상승을 승인하면 파일 쓰기가 성공한다. 이 관찰은 Required 제약이 승인보다 우선하는 경계인지, 승인이 확장할 수 있는 초기 정책인지에 대한 공개 의미를 확정해야 함을 드러낸다. 기존의 녹색 승인 검사가 이 조합의 계약 적합성까지 증명하지는 않는다.
+
+사용자에게 요청한 결정은 다음 두 가지다. 권장안은 아직 확정된 계약 변경이 아니다.
+
+1. `activate=true`는 실제 적용 보장인가, native 활성화 요청 전달인가? 실제 적용 보장을 유지하고 이행 불가능한 구성을 사전 거절하는 방향을 권장한다.
+2. Required 실행 제약을 승인이 확장할 수 있는가? 승인이 넘을 수 없는 요구 경계로 유지하고 집행 불가능한 조합을 거절하는 방향을 권장한다.
+
+결정 후 Port·KDoc·요구 수락 표·host 설정과 실제 효과 검사를 함께 맞춘다. 현 구현에 맞춰 의미를 암묵적으로 낮추거나, 실패 검사를 건너뛰어 단계를 닫지 않는다.
+
 ## G10 — 구조화 산출물 요구의 적용 범위
 
 현재 세 production 구성은 schema를 집행하는 실행 경로를 제공하지 않는다. 따라서 이 단계의 적합성 조건은 JSON처럼 보이는 텍스트를 Structured로 포장하는 것이 아니라, 구조화 산출물 요구를 작업 시작 전에 거절하는 것이다. `validatedByHarness=false`도 산출물 형태 요구를 제거하지 않는다.
@@ -66,6 +83,8 @@ Codex에 연결한 공통 [3개 검사](../harness-native-integration/evidence/g
 
 Koog의 실제 두 도구 호출을 포함한 세 모델 호출에서는 일부 구간의 output/total 측정이 누락되면 뒤의 측정된 0으로 합계를 복원하지 않는다. 네 종결 outcome에서 마지막 공개 사용량 snapshot을 보존하며, Koog에는 독립적으로 정한 부분 측정값 10/5/15도 대조했다. Process adapter의 실패·취소·미확정에는 수치 부분 측정을 새로 합성하지 않고 마지막 공개 snapshot과의 일치를 확인했다. 모든 provider의 모든 누락 구간을 같은 방식으로 주입했다고 주장하지 않는다. Port·production 수정은 필요하지 않았다.
 
+통합 회귀 뒤 기존 검사에 관찰 identity 판정을 보강해 [12개를 다시 실행, 모두 통과](../harness-native-integration/evidence/g11-observation-identity.json)했다. 세 runtime의 일반 텍스트 응답에서 관찰 가능한 역할(Codex ANSWER, Gemini UNKNOWN, Koog UNKNOWN/ANSWER)을 독립 기대값으로 대조하고, 같은 메시지의 delta와 완료 snapshot이 같은 ID·텍스트를 유지하는지 확인했다. Koog의 실제 두 도구 호출은 서로 다른 ID를 쓰고 각각 시작/완료가 대응한다. Codex의 실제 승인 대상과 완료된 파일 효과도 같은 workId를 갖는다. Gemini의 실제 도구/효과 상관관계나 모든 설명·commentary 변형까지 새로 실증한 것은 아니며 해당 mapper 회귀와 구별한다. 기존 G11 7개·G03 5개를 보강한 재실행이라 고유 검사 수는 늘지 않았다.
+
 ## G12 — 영속 저장 장애와 설정 보존
 
 공통 3개 정의 × 두 영속 runtime = 6개와 G04 회귀 6개가 [모두 통과](../harness-native-integration/evidence/g12-persistence.json)했다. 모르는 참조를 새 session으로 바꾸지 않고 거절한다. 실제 임시 저장소의 이력 파일을 잠시 다른 이름으로 옮기면 reopen은 명시적으로 실패하며, 파일을 복원하면 원래 입력 문맥과 같은 영속 참조를 회수한다. fixture 밖의 파일은 변경하지 않는다.
@@ -73,3 +92,11 @@ Koog의 실제 두 도구 호출을 포함한 세 모델 호출에서는 일부 
 [최초 실패](../harness-native-integration/evidence/g12-persistence-first-run.json)에서 Gemini의 reopen이 살아 있는 다른 핸들의 선언된 설정을 조용히 덮어쓰는 결함을 발견했다. 공통 process runtime은 살아 있는 핸들의 spec과 다른 설정의 reopen을 거절한다. 기존 핸들을 해제하면 Gemini는 새 설정을 적용할 수 있고 Codex의 구성 변경 미지원은 유지된다. 다른 실패는 Gemini 저장 형식이 `.jsonl`인데 fixture가 `.json`만 찾은 것이어서 실제 저장 파일 선택을 수정했다.
 
 범위는 명시된 동일 애플리케이션 프로세스다. G04에서 미확정 문맥 차단의 하네스 재생성 후 보존, G01에서 프로세스 재시작·동시 writer 요구의 사전 거절을 검증한다. 영속 지원을 외부 저장소의 항상 가용함으로 해석하지 않으며, 저장 접근 실패를 정상 재개로 숨기지 않는다. 별도의 동적 capability 변경 통로가 없는 구성에 지원 철회 알림을 합성하지 않았다.
+
+## 통합 회귀 checkpoint
+
+`./gradlew.bat --offline test :harness-conformance:testFixturesClasses hostTests -PnativeHarnessTests -PstrictHostTests --continue --console=plain`을 실행했다. [JVM·host 집계](../harness-native-integration/evidence/g03-g12-regression-summary.json)는 JVM 272개 중 실패 4개·오류/건너뜀 0개, Python host 15개·Node host 5개 통과를 기록한다. JVM에는 [실제 native 192개](../harness-native-integration/evidence/g03-g12-full-regression.json)가 포함된다. 변경 없는 protocol 값 타입 검사는 Gradle up-to-date 결과를 재사용했고 나머지 결과가 있는 JVM test task는 실행했다.
+
+실패는 G09의 active skill 본문 부재 2개와 허용 쓰기까지 차단된 복합 명령 유도 2개다. G09의 ReadOnly 통과 1개도 집행의 독립 증거로 세지 않는다. G09를 제외한 native 187개와 다른 JVM 80개에서는 새 실패가 없었다. G04·G12의 production 문맥 수정은 기존 SDK 회귀와 실제 runtime 회귀를 함께 통과했다. 현재 Kotlin 소스·sample·독립 실험에 legacy Port 및 제거한 참조 하네스/AgentHarnessContractTest 참조는 없다.
+
+이 실행 뒤 G11/G03의 identity assertion을 보강한 12개를 재검증해 통과했다. production 변경은 없었다. 단계별 재실행을 서로 더해 고유 검사 수를 부풀리지 않는다. 44개 미연결 원본 본문, 외부 실모델, sample 빌드, artifact 발행, 독립 Koog 실험은 이번 실행에 포함되지 않는다. G09 결정·구현·재검증 후 최종 상태를 다시 기록해야 한다.

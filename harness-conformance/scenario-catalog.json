@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "stage": "2b: native start and response acceptance loss",
+  "stage": "G03-G12 native boundary validation; G09 decisions and final coverage closure remain",
   "countingRule": "76 original inventory identities are retained. C20/C21 and K13/K14 were replaced by actual requirement/admission checks; 44 original C/K definitions remain unattached. Count consumer executions from JUnit; do not equate purpose overlap with full coverage.",
   "entries": [
     {
@@ -12,6 +12,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Verify several real internal calls; a single start/completion pair is not that evidence."
+      ],
+      "relatedValidationGates": [
+        "G11"
       ]
     },
     {
@@ -30,7 +33,10 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G05"
+      ]
     },
     {
       "id": "C04",
@@ -39,7 +45,10 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G05"
+      ]
     },
     {
       "id": "C05",
@@ -59,6 +68,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Choose accepted caller-approval cases rather than a mandatory profile named approval."
+      ],
+      "relatedValidationGates": [
+        "G03"
       ]
     },
     {
@@ -90,6 +102,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Synchronize subscription and overflow; always release stalled collector in finally."
+      ],
+      "relatedValidationGates": [
+        "G07"
       ]
     },
     {
@@ -101,6 +116,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Require a retained terminal and finite flow, not terminal as the first replayed item."
+      ],
+      "relatedValidationGates": [
+        "G07"
       ]
     },
     {
@@ -110,7 +128,10 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G04"
+      ]
     },
     {
       "id": "C12",
@@ -119,7 +140,10 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G04"
+      ]
     },
     {
       "id": "C13",
@@ -130,6 +154,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Observe actual runtime context; separately scripted answers do not establish isolation."
+      ],
+      "relatedValidationGates": [
+        "G04"
       ]
     },
     {
@@ -148,7 +175,10 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G03"
+      ]
     },
     {
       "id": "C16",
@@ -157,7 +187,10 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G05"
+      ]
     },
     {
       "id": "C17",
@@ -166,7 +199,10 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G05"
+      ]
     },
     {
       "id": "C18",
@@ -175,7 +211,10 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G05"
+      ]
     },
     {
       "id": "C19",
@@ -274,7 +313,11 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G05",
+        "G11"
+      ]
     },
     {
       "id": "C28",
@@ -283,7 +326,11 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G05",
+        "G11"
+      ]
     },
     {
       "id": "C29",
@@ -294,6 +341,10 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Explicitly induce missing cancellation evidence; release alone need not yield Unresolved."
+      ],
+      "relatedValidationGates": [
+        "G05",
+        "G11"
       ]
     },
     {
@@ -305,6 +356,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Synchronize cancellation confirmation with cleanup entry; current RUNNING wait can finish before release."
+      ],
+      "relatedValidationGates": [
+        "G06"
       ]
     },
     {
@@ -316,6 +370,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Control missing termination evidence and measure release itself."
+      ],
+      "relatedValidationGates": [
+        "G06"
       ]
     },
     {
@@ -338,6 +395,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Measure close itself and assert state/pending for all tasks against total budget."
+      ],
+      "relatedValidationGates": [
+        "G06"
       ]
     },
     {
@@ -350,6 +410,9 @@
       "beforeBinding": [
         "Tie reason to actual missing evidence; cleanup expiry can be CLEANUP_BOUND_EXCEEDED.",
         "Release noncooperative work in finally."
+      ],
+      "relatedValidationGates": [
+        "G06"
       ]
     },
     {
@@ -361,6 +424,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Assert a real late effect and stable outcome after it; releasing a fixture gate alone proves neither."
+      ],
+      "relatedValidationGates": [
+        "G06"
       ]
     },
     {
@@ -373,6 +439,10 @@
       "beforeBinding": [
         "Test all same-context handles and reopen, not only a released handle.",
         "Release noncooperative work in finally."
+      ],
+      "relatedValidationGates": [
+        "G04",
+        "G12"
       ]
     },
     {
@@ -384,6 +454,10 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Observe new runtime context and clean up surviving old work."
+      ],
+      "relatedValidationGates": [
+        "G04",
+        "G12"
       ]
     },
     {
@@ -393,7 +467,10 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G11"
+      ]
     },
     {
       "id": "K10",
@@ -404,6 +481,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Observe loss outcome before release so cleanup does not substitute for loss detection."
+      ],
+      "relatedValidationGates": [
+        "G05"
       ]
     },
     {
@@ -472,6 +552,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Use native usage representation; do not require every runtime to accept arbitrary accounting values."
+      ],
+      "relatedValidationGates": [
+        "G11"
       ]
     },
     {
@@ -483,6 +566,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Preserve native cumulative/reset semantics; use mapper-level evidence where model boundary cannot produce the fact."
+      ],
+      "relatedValidationGates": [
+        "G11"
       ]
     },
     {
@@ -492,7 +578,10 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G11"
+      ]
     },
     {
       "id": "K18",
@@ -501,7 +590,12 @@
       "layer": "unbound-contract-definition",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "beforeBinding": [],
+      "relatedValidationGates": [
+        "G03",
+        "G06",
+        "G07"
+      ]
     },
     {
       "id": "K19",
@@ -512,6 +606,9 @@
       "relatedPurposeIds": [],
       "beforeBinding": [
         "Use compatible persistence requirement cases including Conditional support; never silently return on a missing interface."
+      ],
+      "relatedValidationGates": [
+        "G12"
       ]
     },
     {
@@ -944,52 +1041,72 @@
     {
       "id": "G03",
       "purpose": "Approval/question withdrawal, supersession, in-flight response/cancellation/terminal races",
-      "priority": 1
+      "priority": 1,
+      "progress": "Actual approval response/cancellation/terminal races and file effects pass. Independent native withdrawal, supersession and caller questions are unavailable in these configurations.",
+      "status": "validated-with-stated-limits"
     },
     {
       "id": "G04",
       "purpose": "Multi-handle context blocking; release/reopen and configured harness/process boundaries",
-      "priority": 1
+      "priority": 1,
+      "progress": "Shared-context handle lifetime fixed; overlap, start-uncertainty blocking and independent context verified. No application restart or concurrent writer guarantee.",
+      "status": "validated-with-stated-limits"
     },
     {
       "id": "G05",
       "purpose": "Partial output and usage for all four outcomes, missing versus empty, unknown versus zero",
-      "priority": 1
+      "priority": 1,
+      "progress": "Four outcomes retain captured partial output. Empty/missing native response acceptance differs by provider and is recorded explicitly. Usage retention additionally verified by G11.",
+      "status": "validated-with-stated-limits"
     },
     {
       "id": "G06",
       "purpose": "Cleanup entry/total timing, multiple resources, noncooperative work, actual late effects and retained outcome",
-      "priority": 1
+      "priority": 1,
+      "progress": "Multiple active resources and cancellation of cleanup caller verified. Evidence includes three Koog tool cases, two previously existing; actual late effects preserve Unresolved.",
+      "status": "validated-with-stated-limits"
     },
     {
       "id": "G07",
       "purpose": "Independent semantic/diagnostic overflow and gap counts under native load",
-      "priority": 2
+      "priority": 2,
+      "progress": "Independent semantic/diagnostic counted gaps and retained terminal verified under actual stream/tool load.",
+      "status": "validated-with-stated-limits"
     },
     {
       "id": "G08",
       "purpose": "Session grant covered/uncovered targets, no grant widening or cross-session propagation, native effect counts",
-      "priority": 2
+      "priority": 2,
+      "progress": "Opaque session approval excluded; one-shot approval does not propagate to subsequent tasks or independent sessions. No enforceable native session grant is exposed; covered/uncovered grant branch remains unavailable.",
+      "status": "validated-with-stated-limits"
     },
     {
       "id": "G09",
       "purpose": "Native workspace/skill activation and filesystem/network enforcement",
-      "priority": 2
+      "priority": 2,
+      "status": "awaiting-contract-decisions",
+      "progress": "Active skill bodies absent from actual model context in both process adapters. Combined filesystem probe is rejected as a whole by native policy, so no-write alone is not sandbox proof. Clarify required activation and approval precedence before implementing; do not report green."
     },
     {
       "id": "G10",
       "purpose": "Structured output enforcement/validation; currently unsupported profiles must reject before work",
-      "priority": 2
+      "priority": 2,
+      "status": "validated-rejection-for-current-profiles",
+      "progress": "All three configurations reject structured output requirements (both validation responsibility flags), in preflight and direct admission: 12 existing G01 executions, not new tests. Actual schema execution remains unsupported."
     },
     {
       "id": "G11",
       "purpose": "Usage duplicate snapshots/reset/missing segments; message roles/identity and tool/effect correlation",
-      "priority": 2
+      "priority": 2,
+      "progress": "Seven usage executions plus 18 G05 regressions. Additional identity assertions revalidated in seven G11 and five G03 executions: plain-text roles and delta/completion identity across all three runtimes, two actual Koog tool lifecycles, Codex approval-to-effect identity. Gemini tool/effect correlation and every commentary/explanation variation are not separately native-validated.",
+      "status": "validated-with-stated-limits"
     },
     {
       "id": "G12",
       "purpose": "Persistence failures, desired configuration, runtime support revocation and declared restart coordination",
-      "priority": 2
+      "priority": 2,
+      "progress": "Six new storage/configuration executions plus six G04 regressions. Live-handle configuration overwrite fixed. Unknown reference and real history-file loss/restoration verified. Unsupported restart/writer scope rejected in G01; no fabricated capability-revocation channel.",
+      "status": "validated-with-stated-limits"
     }
   ],
   "requirementAdmission": {
@@ -1016,5 +1133,192 @@
     "physicalNetworkFailureInjected": false,
     "koogAcknowledgementLoss": "No separate acknowledgement suspension in this configuration; direct handoff regression and usable-handle test apply.",
     "geminiAndKoogResponseLoss": "No caller approval channel; actual requirement rejection is covered by G01."
+  },
+  "boundaryVerification": [
+    {
+      "id": "G03",
+      "sharedSources": [
+        "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessInteractionConformanceTest.kt"
+      ],
+      "nativeBinding": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeInteractionTest.kt",
+      "providers": [
+        "codex"
+      ],
+      "evidence": "../harness-native-integration/evidence/g03-interaction.json",
+      "recordedExecutions": 5,
+      "relatedOriginalIds": [
+        "C06",
+        "C15",
+        "K18"
+      ],
+      "coverageRule": "Related purpose only; does not mark every assertion in the original C/K body executed. Regression overlaps must not be added as new cases."
+    },
+    {
+      "id": "G04",
+      "sharedSources": [
+        "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessContextConformanceTest.kt"
+      ],
+      "nativeBinding": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeContextTest.kt",
+      "providers": [
+        "codex",
+        "gemini-cli"
+      ],
+      "evidence": "../harness-native-integration/evidence/g04-context.json",
+      "recordedExecutions": 6,
+      "relatedOriginalIds": [
+        "C11",
+        "C12",
+        "C13",
+        "K07",
+        "K08"
+      ],
+      "coverageRule": "Related purpose only; does not mark every assertion in the original C/K body executed. Regression overlaps must not be added as new cases."
+    },
+    {
+      "id": "G05",
+      "sharedSources": [
+        "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessOutcomeConformanceTest.kt"
+      ],
+      "nativeBinding": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeOutcomeTest.kt",
+      "providers": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "evidence": "../harness-native-integration/evidence/g05-outcome.json",
+      "recordedExecutions": 18,
+      "relatedOriginalIds": [
+        "C03",
+        "C04",
+        "C16",
+        "C17",
+        "C18",
+        "C27",
+        "C28",
+        "C29",
+        "K10"
+      ],
+      "coverageRule": "Related purpose only; does not mark every assertion in the original C/K body executed. Regression overlaps must not be added as new cases."
+    },
+    {
+      "id": "G06",
+      "sharedSources": [
+        "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessCleanupBudgetConformanceTest.kt"
+      ],
+      "nativeBinding": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeCleanupBudgetTest.kt",
+      "providers": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "evidence": "../harness-native-integration/evidence/g06-cleanup.json",
+      "recordedExecutions": 12,
+      "relatedOriginalIds": [
+        "K01",
+        "K02",
+        "K04",
+        "K05",
+        "K06",
+        "K18"
+      ],
+      "coverageRule": "Related purpose only; does not mark every assertion in the original C/K body executed. Regression overlaps must not be added as new cases."
+    },
+    {
+      "id": "G07",
+      "sharedSources": [
+        "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessObservationLoadConformanceTest.kt"
+      ],
+      "nativeBinding": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeObservationLoadTest.kt",
+      "providers": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "evidence": "../harness-native-integration/evidence/g07-observation.json",
+      "recordedExecutions": 3,
+      "relatedOriginalIds": [
+        "C09",
+        "C10",
+        "K18"
+      ],
+      "coverageRule": "Related purpose only; does not mark every assertion in the original C/K body executed. Regression overlaps must not be added as new cases."
+    },
+    {
+      "id": "G08",
+      "sharedSources": [
+        "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessApprovalScopeConformanceTest.kt"
+      ],
+      "nativeBinding": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeApprovalScopeTest.kt",
+      "providers": [
+        "codex"
+      ],
+      "evidence": "../harness-native-integration/evidence/g08-approval-scope.json",
+      "recordedExecutions": 3,
+      "relatedOriginalIds": [],
+      "coverageRule": "Related purpose only; does not mark every assertion in the original C/K body executed. Regression overlaps must not be added as new cases."
+    },
+    {
+      "id": "G11",
+      "sharedSources": [
+        "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessAccountingConformanceTest.kt",
+        "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessAccountingSequenceConformanceTest.kt"
+      ],
+      "nativeBinding": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeAccountingTest.kt",
+      "providers": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "evidence": "../harness-native-integration/evidence/g11-accounting.json",
+      "recordedExecutions": 25,
+      "relatedOriginalIds": [
+        "C01",
+        "C27",
+        "C28",
+        "C29",
+        "K09",
+        "K15",
+        "K16",
+        "K17"
+      ],
+      "coverageRule": "Related purpose only; does not mark every assertion in the original C/K body executed. Regression overlaps must not be added as new cases.",
+      "additionalEvidence": [
+        "../harness-native-integration/evidence/g11-observation-identity.json"
+      ],
+      "additionalNativeBindings": [
+        "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeAccountingSequenceTest.kt",
+        "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeInteractionTest.kt"
+      ]
+    },
+    {
+      "id": "G12",
+      "sharedSources": [
+        "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessPersistenceFailureConformanceTest.kt"
+      ],
+      "nativeBinding": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativePersistenceFailureTest.kt",
+      "providers": [
+        "codex",
+        "gemini-cli"
+      ],
+      "evidence": "../harness-native-integration/evidence/g12-persistence.json",
+      "recordedExecutions": 12,
+      "relatedOriginalIds": [
+        "K07",
+        "K08",
+        "K19"
+      ],
+      "coverageRule": "Related purpose only; does not mark every assertion in the original C/K body executed. Regression overlaps must not be added as new cases."
+    }
+  ],
+  "integrationCheckpoint": {
+    "summary": "../harness-native-integration/evidence/g03-g12-regression-summary.json",
+    "nativeEvidence": "../harness-native-integration/evidence/g03-g12-full-regression.json",
+    "jvmTests": 272,
+    "jvmFailures": 4,
+    "nativeTests": 192,
+    "hostTests": 20,
+    "hostFailures": 0,
+    "status": "not-complete; G09 remains unresolved",
+    "identityFollowup": "../harness-native-integration/evidence/g11-observation-identity.json"
   }
 }
