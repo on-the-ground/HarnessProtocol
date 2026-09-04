@@ -50,6 +50,8 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 | `ExecutionStarted/Completed/Failed/Cancelled` | `TaskStarted/Completed/Failed/Cancelled`, 종료 미확정은 `TaskUnresolved` | 이벤트·식별자·상태의 주어를 일치시키고 종료 미확정을 구별한다. |
 | 기본 Port의 `resumeSession` | 영속성 선택 계약의 `reopenSession` | 보관된 업무 문맥에 대한 새 handle 획득임을 나타낸다. 중단된 작업의 재실행·복구와 구별한다. |
 | `ProviderEventObserved` | 별도 진단 계약의 `ProviderDiagnostic` | 원본 보존을 모든 Task의 필수 의미 이벤트에서 분리한다. 공급자 payload는 진단 정보임을 이름에 남긴다. |
+| `ContextManaged` | 선택 진단으로 이동, 기본 이벤트에서 제거 | 내부 문맥 정리 관찰만으로 소비자가 의존할 별도 보장이 성립하지 않는다. |
+| `ReasoningDelta` | 공개 설명은 Message 이벤트의 관찰 가능한 역할·phase로 통합 | 설명 표시 목적을 유지하면서 독립적인 추론 이벤트 종류를 제거한다. 비공개 내부 진단은 ProviderDiagnostic에 속한다. |
 
 `TaskOutcome`으로 결과를 통합할 때 현재 실행 실패·취소 예외를 이름만 바꾸어 중복 계약으로 남기지 않는다. handle 생성 전 호출 실패와 handle을 받은 작업의 outcome을 구분한다. 코루틴 waiter 자체의 취소는 여전히 작업 취소와 별개다.
 
@@ -64,12 +66,15 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 | `InteractionRequest`, `InteractionResponse`, `InteractionId`, `respond` | 유지. Approval과 Question/Answer가 공유하는 전달·대기·일회 응답 계약으로 확장한다. |
 | `ApprovalDecision` | 유지. 승인에만 사용하는 구체적 결정이다. 질문 답변을 여기에 추가하지 않는다. |
 | `ToolCallChanged`, `EffectChanged` | 유지. 도구 수행과 외부 효과의 차이는 업무 관찰에 의미가 있다. graph node와 tool을 동일시하지 않는다. |
+| `MessageDelta`, `MessageCompleted`, `UsageChanged`, `ObservationGap`, `Warning` | 유지. 메시지 표시·누적 사용량·관찰 누락·부가 정보의 목적과 조건은 [Event contract](event-contract.md#이벤트를-남기는-목적)를 따른다. |
 | `validate`, `CompatibilityReport` | 유지. 요구를 지킬 수 있는지 판단하고, 불가능한 요구를 실제 호출 경계에서도 거절한다. |
 | `AgentSpec`, `ExecutionPolicy` | 필드의 책임을 먼저 분리한다. session 설정, 작업 요구, 승인 중재, 실행 환경 제약을 그대로 둔 채 `TaskSpec`/`TaskPolicy`로 치환하지 않는다. |
 | `workingDirectory`, 로컬 skill 경로, FS/network 집행 | 명시적인 실행 환경·자원 관련 선택 계약으로 옮긴다. 실제 계약 없이 범용 `Resource`나 임의 options map으로 바꾸지 않는다. |
 | `SdkBridge`, `RecordingBridge` | process adapter 구현·테스트에서 유지. 공통 Port와 공통 적합성 검사의 필수 전제에서 제거한다. |
 
 선택 계약은 보장을 약하게 만드는 장치가 아니다. 요구한 영속성, 권한 제한, 질문 대응, 출력 형태를 지원한다고 선언했다면 정확히 이행해야 한다. 필수 요구를 조용히 무시하거나 기본값으로 대체하지 않는다. 지원 탐색과 요구 전달의 구체적 API는 계약 확정 단계에서 설계한다.
+
+명명은 개념의 주어를 따른다. Task 자체의 입력·상태·outcome·종결 이벤트는 `Task*`, 도구·메시지·interaction은 각 대상의 이름을 사용한다. `TaskEvent`에 속한다는 이유로 모든 하위 이벤트에 Task를 덧붙이지 않는다. 타입 충돌은 AHP package·타입 qualification으로 구별하고, 정확한 Kotlin nesting은 공개 모델 단계에서 정한다. 이름을 유지하는 이벤트도 위 목적 심사를 거친 것이며 기존 존재 자체가 존치 근거는 아니다.
 
 ## 5. 결과와 종료 용어의 의미
 
@@ -82,9 +87,9 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 
 이 네 가지는 결과 의미의 분류다. 대응 상태와 전이·정리 규칙은 [Lifecycle](lifecycle-and-concurrency.md)을 따른다. 공개 sealed 타입의 최종 필드와 세부 오류 분류는 [전환 계획](port-revision-plan.md)에서 확정한다. `Unresolved`도 호출자가 유한하게 회수할 수 있는 outcome이어야 하며 무한 대기로 대신하지 않는다. 한 handle의 종결 판정 이후 추가 확인을 어떻게 제공할지는 별도 검토하고, 새 enum 하나로 재접속 기능까지 지원한다고 간주하지 않는다.
 
-`close`와 `release`는 자원·handle 정리라는 익숙한 이름을 유지한다. 명시적 취소 요청과 bounded cleanup을 수행하더라도, 유예 시간 경과만으로 `Cancelled`를 합성하지 않는다. 작업 종료가 미확정이면 실제 종료와 문맥 일관성을 확인하기 전 같은 session의 새 작업을 거절한다. 구체적인 확인·복구 수단은 후속 구현에서 검증한다.
+`close`와 `release`는 자원·handle 정리라는 익숙한 이름을 유지한다. 명시적 취소 요청과 bounded cleanup을 수행하더라도, 유예 시간 경과만으로 `Cancelled`를 합성하지 않는다. 차단·복구와 독립된 문맥으로의 이동은 [Lifecycle의 범위](lifecycle-and-concurrency.md#문맥-차단과-복구-범위)를 따른다.
 
-구조화 산출물은 요청한 schema와 검증 책임을 명시하는 선택 계약으로 다룬다. 텍스트 전달은 계속 지원하고, 진단 payload나 tool의 vendor별 result에서 업무 결과를 추출하도록 소비자에게 요구하지 않는다. 완료·부분 산출물·검증 실패를 어떻게 연결할지는 결과 모델 설계에 포함한다.
+구조화 산출물은 요청한 schema와 검증 책임을 명시하는 선택 계약으로 다룬다. 텍스트 전달은 계속 지원하고, 진단 payload나 tool의 vendor별 result에서 업무 결과를 추출하도록 소비자에게 요구하지 않는다. [모든 outcome의 산출물·사용량 회수](protocol-reference.md#산출물과-부가-관찰)는 확정된 보장이며 구체적인 필드 배치는 결과 모델 설계에 포함한다.
 
 ## 6. 전환 범위
 

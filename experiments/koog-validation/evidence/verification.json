@@ -1,0 +1,276 @@
+{
+  "verifiedOn": "2026-09-04",
+  "baselineRevision": "d5733031a2533dfd0d56821d912442a08552b0fd",
+  "koogVersion": "1.2.0",
+  "kotlinVersion": "2.3.10",
+  "gradleVersion": "9.1.0",
+  "java": "Amazon Corretto 25.0.3; JVM target 21",
+  "externalModelCalls": 0,
+  "evidenceLevel": "Real Koog runtime with scripted model boundary and synthetic business tools. Existing adapter tests use their original fixtures; not a three-provider integration certification.",
+  "commands": [
+    "./gradlew.bat test --console=plain",
+    "./gradlew.bat -p experiments/koog-validation test --console=plain"
+  ],
+  "experimentTests": 18.0,
+  "baselineTests": 71.0,
+  "experimentSuites": [
+    {
+      "name": "experiment.NativeKoogTest",
+      "timestamp": "2026-09-04T02:59:30.826Z",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "native file checkpoint resumes interrupted graph rather than accepting a new conversation turn()",
+        "native graph performs a real registered tool call and completes()",
+        "native repeated session run does not imply conversation continuity()",
+        "native coroutine cancellation interrupts cooperative tool execution()"
+      ],
+      "observations": []
+    },
+    {
+      "name": "experiment.PortScenariosTest",
+      "timestamp": "2026-09-04T02:59:32.774Z",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "S1 tool execution result and unknown usage work without an observer()",
+        "S2 approval gates actual effect and rejects unsupported or duplicate decisions()",
+        "immediate cancellation settles without waiting for the model()",
+        "unsupported configuration is rejected before model or business tool execution()",
+        "S4 close timeout cannot prove noncooperative effect has stopped()",
+        "failure and iteration limit do not become invented successful responses()",
+        "slow observation does not block actual graph and reports dropped events()",
+        "S4 close cancels pending execution and completion wins after completion()",
+        "S2 native question cannot be represented by approval response()",
+        "S4 active session rejects overlap and cooperative cancel settles once()",
+        "S4 pending cancellation clears interaction and prevents effect()",
+        "S2 decline continues agent with no business mutation()",
+        "S3 completed context survives next input release and new harness()",
+        "S1 text result can carry structured data but does not guarantee its schema()"
+      ],
+      "observations": []
+    }
+  ],
+  "baselineSuites": [
+    {
+      "name": "dev.harnessprotocol.HarnessesTest",
+      "timestamp": "2026-09-04T02:32:38.140Z",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "default factories expose only the common harness port()"
+      ],
+      "observations": []
+    },
+    {
+      "name": "dev.harnessprotocol.codex.CodexEventMapperTest",
+      "timestamp": "2026-09-04T02:33:04.663Z",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "failed turn carries the turn error classification()",
+        "usage without total is ignored rather than mapped to nulls()",
+        "commentary after the final answer does not overwrite the final message()",
+        "execution usage excludes previous executions of the thread()",
+        "an error the provider will retry is a warning not a failure()",
+        "interrupted command work is cancelled not failed()",
+        "maps final message and completion()",
+        "reads nested last and total usage()",
+        "classifies structured error codes()"
+      ],
+      "observations": []
+    },
+    {
+      "name": "dev.harnessprotocol.codex.CodexHarnessContractTest",
+      "timestamp": "2026-09-04T02:33:04.839Z",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "compatible specs reach the bridge with their intent intact()",
+        "different sessions execute concurrently()",
+        "state is terminal before awaitResult returns()",
+        "release is called after terminal()",
+        "stream failure fails the execution as transport()",
+        "overflow is explicit and terminal survives()",
+        "session release is idempotent and rejects further execute()",
+        "cancel after terminal is a no-op()",
+        "session release settles an active execution()",
+        "terminal is exactly once and last()",
+        "completes without an event collector()",
+        "creates a session and completes an execution()",
+        "slow collector does not block lifecycle()",
+        "rejects overlapping execute on one session()",
+        "stream ending without a terminal fails the execution as transport()",
+        "harness close settles active executions as cancelled()",
+        "completion wins the race against cancel()",
+        "cancellation is reported through state and awaitResult()",
+        "resume uses the session id returned by the host()",
+        "failure is reported through state and awaitResult()"
+      ],
+      "observations": []
+    },
+    {
+      "name": "dev.harnessprotocol.codex.CodexInteractionTest",
+      "timestamp": "2026-09-04T02:33:11.612Z",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "caller decides is compatible()",
+        "interaction request suspends and respond resumes()",
+        "cancel while waiting clears the request and the execution ends cancelled()",
+        "harness close while waiting clears the snapshot()",
+        "rejects invalid or duplicate interaction response()",
+        "interaction can be cleared without a response()"
+      ],
+      "observations": []
+    },
+    {
+      "name": "dev.harnessprotocol.gemini.GeminiCliHarnessContractTest",
+      "timestamp": "2026-09-04T02:32:55.929Z",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "compatible specs reach the bridge with their intent intact()",
+        "different sessions execute concurrently()",
+        "state is terminal before awaitResult returns()",
+        "release is called after terminal()",
+        "stream failure fails the execution as transport()",
+        "overflow is explicit and terminal survives()",
+        "session release is idempotent and rejects further execute()",
+        "cancel after terminal is a no-op()",
+        "session release settles an active execution()",
+        "terminal is exactly once and last()",
+        "completes without an event collector()",
+        "creates a session and completes an execution()",
+        "slow collector does not block lifecycle()",
+        "rejects overlapping execute on one session()",
+        "stream ending without a terminal fails the execution as transport()",
+        "harness close settles active executions as cancelled()",
+        "completion wins the race against cancel()",
+        "cancellation is reported through state and awaitResult()",
+        "resume uses the session id returned by the host()",
+        "failure is reported through state and awaitResult()"
+      ],
+      "observations": []
+    },
+    {
+      "name": "dev.harnessprotocol.gemini.GeminiCliPolicyTest",
+      "timestamp": "2026-09-04T02:33:02.844Z",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "caller decides is rejected where unsupported()"
+      ],
+      "observations": []
+    },
+    {
+      "name": "dev.harnessprotocol.gemini.GeminiEventMapperTest",
+      "timestamp": "2026-09-04T02:33:02.848Z",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "context pressure is a typed warning and colours a following error()",
+        "exposes a built in tool as work and as an external effect()",
+        "turn limit completes with a stop reason instead of a warning()",
+        "blocked execution is policy blocked and plain errors are provider failures()",
+        "accumulates usage across multiple finished events()",
+        "collects streamed content into final result()",
+        "loop detection and provider stop are stop reasons()",
+        "cancelled tool work keeps its own status()"
+      ],
+      "observations": []
+    },
+    {
+      "name": "dev.harnessprotocol.bridge.BridgeProtocolTest",
+      "timestamp": "2026-09-04T02:32:40.449Z",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "default JSON preserves arbitrary provider payload()"
+      ],
+      "observations": []
+    },
+    {
+      "name": "dev.harnessprotocol.bridge.ProcessLifecycleTest",
+      "timestamp": "2026-09-04T02:32:40.817Z",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "explicit close settles as cancelled when the owner settles first()",
+        "host exit fails every active execution as transport()",
+        "completes through a real host process()",
+        "host EOF without a terminal fails the execution()",
+        "close without owner settlement fails as transport()"
+      ],
+      "observations": []
+    }
+  ],
+  "experimentSourceHashes": [
+    {
+      "path": "experiments/koog-validation/build.gradle.kts",
+      "sha256": "f612f7245dbcd12a8d6cc41133cdd7443fb08318fe2bb32ddf598ee7cf7e0a02"
+    },
+    {
+      "path": "experiments/koog-validation/gradle.lockfile",
+      "sha256": "b31507c4c70256ecf8244c79bc66405e79466ac8a4c2e730e748280132e7e648"
+    },
+    {
+      "path": "experiments/koog-validation/gradle.properties",
+      "sha256": "f94caa5b6d03ac06f58212117514a00ae94b2301c1de360656248792fb9827a5"
+    },
+    {
+      "path": "experiments/koog-validation/settings.gradle.kts",
+      "sha256": "63fdb5fb1900b0b057383cf7a8cd9438e146cd3113d9bc34f3c78777e481e637"
+    },
+    {
+      "path": "experiments/koog-validation/src/main/kotlin/experiment/ConversationStore.kt",
+      "sha256": "a7819d5d31d1cf99eaa531def76e62d0eb2a566ea844c1f89ffaf25e309b2bd9"
+    },
+    {
+      "path": "experiments/koog-validation/src/main/kotlin/experiment/KoogHarness.kt",
+      "sha256": "7a66ca0a540d3293c2839bd29175c8e0290d42434b71b8fb91d68c0e0356a343"
+    },
+    {
+      "path": "experiments/koog-validation/src/main/kotlin/experiment/KoogRuntime.kt",
+      "sha256": "bc64fc38bc7105a1b082ef16e10efbc98a37e81ae490dd81288aca402d960912"
+    },
+    {
+      "path": "experiments/koog-validation/src/main/kotlin/experiment/ObservationStream.kt",
+      "sha256": "25f055fd72715b9560c90a4afdeb63283c49e7788e54a9fdd75326ab739fe972"
+    },
+    {
+      "path": "experiments/koog-validation/src/test/kotlin/experiment/Fixtures.kt",
+      "sha256": "37f8d176c880ec947c89e3cf10fd5d2012f3bd1021434a45933260eaa3a3d5f3"
+    },
+    {
+      "path": "experiments/koog-validation/src/test/kotlin/experiment/NativeKoogTest.kt",
+      "sha256": "3406cc046e9dbdd8f75bdc6a7689c07ec8c88e7d82f1320986c10833de0d5e8f"
+    },
+    {
+      "path": "experiments/koog-validation/src/test/kotlin/experiment/PortScenariosTest.kt",
+      "sha256": "4bb2128d465696a45e8aff1cd40f1f695a1c0ee46235547f7f1c15df7caf25ff"
+    }
+  ]
+}

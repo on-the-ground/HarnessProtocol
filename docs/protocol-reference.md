@@ -16,9 +16,11 @@
 
 ## AgentHarness와 요구 검증
 
-`provider`는 제공 경계의 식별자다. adapter 선택과 지원 판단은 구성 경계에서 수행하고 portable 업무 판단은 vendor 클래스나 원본 payload를 해석하지 않는다.
+`provider`는 adapter 제공 종류를 구별하는 구성 식별자이며 계정·저장소·영속 문맥의 namespace를 대신하지 않는다. [제공 경계](semantic-contract.md#설계-주체)는 실행 책임의 경계를 뜻한다. adapter 선택과 지원 판단은 구성 경계에서 수행하고 portable 업무 판단은 vendor 클래스나 원본 payload를 해석하지 않는다.
 
 `validate`는 요청한 의미를 보존할 수 있는지 진단한다. 검증 대상은 문맥 설정, 작업 요구, 선택 계약의 각 적용 범위에 맞춰 구성한다. 기존 `AgentSpec`을 그대로 받는 시그니처를 최종안으로 확정한 것은 아니다.
+
+지원 정보의 범위·유효 조건, 요청별 검증과 실제 수락의 관계는 [지원 탐색과 요구 수락](capability-candidates.md#지원-탐색과-요구-수락)을 따른다. 소비자는 기능 목록을 먼저 조회하지 않고도 필수 요구를 전달할 수 있어야 한다.
 
 - 필수 요구를 보존하지 못하면 error로 거절한다. warning이나 provider default로 대체하지 않는다.
 - 사전 검증을 생략하더라도 session 생성·작업 시작·선택 계약 호출의 실제 경계에서 다시 검증한다.
@@ -31,23 +33,27 @@
 
 식별자는 비어 있지 않은 opaque 값이다. consumer가 native ID의 구조를 해석하거나 임의로 합성하지 않는다. `TaskId`는 소유 harness 안에서 작업을 구별하고, `WorkId`와 `InteractionId`는 해당 Task 안에서 대상을 구별한다. 서로 다른 Task에서 같은 하위 ID가 나타나도 섞이지 않아야 한다. provider가 같은 작업의 tool/effect를 식별한 경우 같은 WorkId로 연결한다.
 
+기본 `SessionId`는 발급한 harness의 논리 session을 구별한다. 같은 ID 문자열이 다른 harness에 있더라도 같은 문맥이라는 뜻은 아니다. 영속 문맥을 참조하려면 선택 계약이 정한 저장 namespace와 그 안의 opaque 식별자가 필요하다. namespace는 계정·endpoint·저장소 구성을 구별할 수 있어야 하며 자격 증명 자체를 식별자에 담지 않는다. 구체적 참조 타입은 미확정이지만 provider 종류와 ID 문자열만으로 전역 동일성을 추정하지 않는다는 의미는 확정한다.
+
 `TaskInput.Text`는 빈 문자열을 거절하되 공백만 있는 문자열을 임의로 trim하거나 다른 값으로 바꾸지 않는다. caller 입력과 지속 지시의 의미를 유지한다. 요청한 skill 활성화 등 provider별 envelope를 구성할 수 있지만 다른 지시나 업무 입력으로 조용히 대체하지 않는다.
 
 ## AgentSession과 영속성
 
-`SessionId`는 제공 경계 안의 opaque 식별자다. 기본 ID만으로 재시작 이후의 보관·재개 가능성을 추론하지 않는다.
+`SessionId`의 유효 범위는 위 식별 계약을 따른다. 기본 ID만으로 재시작 이후의 보관·재개 가능성을 추론하지 않는다.
 
 `startTask(input)`은 작업을 받아들이고 `AgentTask` handle을 반환한다. 작업 완료까지 기다리는 연산이 아니다. 같은 session의 문맥을 공유하는 작업은 순차적으로 시작하며 진행 중 작업이 있으면 새 요청을 provider에 보내기 전에 거절한다.
 
-이전 작업의 outcome이 `Unresolved`이면 handle은 종결됐어도 실제 작업이 남아 있을 수 있다. 문맥의 안전성을 확인하기 전 같은 session에서 새 작업을 시작하지 않는다. 서로 다른 session은 논리적으로 격리되며 실제 병렬 처리량은 보장하지 않는다.
+이전 작업의 outcome이 `Unresolved`이면 handle은 종결됐어도 실제 작업이 남아 있을 수 있다. 같은 문맥의 시작 거절, 조정 범위와 독립된 새 session·기존 문맥 복구의 차이는 [문맥 차단과 복구](lifecycle-and-concurrency.md#문맥-차단과-복구-범위)를 따른다. 서로 다른 session은 논리적으로 격리되며 실제 병렬 처리량은 보장하지 않는다.
 
 `release`는 해당 session handle을 정리한다. 작업에 취소를 요청하고 제한된 시간 동안 종료를 확인한다. 이후 handle은 사용할 수 없다. 영속 보관을 요청하지 않았다면 release 이후의 문맥 보존은 보장하지 않는다.
 
-영속성은 [선택 계약](capability-candidates.md)이다. 보관 범위·수명·저장 성공·재개 조건을 명시해야 한다. 지원한 경우 release나 harness 재생성 이후에도 약속한 범위에서 문맥을 다시 열 수 있어야 한다.
+### 영속성 선택 계약
 
-`reopenSession`은 보관된 문맥의 새 handle을 얻는다. 모르는 ID나 다른 제공 경계의 ID를 새 session으로 바꾸지 않는다. 재개 설정은 이후 적용할 desired configuration이며 의미를 보존할 수 없는 변경을 거절한다. checkpoint 복원·Task 재접속·외부 효과의 복원은 포함하지 않는다. 영속성 지원 탐색과 보관 식별자의 구체적 API는 미확정이다.
+영속성은 기본 `AgentSession`에 포함되지 않는 [선택 계약](capability-candidates.md)이다. `reopenSession`은 그 계약을 제공하는 진입점의 연산이며 기본 Session의 필수 메서드가 아니다. 구체적인 소유 interface는 구현 전 확정한다. 보관 범위·수명·저장 성공·재개 조건과 조정 범위를 명시해야 한다. 지원한 경우 release나 harness 재생성 이후에도 약속한 범위에서 문맥을 다시 열 수 있어야 한다.
 
-재개 응답에서 제공 경계가 정규화한 식별자를 반환하면 새 handle에는 그 식별자를 사용한다. 입력 ID를 무조건 그대로 돌려주지 않는다. 이후 재개에 필요한 provider와 보관 식별자를 함께 보관하며, 다른 harness 인스턴스에서 같은 기본 SessionId만으로 동일한 영속 문맥을 추정하지 않는다.
+`reopenSession`은 보관된 문맥의 새 handle을 얻는다. 모르는 ID나 다른 저장 namespace의 참조는 거절하며 새 session으로 바꾸지 않는다. 재개 설정은 이후 적용할 desired configuration이며 의미를 보존할 수 없는 변경을 거절한다. checkpoint 복원·Task 재접속·외부 효과의 복원은 포함하지 않는다. 차단된 문맥을 reopen했다는 이유로 작업 가능하다고 보고하지 않는다.
+
+재개 응답에서 adapter가 정규화한 식별자를 반환하면 새 handle에는 그 식별자를 사용한다. 입력 ID를 무조건 그대로 돌려주지 않는다. 이후 재개에 필요한 adapter 종류·저장 namespace·보관 식별자의 연결을 보존한다.
 
 ## AgentTask
 
@@ -99,9 +105,9 @@ Handle 생성 전의 검증·시작 실패는 호출 실패다. handle을 받은
 | `CANCELLED` | `Cancelled`: 취소에 의한 실제 종료를 확인했다. |
 | `UNRESOLVED` | `Unresolved`: 관찰·제어를 종결하면서 실제 결과를 확인하지 못했다. |
 
-뒤의 네 상태는 해당 handle의 종결이다. outcome은 정확히 한 번 확정하며 덮어쓰지 않는다. `UNRESOLVED`가 외부 작업 종료를 뜻하지 않는다는 점이 중요하다. [Lifecycle](lifecycle-and-concurrency.md)을 따른다.
+뒤의 네 상태는 해당 handle의 종결이다. outcome은 정확히 한 번 확정하며 덮어쓰지 않는다. `UNRESOLVED`가 외부 작업 종료를 뜻하지 않는다는 점이 중요하다. 판정 근거는 [종결 확인의 근거](lifecycle-and-concurrency.md#종결-확인의-근거)를 따른다.
 
-어떤 outcome이든 `awaitOutcome()`이 반환하기 전에 대응 terminal state와 빈 pending snapshot이 확정돼 있어야 한다. 이미 해결된 요청은 그대로 두고, 열린 요청은 실제 원인에 맞춰 정리한다. 정리된 ID에 대한 늦은 응답은 거절한다. collector callback들이 그 갱신을 관찰하는 순서까지 보장하는 것은 아니다.
+어떤 outcome이든 waiter 반환 전 terminal state·pending 정리는 [Lifecycle의 확정 순서](lifecycle-and-concurrency.md#상태와-outcome)를 따른다.
 
 `Completed`도 반복 한도 등 종료 사유를 보존한다. 자연 종료와 한도·반복 감지·provider 중단을 구별하되 내부 step/turn을 보편적 업무 단위로 승격하지 않는다. 기존 `StopReason` 세부 enum의 전환은 결과 모델과 함께 확정한다.
 
@@ -113,9 +119,11 @@ Handle 생성 전의 검증·시작 실패는 호출 실패다. handle을 받은
 
 `TaskOutput.Text`는 전달한 텍스트 산출물이다. 진행 설명으로 최종 산출물을 덮어쓰지 않는다. 부분 산출물이 있어도 outcome을 성공으로 바꾸지 않는다.
 
-구조화 산출물을 요구한 경우 schema·검증 책임·검증 실패의 처리까지 선택 계약으로 정의한다. JSON 문자열 하나를 반환하는 것만으로 schema 지원을 선언하지 않는다. outcome에 산출물·종료 사유·사용량을 배치할 구체적 필드는 미확정이다.
+`Completed`·`Failed`·`Cancelled`·`Unresolved` 모두 확정 시점까지 확보한 산출물과 사용량을 `awaitOutcome()`의 결과를 통해 회수할 수 있어야 한다. observer가 없거나 이벤트를 잃었어도 이 정보는 보존한다. 산출물의 완료·부분 상태와 알려진 검증 결과를 구별하고, unknown을 빈 결과·0 또는 검증 성공으로 합성하지 않는다. 여기서 산출물은 호출자에게 전달할 업무 결과이며 모든 내부 도구 payload를 보관하라는 뜻은 아니다. Unresolved의 산출물·사용량은 그 시점의 관찰이며 실제 실행의 최종값임을 보장하지 않는다. 이후 추가 정보를 얻는 것은 별도 계약이다.
 
-공통 `UsageChanged`는 해당 Task의 누적 snapshot이며 이전 값에 더하지 않는다. provider의 증분·누적 표현 차이는 adapter가 번역한다. Session 누적은 실제 제공할 수 있을 때 별도로 전달한다. 모르는 값은 unknown이며 0으로 합성하지 않는다. context 관리 관찰은 문맥 상한 집행 보장이 아니다. `ProviderDiagnostic`은 별도 진단 경로이며 기본 결과나 실패 분류를 대신하지 않는다.
+구조화 산출물을 요구한 경우 schema·검증 책임·검증 실패의 처리까지 선택 계약으로 정의한다. JSON 문자열 하나를 반환하는 것만으로 schema 지원을 선언하지 않는다. 모든 outcome에서 확보한 정보를 회수한다는 보장은 확정이며 공통 envelope·variant별 필드 등 Kotlin 배치만 미확정이다.
+
+공통 `UsageChanged`는 해당 Task의 누적 snapshot이며 이전 값에 더하지 않는다. provider의 증분·누적 표현 차이는 adapter가 번역한다. Session 누적은 실제 제공할 수 있을 때 별도로 전달한다. 모르는 값은 unknown이며 0으로 합성하지 않는다. 내부 문맥 관리 관찰은 기본 이벤트가 아니라 선택 진단이며 문맥 상한 집행의 보장도 아니다. `ProviderDiagnostic`은 별도 진단 경로이며 기본 결과나 실패 분류를 대신하지 않는다.
 
 ## 구현 전환
 

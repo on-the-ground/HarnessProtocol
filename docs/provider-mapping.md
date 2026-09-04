@@ -51,6 +51,16 @@ Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`�
 
 ## 상태·결과 매핑 원칙
 
+규범은 [종결 확인의 근거](lifecycle-and-concurrency.md#종결-확인의-근거)다. 다음 표는 기존 조사·실험이 제공한 신호와 새 계약으로의 검증 과제를 구별한다. 아직 세 adapter의 새 판정 규칙을 실행 검증한 표가 아니다.
+
+| 대상 | 기존 경로의 근거 후보 | 충분한 근거가 되기 위한 조건 | 남은 검증 |
+|---|---|---|---|
+| Codex | turn 종결 보고와 status, interrupt 요청 응답 | 종결 보고가 해당 Task의 위임 범위를 끝낸다는 대응과 사유를 확인. interrupt 요청 수락만으로 Cancelled를 만들지 않음 | turn/Task 범위, 완료·취소 경쟁, 하위 실행의 귀속과 보고 유실을 fixture·실연동으로 확인 |
+| Gemini CLI | sendStream 관찰 종료 후 host가 합성한 completed/failed/cancelled 알림 | 관찰 loop 종료가 귀속된 실제 작업의 종결을 뜻하는지 SDK 계약·실행으로 입증. 합성 이벤트의 이름만으로 판정하지 않음 | stream 종료 후 계속되는 작업·도구, abort 뒤 실제 종료, 보고 유실·비협조적 작업을 구별 |
+| Koog | graph 실행 coroutine과 등록 tool의 종료. 비협조적 tool 반환 전에는 기존 실험에서 실행이 남음 | 해당 coroutine의 종료가 귀속된 graph/tool 실행의 종결을 포괄하고 종료 사유를 확인할 수 있음 | 실험 밖으로 분리된 작업·외부 효과의 범위, production 수명 관리, 새 네 outcome 판정 검사 |
+
+Adapter가 같은 범위의 충분한 근거를 확보했다면 그 결과를 전달해야 한다. 근거가 부족한 bounded 정리는 Unresolved다. 어떤 adapter에서도 stream·process 종료 자체를 항상 성공 또는 항상 미확정으로 고정하지 않는다. 구현 전환 시 표에 SDK/runtime revision, 보장 범위와 실제 통과 시나리오를 추가한다.
+
 현재 host death → TRANSPORT 실패, close 유예 → CANCELLED 경로는 개정 대상이다. 먼저 확인한 사실을 판정한다.
 
 - 작업 실패를 provider가 확인했다면 Failed로 분류한다.
@@ -60,7 +70,7 @@ Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`�
 
 기존 인증·정책·예산·문맥·일시적 오류 매핑의 유용한 구분은 보존한다. provider의 unknown 오류는 공통 설명과 알려진 사실로 전달하고 raw 이벤트 해석을 소비자의 필수 책임으로 두지 않는다.
 
-분류 근거는 구조화된 provider 정보·의미가 확인된 native 예외·직접 확인한 runtime 사실이다. 자연어 문구만으로 인증 실패나 재시도 가능성을 추정하지 않는다. 시작 응답이나 interaction 응답 확인을 잃은 경우에는 미수행으로 단정하지 않고 수락 미확정을 보존한다.
+분류는 [공통 실패 분류](protocol-reference.md#상태와-종결-판정)를 따른다. 시작 응답이나 interaction 응답 확인을 잃은 경우에는 미수행으로 단정하지 않고 수락 미확정을 보존한다.
 
 Codex의 session 누적 usage에서 baseline을 빼는 방식과 Gemini의 필드별 누적은 현재 구현 수단이다. reset·누락·scope를 검증해 Task/Session 측정을 섞지 않는다. 음수나 unknown을 임의의 0으로 보정해 정확한 측정처럼 보고하지 않는다.
 

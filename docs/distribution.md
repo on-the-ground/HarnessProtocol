@@ -14,6 +14,8 @@
 
 아래 정보는 전환 전 구현에 관한 것이다. `0.1.0` 좌표에서 새 AgentTask API를 제공한다고 주장하지 않는다.
 
+다음 예시는 이 저장소에서 `./gradlew.bat publishToMavenLocal`을 실행해 로컬 Maven 저장소에 설치한 artifact를 소비한다. 공개 Maven repository에서 다운로드할 수 있다는 안내가 아니다. publicationGroup/publicationVersion을 변경했다면 소비 좌표도 실제 로컬 발행값에 맞춘다. 현재 문서 작업에서는 발행을 실행하지 않았다.
+
 ```kotlin
 repositories { mavenLocal() }
 dependencies {

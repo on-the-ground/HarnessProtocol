@@ -42,10 +42,13 @@ Payload는 Codex method/payload, Gemini type/value 등의 원본과 host 합성 
 
 현재 구현은 host death를 진행 중 execution의 TRANSPORT 실패로, 명시적 close 유예 만료를 CANCELLED로 처리한다. **이 동작은 새 계약에 맞춰 변경해야 한다.** 통신·process 종료만으로 외부 작업의 실패나 취소를 확정할 수 없다. 확인된 결과와 `Unresolved`를 구분하는 근거가 adapter에 필요하다.
 
+판정은 [종결 증거 규칙](lifecycle-and-concurrency.md#종결-확인의-근거)과 [adapter별 근거 검증](provider-mapping.md#상태결과-매핑-원칙)을 따른다. host의 합성 종결 알림은 실제 Task 범위의 종료를 입증할 때에만 충분하다. 충분한 근거를 이미 받았다면 transport 정리 오류 때문에 그 결과를 Unresolved로 낮추지 않는다.
+
 - 기존 executionId를 public TaskId로 변환할 수 있지만 둘의 수명과 식별 범위를 일치시켜 검증한다.
 - 내부 resume_session은 영속성 선택 계약의 reopen에 대응할 수 있다. 모든 기본 Session의 필수 연산으로 남기지 않는다.
 - 새 Question/Answer와 요구 계약을 전달하려면 내부 envelope도 의미에 맞게 확장·버전 관리한다.
 - TaskOutcome과 TaskOutput의 분리를 내부 완료 알림이 지원해야 한다. 문자열 하나와 예외만으로 새 의미를 잃지 않는다.
+- 실패·취소·미확정에서도 이미 확보한 업무 산출물·사용량을 보존한다. 기존 성공 알림에만 결과를 담던 구조를 그대로 유지하지 않는다.
 - 원본 payload의 내부 수신과 public ProviderDiagnostic 노출은 별개다. 모든 원본을 TaskEvent에 실을 필요는 없다.
 - 두 언어 host와 Kotlin decoder를 함께 전환하고 독립적으로 배포 가능한 조합의 호환성을 검증한다.
 

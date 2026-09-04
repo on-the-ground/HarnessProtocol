@@ -21,17 +21,20 @@
 | 결정 항목 | 지켜야 할 방향 | 남은 구체화 |
 |---|---|---|
 | Task lifecycle | `AgentTask`, `startTask`, `requestCancellation`, `awaitOutcome` | 호출 실패와 outcome의 경계, 시작 요청 수락 미확정의 표현·identity 회수, 다중 waiter와 정리 경쟁 |
-| 상태 / outcome | `Completed/Failed/Cancelled/Unresolved`와 대응 상태 | sealed 타입 필드, 종료 사유, 이미 확보한 부분 산출물·사용량의 위치 |
-| Session | 기본 문맥 연속성, 영속성 분리 | 설정 scope, 보관 성공·식별·수명, `reopenSession`, 미확정 작업이 남은 문맥의 차단·복구 |
+| 상태 / outcome | `Completed/Failed/Cancelled/Unresolved`와 대응 상태, 충분한 종결 근거의 사용 의무 | Task 범위별 종결 증거와 세 adapter 매핑의 실행 검증, sealed 필드·종료 사유 |
+| Session | 기본 문맥 연속성, 영속성 분리, 기본 조정은 소유 harness의 동일 문맥 | 설정 scope, 저장 namespace·재개 참조, 영속 조정 범위·차단 전달·복구 조건·접근 소유권, `reopenSession` 소유 interface |
 | Interaction | 공통 요청 lifecycle, 승인/질문 의미 구별 | 요청·응답 타입, 지원 요구, decision 범위, 모든 outcome의 pending 정리, 응답 수락 확인 유실·중복 처리 |
 | 구성 | 요구를 실제 적용 범위에 배치 | 기존 AgentSpec/ExecutionPolicy 분해, 지시·모델·작업·문맥 설정의 소유와 override |
-| 선택 계약 | 지원 선언 시 강한 보장 | 지원 탐색·요구 전달·실제 경계 검증, 영속성·자원·정책·출력·진단 interface |
-| 산출물 | `TaskOutput`과 종결 판정 분리 | 텍스트·구조화 결과, schema 검증 실패와 부분 결과의 표현 |
-| 관찰 | state/pending/outcome 독립, 의미 이벤트와 진단 분리 | message identity/phase, Task 누적 usage snapshot의 필드·nullable 병합, TaskUnresolved, provider 진단과의 상관관계 |
+| 선택 계약 | 범위·유효 조건이 있는 지원 정보, 요구별 validate, 실제 경계 검증을 구별 | 구성·session 의존 지원 정보, 미확인 조건과 거절 모델, 영속성·자원·정책·출력·진단 interface |
+| 산출물 | 모든 outcome에서 확보한 산출물·사용량 회수, 관찰 유실과 독립 | 공통 envelope/variant 배치, 완료·부분·검증 결과·unknown의 필드 표현 |
+| 관찰 | state/pending/outcome 독립, ContextManaged는 진단으로 이동, 공개 설명은 메시지로 통합 | message identity/phase와 기존 ReasoningDelta 변환, Task 누적 usage의 필드·nullable 병합, 진단 상관관계 |
+| 정리 | close/release와 outcome 회수의 bounded 보장 | 전체 시간 상한·적용 범위·설정 노출, 다중 자원 정리와 확인 절차의 예산 배분 |
 
 `Unresolved`를 기존 TRANSPORT 실패로 감춰서는 안 된다. 통신 실패가 확인된 작업 실패인지, 종료를 모르는 상황인지를 판정할 근거가 필요하다. 현재 구현의 강제 취소를 문서상 이름만 바꾸어 유지하지 않는다.
 
 수락 여부를 모르는 시작 호출과 응답 acknowledgement 유실도 미확정 정보다. public handle이 없다는 이유로 작업 미실행을 단정하지 않는다. 요청 identity·전달 상태·안전한 재시도 가능성을 표현하는 구체적 API를 구현 전에 정한다. 이 항목이 남아 있는 동안 새 원격 호출 계약이 완성됐다고 보지 않는다.
+
+순서는 지원 정보·요구 수락과 식별·조정 범위를 먼저 구체화하고, 그 범위에 맞는 종결 근거·결과 회수·복구 모델을 확정한 뒤 공개 Kotlin 선언으로 옮긴다. 문맥 연속성과 영속성의 목적 차이, 모든 outcome의 부분 결과 보존은 이미 확정된 의미다. 이를 필드 설계 중 선택 사항으로 되돌리지 않는다. 상세 결정의 근거와 채택하지 않은 대안은 [외부 총평 반영 기록](review-disposition.md)에 있다.
 
 ## 2. 공개 Port와 KDoc 전환
 
@@ -39,6 +42,7 @@
 - 성공 전용 AgentResult와 실행 실패/취소 예외의 역할을 재구성한다. 변경된 의미를 alias로 감추지 않는다.
 - 기본 session에서 필수 영속 재개를 분리한다. 재개 요구가 있는 소비자의 보장은 새 선택 계약으로 유지한다.
 - ProviderDiagnostic과 구현별 transport를 기본 의미 이벤트·적합성 검사에서 분리한다.
+- ContextManaged의 내부 관찰은 선택 진단으로 옮기고, 공개 설명은 Message 계약에 보존한다. ReasoningDelta를 이름만 바꿔 별도 기본 이벤트로 유지하지 않는다.
 - 무의미한 default close 구현, 모호한 오류 상속, provider turn 기반 사유·한도 이름을 새 책임에 맞춰 검토한다.
 - KDoc은 실제 시그니처·구현과 같은 변경에서 갱신한다. 문서만 새 API이고 타입 의미는 이전 상태인 구현을 완료로 취급하지 않는다.
 

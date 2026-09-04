@@ -27,6 +27,7 @@ AgentHarness                   하네스 제공 경계
 - 승인과 질문은 외부 응답을 기다리는 interaction이다. 승인 결정과 정보 답변의 의미를 각각 유지한다.
 - `TaskOutcome`은 `Completed`, `Failed`, `Cancelled`, `Unresolved`라는 종결 판정을 구별한다. 실행 완료는 업무 목표 달성을 증명하지 않는다.
 - `TaskOutput`은 산출물이다. 텍스트 전달과 구조화된 산출물의 schema 보장은 구별한다.
+- 모든 outcome에서 그 시점까지 확보한 산출물과 사용량을 회수한다. 부분 결과와 unknown을 보존하며 이벤트 구독 여부에 의존하지 않는다.
 - 취소 요청이나 handle 정리만으로 실제 중단을 확정하지 않는다. 종료 결과를 확인하지 못하면 `Unresolved`를 전달한다.
 
 ## 문서와 구현 상태
@@ -43,6 +44,7 @@ AgentHarness                   하네스 제공 경계
 | 배포와 구현 세부 | [Distribution](docs/distribution.md), [Bridge protocol](docs/bridge-protocol.md) |
 | 실증 근거 | [Koog 검증 계획](docs/koog-abstraction-validation-plan.md), [검증 결과](docs/koog-abstraction-validation-results.md) |
 | 회귀 검토 | [문서 개편 후 회귀 검토](docs/regression-review.md): 복원한 보장, 새 설계의 경계 조건, 기존 suite 재실행 결과 |
+| 총평 반영 | [채택·수정·보류 판단](docs/review-disposition.md): 종결 증거, 문맥 조정, 지원 탐색, 이벤트 존치와 남은 검증 |
 | Codex 기반 선택 | [codex-agent 검토](docs/codex-agent-adoption-review.md), [저수준 client 조사](docs/spikes/2026-09-03-codex-low-level-client.md) |
 
 확정된 의미와 아직 정해야 할 공개 필드·선택 계약 API는 문서에서 구분한다. 기존 버전의 설계 이력은 Git에서 확인한다.

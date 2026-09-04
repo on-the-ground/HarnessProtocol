@@ -21,15 +21,15 @@
 
 ## 메시지와 산출물
 
-`MessageDelta`와 `MessageCompleted`는 메시지 진행·완료 관찰이다. 작업의 `TaskOutput`과 같은 개념으로 취급하지 않는다. 여러 설명과 중간 메시지를 보낸 작업도 하나의 종결 판정과 산출물을 갖는다.
+`MessageDelta`와 `MessageCompleted`는 소비자가 진행 중 메시지를 표시하고 같은 메시지의 완료 snapshot으로 표시를 확정하는 계약이다. 작업의 `TaskOutput`과 같은 개념으로 취급하지 않는다. 여러 설명과 중간 메시지를 보낸 작업도 하나의 종결 판정과 산출물을 갖는다.
 
 - 메시지 identity와 관찰 가능한 역할·phase를 보존한다. 역할이 불명확하면 최종 답변으로 꾸미지 않는다.
 - delta와 완료 snapshot이 같은 내용을 담으면 두 번 이어 붙이지 않는다.
 - 완료된 최종 메시지 이후 commentary가 왔다고 산출물을 commentary로 덮어쓰지 않는다.
 - 이벤트 유실로 소비자가 조립한 텍스트가 불완전해도 adapter가 전달할 canonical 산출물은 별도로 관리한다.
-- 실제 partial output은 보존할 수 있지만 그 존재가 `Completed`나 업무 성공의 근거는 아니다.
+- 확보한 업무 산출물은 [모든 outcome의 회수 계약](protocol-reference.md#산출물과-부가-관찰)을 따른다. 부분 산출물의 존재가 `Completed`나 업무 성공의 근거는 아니다.
 
-`ReasoningDelta`는 provider가 공개하는 설명·요약을 관찰할 때 사용할 수 있다. 모든 하네스의 필수 출력으로 요구하거나 노출되지 않은 추론을 합성하지 않는다. phase·message 식별자의 최종 모델은 결과·이벤트 API 확정 단계에서 정한다.
+Provider가 호출자에게 공개하는 설명·요약은 메시지 표시 목적에 포함한다. 관찰 가능한 역할·phase를 보존하는 메시지 계약으로 통합하고, `ReasoningDelta`를 별도의 기본 이벤트 종류로 유지하지 않는다. 설명을 최종 산출물로 오인하거나 비공개 추론을 합성하지 않는다. 역할·phase를 알 수 없으면 unknown을 보존한다. 구체적인 message 식별·phase 타입은 결과·이벤트 API에서 확정한다. 내부 추론 진단은 선택적인 ProviderDiagnostic에 속한다.
 
 ## 도구와 외부 효과
 
@@ -48,9 +48,9 @@
 
 Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요는 없다. 관찰 상실이나 Task 종결 때문에 하위 작업의 terminal 이벤트가 없을 수도 있다. Task의 terminal과 모든 하위 효과의 완료를 동일시하지 않는다.
 
-Provider ID가 없으면 adapter가 충돌하지 않는 ID를 부여하고, 근거 없이 서로 다른 이벤트를 같은 작업으로 묶지 않는다. tool arguments/result의 vendor별 schema는 업무 산출물의 공통 schema가 아니다.
+동일 작업의 상관관계는 Task 범위의 native call ID, runtime 호출 객체의 identity, 또는 adapter가 해당 호출의 시작부터 결과까지 유지하는 일관된 대응으로 입증한다. 그 대응이 있으면 같은 WorkId를 사용하고, 없으면 충돌하지 않는 ID로 구별하며 관계를 미확정으로 남긴다. 이름·인자·시간 근접성만으로 두 작업을 합치지 않는다. tool arguments/result의 vendor별 schema는 업무 산출물의 공통 schema가 아니다.
 
-효과가 존재한다는 근거는 있으나 기존 분류에 없으면 `OTHER`로 표현할 수 있다. 모르는 도구 이름만 보고 효과가 있었다고 추정하지 않는다. 내부 context 관리 자체는 별도 `ContextManaged` 관찰로 다루며 외부 효과 분류와 중복시키지 않는다.
+효과가 존재한다는 근거는 있으나 기존 분류에 없으면 `OTHER`로 표현할 수 있다. 모르는 도구 이름만 보고 효과가 있었다고 추정하지 않는다. 내부 context 관리 자체는 선택 진단으로 다루며 외부 효과 분류와 중복시키지 않는다.
 
 ## Interaction 이벤트와 snapshot
 
@@ -60,11 +60,11 @@ Provider ID가 없으면 adapter가 충돌하지 않는 ID를 부여하고, 근�
 
 응답 없이 정리할 때 취소 요청, 작업 종결, provider 철회, supersede 등 실제 원인을 전달한다. `CANCELLATION_REQUESTED`는 실제 취소 완료와 다르다. `TASK_ENDED`는 handle의 종결에 따른 정리이며 미확정 작업의 물리적 종료를 주장하지 않는다. 최종 사유 enum은 interaction 모델과 함께 확정한다.
 
-모든 Task outcome의 확정 과정에서 남아 있는 요청을 정리하고 snapshot을 비운다. 정리 의미 이벤트는 terminal 앞에 놓는다. 느린 observer가 이 이벤트를 놓쳐도 snapshot과 응답 거절 규칙은 유지된다. 응답 수락 확인을 잃은 경우에는 요청을 다시 열어 재전송 가능한 것처럼 꾸미지 않는다.
+종결 시 snapshot 정리와 늦은 응답 거절은 [Lifecycle](lifecycle-and-concurrency.md#상태와-outcome), 수락 확인 유실은 [응답 수락 계약](protocol-reference.md#interaction)을 따른다. 정리 의미 이벤트는 terminal 앞에 놓는다. 느린 observer가 이 이벤트를 놓쳐도 snapshot과 응답 거절 규칙은 유지된다.
 
 ## Context, usage, 경고
 
-`ContextManaged`는 provider가 문맥을 정리한 관찰이다. 영속 저장, 전체 이력 복구, caller가 요구한 context token ceiling 집행의 증거가 아니다.
+기존 `ContextManaged`가 표현한 내부 문맥 정리 관찰은 ProviderDiagnostic으로 이동한다. 현재 근거로는 별도 업무 판단에 사용할 공통 보장을 식별하지 못했으므로 기본 이벤트에서 제거한다. 문맥 상한 집행·영속 저장 등의 결과가 필요하면 해당 선택 계약에서 의미를 정의하고 검증해야 한다. 내부 compaction 알림을 그 보장의 증거로 사용하지 않는다.
 
 `UsageChanged`는 **그 시점까지의 Task 누적 snapshot**이다. 소비자는 이전 snapshot에 더하지 않고 새 값으로 갱신한다. provider의 증분은 adapter에서 누적하고, 이미 누적인 값은 반복 합산하지 않는다. Session 누적은 실제 관찰할 수 있을 때 별도 범위로 전달한다. 이전 Task의 사용량을 현재 Task에 섞지 않는다.
 
@@ -80,7 +80,24 @@ Provider ID가 없으면 adapter가 충돌하지 않는 ID를 부여하고, 근�
 
 알 수 없는 실패는 공통 메시지와 알려진 사실로 전달한다. 소비자에게 raw payload를 읽어야만 종결 판정을 해석할 수 있도록 요구하지 않는다.
 
-인증·일시적 오류 등 구체적인 실패 종류는 구조화된 provider 정보, 확인된 native 예외나 runtime 사실로 분류한다. 자연어 문구의 추측만으로 재시도·권한 판단을 바꾸지 않는다.
+실패 이벤트의 분류도 [종결 판정과 실패 분류](protocol-reference.md#상태와-종결-판정)를 따른다.
+
+## 이벤트를 남기는 목적
+
+이 표는 발생 빈도가 아니라 소비 목적을 기준으로 한 판정이다. 특정 작업에 도구나 interaction이 없어서 해당 이벤트가 발생하지 않는 것과, 추가 보장을 선택적으로 지원하는 것은 구별한다.
+
+| 이벤트 | 소비 목적 / 배치 |
+|---|---|
+| MessageDelta / MessageCompleted | 진행 표시와 메시지 확정. 관찰 가능한 공개 설명도 역할·phase를 보존해 포함 |
+| ToolCallChanged / EffectChanged | 수행 중인 기능과 관찰된 변경·시도를 구별하고 개입 대상과 연결 |
+| InteractionRequested / InteractionResolved | 외부 판단·정보 요청의 표시와 정리. 현재 응답 대상은 snapshot으로 회수 |
+| UsageChanged | 관찰한 소비량을 같은 Task 누적 기준으로 표시·판단. 측정 지원·예산 집행까지 암묵적으로 보장하지 않음 |
+| ObservationGap | 진행 표시·집계의 누락을 인지하고 state·pending·outcome으로 필요한 사실 회수 |
+| TaskStarted | 위임 작업의 진행 시작을 관찰. 대응하는 outcome은 없으며 종결 판정과 혼동하지 않음 |
+| TaskCompleted / TaskFailed / TaskCancelled / TaskUnresolved | 위임 작업의 종결을 관찰. `awaitOutcome`이 회수하는 판정과 같은 의미 |
+| Warning | 요구가 그대로 유지되는 상태에서 호출자·운영자가 구성이나 사용 방식을 고칠 수 있는 사실을 전달. 예로 해당 정책에서는 오지 않아야 할 승인 요청이 도착해 거절한 경우가 있다. 실패·미지원의 대체 경로가 아님 |
+| 기존 ContextManaged | 내부 관리 관찰이므로 선택 진단으로 이동 |
+| 기존 ReasoningDelta | 공개 설명의 메시지 목적에 통합. 독립적인 기본 이벤트 종류 제거 |
 
 ## 전환·검증
 
