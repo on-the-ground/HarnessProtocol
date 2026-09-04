@@ -92,7 +92,7 @@ class CodexHarness private constructor(
             val bridge = JsonLineProcessBridge(
                 command = options.pythonCommand + bridgeScript.toAbsolutePath().toString(),
                 workingDirectory = options.processWorkingDirectory,
-                environment = options.environment,
+                environment = codexHostEnvironment(options),
             )
             return CodexHarness(bridge, CoroutineScope(SupervisorJob() + Dispatchers.Default))
         }
@@ -111,7 +111,17 @@ data class CodexSdkOptions(
     ),
     val processWorkingDirectory: Path? = null,
     val environment: Map<String, String> = emptyMap(),
+    /** Specific Codex executable for the Python SDK; `null` uses its pinned runtime. */
+    val codexExecutable: Path? = null,
 )
+
+internal fun codexHostEnvironment(options: CodexSdkOptions): Map<String, String> = buildMap {
+    putAll(options.environment)
+    remove(CODEX_EXECUTABLE_ENV)
+    options.codexExecutable?.let { put(CODEX_EXECUTABLE_ENV, it.toAbsolutePath().normalize().toString()) }
+}
+
+internal const val CODEX_EXECUTABLE_ENV = "HARNESS_CODEX_EXECUTABLE"
 
 private class CodexSession(
     private val state: BridgeHarnessRuntime.SessionState,

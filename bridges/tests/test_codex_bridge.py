@@ -24,13 +24,18 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 import codex_sdk_bridge as bridge_module  # noqa: E402
-from codex_sdk_bridge import Bridge, make_inputs, thread_start_params  # noqa: E402
+from codex_sdk_bridge import Bridge, codex_config, make_inputs, thread_start_params  # noqa: E402
 
 pytest.importorskip("openai_codex")
 from openai_codex.client import CodexClient, CodexConfig  # noqa: E402
 
 
 # ---------------------------------------------------------------- mapping
+
+
+def test_codex_runtime_override_is_explicit_and_optional():
+    assert codex_config({}).codex_bin is None
+    assert codex_config({"HARNESS_CODEX_EXECUTABLE": "/opt/codex"}).codex_bin == "/opt/codex"
 
 
 def test_provider_default_approval_sends_no_approval_fields():

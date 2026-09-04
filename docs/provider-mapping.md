@@ -28,6 +28,7 @@
 Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`를 사용하며 requirements는 0.147.0을 고정한다. 근거는 [client 조사](spikes/2026-09-03-codex-low-level-client.md)다.
 
 - thread/start·resume의 developerInstructions, model, cwd와 정책 wire 필드를 구성한다.
+- `CodexSdkOptions.codexExecutable`이 지정되면 Python SDK의 `CodexConfig.codex_bin`으로 전달하고, 생략하면 SDK의 pinned runtime을 유지한다.
 - PROVIDER_DEFAULT는 approval 필드를 생략한다. SDK convenience default로 의미를 바꾸지 않는다.
 - CALLER_DECIDES는 caller 응답을 기다린다. reader thread를 막는 handler의 pending 대기를 먼저 풀고 interrupt/close한다.
 - 현재 handler는 DENY_ALL에서 decline하며, PROVIDER_DEFAULT/AGENT_REVIEWED 경로에 예상 밖 요청이 오면 decline과 경고를 사용한다.

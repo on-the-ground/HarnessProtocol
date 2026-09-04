@@ -23,6 +23,7 @@ import asyncio
 import dataclasses
 import itertools
 import json
+import os
 import queue
 import sys
 import threading
@@ -68,7 +69,7 @@ class Execution:
 
 class Bridge:
     def __init__(self, client: CodexClient | None = None) -> None:
-        self.client = client or CodexClient(CodexConfig(), approval_handler=self.on_server_request)
+        self.client = client or CodexClient(codex_config(), approval_handler=self.on_server_request)
         self.loop: asyncio.AbstractEventLoop | None = None
         self.sessions: dict[str, dict[str, Any]] = {}
         self.executions: dict[str, Execution] = {}
@@ -319,6 +320,12 @@ SANDBOX_WIRE = {
     "workspace_write": "workspace-write",
     "full_access": "danger-full-access",
 }
+
+
+def codex_config(environment: dict[str, str] | None = None) -> CodexConfig:
+    source = os.environ if environment is None else environment
+    executable = source.get("HARNESS_CODEX_EXECUTABLE") or None
+    return CodexConfig(codex_bin=executable)
 
 
 def approval_params(approval: str) -> dict[str, Any]:
