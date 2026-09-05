@@ -79,8 +79,9 @@ sealed interface WorkspaceRequirement {
 /**
  * @property name provider에 노출할 non-blank 이름
  * @property path skill 디렉터리의 non-blank 경로. 절대 경로를 권장한다
- * @property activate `true`면 매 작업에서 provider의 활성화 envelope로 활성화한다. 사용자 입력
- * 자체는 바뀌지 않는다
+ * @property activate `true`면 이 skill의 지침이 매 Task의 실제 실행에 적용돼야 한다. 이름이나
+ * 활성화 힌트만 provider에 전달하는 것으로는 이 요구를 충족하지 않는다. `false`면 skill은
+ * 제공되지만 지침을 자동으로 적용하지 않는다. 사용자 [TaskInput] 값 자체는 바뀌지 않는다
  */
 data class SkillReference(
     val name: String,
@@ -93,7 +94,12 @@ data class SkillReference(
     }
 }
 
-/** 도구 실행 환경에 집행을 요구하는 제약. 승인 gate와 다른 계약이다. */
+/**
+ * 도구 실행 환경에 집행을 요구하는 제약. 승인 gate와 다른 계약이다.
+ *
+ * [Required]가 정한 경계는 승인으로 넓힐 수 없다. adapter가 승인된 권한 상승까지 포함해 이
+ * 상한을 집행할 수 없다면 [AgentHarness.validate]와 실제 session 생성 경계에서 요구를 거절한다.
+ */
 sealed interface ExecutionConstraint {
     /** provider/runtime의 현재 정책을 바꾸지 않는다. provider 간 동일 권한을 뜻하지 않는다. */
     data object ProviderDefault : ExecutionConstraint
@@ -115,13 +121,18 @@ sealed interface ExecutionConstraint {
 sealed interface FilesystemAccess {
     /** 읽기는 허용하되 변경을 막는다. */
     data object ReadOnly : FilesystemAccess
-    /** workspace와 [additionalWritableRoots] 안의 쓰기를 허용한다. */
+    /**
+     * 쓰기가 허용될 수 있는 최대 범위를 workspace와 [additionalWritableRoots]로 제한한다.
+     * 별도 승인 정책은 이 범위 안의 효과도 거절할 수 있지만 범위 밖으로 넓힐 수 없다.
+     */
     data class WorkspaceWrite(val additionalWritableRoots: Set<String> = emptySet()) : FilesystemAccess
     /** harness가 정의하는 sandbox 없이 실행한다. */
     data object FullAccess : FilesystemAccess
 }
 
-/** `ALLOWED`는 연결·자격 증명·서비스 가용성을 보장하지 않는다. */
+/**
+ * network 접근의 상한. `ALLOWED`도 별도 승인 통과, 연결·자격 증명·서비스 가용성을 보장하지 않는다.
+ */
 enum class NetworkAccess { DENIED, ALLOWED }
 
 /** 공급자 원본 관찰의 요구. 기본 적합성 조건이 아니다. */

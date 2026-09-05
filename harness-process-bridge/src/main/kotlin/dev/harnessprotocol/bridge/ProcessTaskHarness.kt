@@ -10,6 +10,8 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
 /** Native process adapter plumbing. EOF is observation loss, not proof that remote work stopped. */
@@ -25,6 +27,50 @@ abstract class ProcessTaskHarness(
     protected abstract fun ingest(task: ManagedTask, spec: SessionSpec, request: TaskRequest): (JsonObject) -> Unit
     protected open fun validateReopen(ref: PersistentSessionRef, spec: SessionSpec): CompatibilityReport = CompatibilityReport.Compatible
     protected open fun sessionOpened(id: SessionId, spec: SessionSpec, resumed: Boolean) = Unit
+
+    /** Validate and materialize local workspace resources before a native session is allocated. */
+    protected fun workspaceIssues(spec: SessionSpec): List<CompatibilityIssue> {
+        val workspace = spec.requirements.workspace as? WorkspaceRequirement.Required ?: return emptyList()
+        return buildList {
+            workspace.workingDirectory?.let { value ->
+                val path = runCatching { Path.of(value) }.getOrNull()
+                if (path == null || !Files.isDirectory(path))
+                    add(CompatibilityIssue("requirements.workspace.workingDirectory", "Working directory must be an existing directory"))
+            }
+            workspace.skills.forEachIndexed { index, skill ->
+                val directory = resolveSkillDirectory(workspace, skill)
+                if (!Files.isDirectory(directory) || !Files.isRegularFile(directory.resolve("SKILL.md")))
+                    add(CompatibilityIssue("requirements.workspace.skills[$index].path", "Skill path must be a directory containing SKILL.md"))
+            }
+        }
+    }
+
+    /**
+     * Applies active skill instructions at the native instruction level. Inactive skills are made
+     * discoverable by name and path without leaking their bodies into the model context.
+     */
+    protected fun effectiveInstructions(spec: SessionSpec): String? {
+        val workspace = spec.requirements.workspace as? WorkspaceRequirement.Required
+        if (workspace == null || workspace.skills.isEmpty()) return spec.instructions
+        val catalog = workspace.skills.joinToString("\n") { skill ->
+            "- ${skill.name}: ${resolveSkillDirectory(workspace, skill)}"
+        }
+        val active = workspace.skills.filter { it.activate }.joinToString("\n\n") { skill ->
+            val directory = resolveSkillDirectory(workspace, skill)
+            "Active skill '${skill.name}' (base directory: $directory):\n${Files.readString(directory.resolve("SKILL.md"))}"
+        }
+        return buildList {
+            spec.instructions?.let(::add)
+            add("Available skills (do not apply an inactive skill unless the task explicitly activates it):\n$catalog")
+            if (active.isNotEmpty()) add(active)
+        }.joinToString("\n\n")
+    }
+
+    private fun resolveSkillDirectory(workspace: WorkspaceRequirement.Required, skill: SkillReference): Path {
+        val raw = Path.of(skill.path)
+        if (raw.isAbsolute) return raw.normalize()
+        return workspace.workingDirectory?.let { Path.of(it).resolve(raw).normalize() } ?: raw.toAbsolutePath().normalize()
+    }
 
     protected fun persistenceIssues(spec: SessionSpec): List<CompatibilityIssue> {
         val requirement = spec.requirements.persistence as? PersistenceRequirement.Required ?: return emptyList()

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 process.env.HARNESS_GEMINI_BRIDGE_LIBRARY = "1";
-const { agentOptions, sdkSpecifier, activationPrompt } = await import("../gemini_cli_sdk_bridge.mjs");
+const { agentOptions, sdkSpecifier, taskPrompt } = await import("../gemini_cli_sdk_bridge.mjs");
 
 const sdk = { skillDir: (path) => ({ dir: path }) };
 
@@ -20,9 +20,9 @@ test("agentOptions maps model, cwd and skills", () => {
   assert.deepEqual(options, { skills: [{ dir: "/s" }], model: "m", cwd: "/w" });
 });
 
-test("activationPrompt keeps user text and prepends the activation envelope", () => {
-  assert.equal(activationPrompt({ skills: [] }, "do it"), "do it");
-  assert.equal(activationPrompt({ skills: [{ name: "s" }] }, "do it"), "$s\n\ndo it");
+test("taskPrompt keeps caller input exact because active bodies are system instructions", () => {
+  assert.equal(taskPrompt({ skills: [] }, "do it"), "do it");
+  assert.equal(taskPrompt({ skills: [{ name: "s", activate: true }] }, "do it"), "do it");
 });
 
 test("sdkSpecifier turns a Windows path into a file URL", () => {

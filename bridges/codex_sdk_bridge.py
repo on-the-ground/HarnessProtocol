@@ -372,19 +372,10 @@ def make_inputs(input_value: dict[str, Any], spec: dict[str, Any]) -> list[dict[
     if input_type != "text":
         raise ValueError(f"unsupported input type: {input_type!r}")
 
-    skills = spec.get("skills") or []
     text = required_string(input_value, "text")
-    # Provider activation envelope: Codex activates a skill through a `$name`
-    # mention plus a skill input item. The user's text itself is not altered.
-    mentions = " ".join(f"${skill['name']}" for skill in skills if skill.get("activate", True))
-    if mentions:
-        text = f"{mentions}\n\n{text}"
-    result: list[dict[str, Any]] = [{"type": "text", "text": text}]
-    result.extend(
-        {"type": "skill", "name": required_string(skill, "name"), "path": required_string(skill, "path")}
-        for skill in skills
-    )
-    return result
+    # Active skill bodies are materialized into developerInstructions before the
+    # native session is allocated. Keep the caller's task input byte-for-byte here.
+    return [{"type": "text", "text": text}]
 
 
 def approval_prompt(effect: str, params: dict[str, Any]) -> str:

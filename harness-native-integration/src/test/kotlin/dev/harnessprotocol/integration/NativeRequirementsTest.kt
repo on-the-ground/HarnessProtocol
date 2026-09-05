@@ -51,7 +51,7 @@ private class NativeRequirementsFixture(
             Capability.QUESTIONS to Support.Unsupported("No typed question channel configured"),
             Capability.PERSISTENCE to if (persistent) Support.Conditional(SupportScope.SESSION, "Reopen in this application process; no concurrent access") else Support.Unsupported("No storage namespace or durable graph storage configured"),
             Capability.WORKSPACE to if (koog) Support.Unsupported("No workspace loader configured") else Support.Supported,
-            Capability.EXECUTION_CONSTRAINT to if (codex) Support.Conditional(SupportScope.SESSION, "Network policy requires a workspace-write sandbox") else Support.Unsupported("No sandbox enforcement configured"),
+            Capability.EXECUTION_CONSTRAINT to if (codex) Support.Conditional(SupportScope.SESSION, "Restrictive constraints require DenyAll; network policy requires workspace-write") else Support.Unsupported("No sandbox enforcement configured"),
             Capability.STRUCTURED_OUTPUT to Support.Unsupported("No schema enforcement configured"),
             Capability.DIAGNOSTICS to Support.Supported,
         ))
@@ -70,9 +70,15 @@ private class NativeRequirementsFixture(
                 add(sessionCase("caller-questions", SessionRequirements(questions = QuestionRequirement.CallerAnswers), false, Capability.QUESTIONS))
                 add(sessionCase("diagnostic-channel", SessionRequirements(diagnostics = DiagnosticsRequirement.Required), true, Capability.DIAGNOSTICS))
                 add(sessionCase("workspace", SessionRequirements(workspace = WorkspaceRequirement.Required(workingDirectory = root.toAbsolutePath().toString())), !koog, Capability.WORKSPACE))
-                add(sessionCase("read-only", SessionRequirements(execution = ExecutionConstraint.Required(filesystem = FilesystemAccess.ReadOnly)), codex, Capability.EXECUTION_CONSTRAINT))
+                add(sessionCase("read-only", SessionRequirements(approval = ApprovalRequirement.DenyAll,
+                    execution = ExecutionConstraint.Required(filesystem = FilesystemAccess.ReadOnly)), codex, Capability.EXECUTION_CONSTRAINT))
                 add(sessionCase("network-without-filesystem", SessionRequirements(execution = ExecutionConstraint.Required(network = NetworkAccess.ALLOWED)), false, Capability.EXECUTION_CONSTRAINT))
-                add(sessionCase("workspace-network", SessionRequirements(execution = ExecutionConstraint.Required(filesystem = FilesystemAccess.WorkspaceWrite(), network = NetworkAccess.DENIED)), codex, Capability.EXECUTION_CONSTRAINT))
+                add(sessionCase("workspace-network", SessionRequirements(approval = ApprovalRequirement.DenyAll,
+                    execution = ExecutionConstraint.Required(filesystem = FilesystemAccess.WorkspaceWrite(), network = NetworkAccess.DENIED)), codex, Capability.EXECUTION_CONSTRAINT))
+                add(sessionCase("caller-cannot-expand-read-only", SessionRequirements(approval = ApprovalRequirement.CallerDecides,
+                    execution = ExecutionConstraint.Required(filesystem = FilesystemAccess.ReadOnly)), false, Capability.EXECUTION_CONSTRAINT))
+                add(sessionCase("reviewer-cannot-expand-workspace", SessionRequirements(approval = ApprovalRequirement.AgentReviewed,
+                    execution = ExecutionConstraint.Required(filesystem = FilesystemAccess.WorkspaceWrite())), false, Capability.EXECUTION_CONSTRAINT))
                 listOf(true, false).forEach { validate ->
                     add(RequirementCase("structured-${if (validate) "validated" else "caller-validation"}", base,
                         TaskRequest(TaskInput.Text("requirement-$id-structured"), TaskRequirements(OutputRequirement.Structured("{\"type\":\"object\"}", validate))),

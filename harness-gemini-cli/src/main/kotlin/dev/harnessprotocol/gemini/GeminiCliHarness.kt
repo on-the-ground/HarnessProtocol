@@ -21,6 +21,7 @@ open class GeminiCliHarness protected constructor(bridge: SdkBridge, scope: Coro
     ))
     override fun validate(spec: SessionSpec) = CompatibilityReport(buildList {
         addAll(persistenceIssues(spec))
+        addAll(workspaceIssues(spec))
         if (spec.requirements.approval != ApprovalRequirement.ProviderDefault)
             add(CompatibilityIssue("requirements.approval", "The SDK does not expose approval mediation"))
         if (spec.requirements.questions != QuestionRequirement.NotRequired)
@@ -29,7 +30,7 @@ open class GeminiCliHarness protected constructor(bridge: SdkBridge, scope: Coro
             add(CompatibilityIssue("requirements.execution", "The SDK does not expose filesystem or network enforcement"))
     })
     override fun sessionPayload(spec: SessionSpec) = buildJsonObject {
-        spec.instructions?.let { put("instructions", it) }
+        effectiveInstructions(spec)?.let { put("instructions", it) }
         spec.model?.let { put("model", it) }
         (spec.requirements.workspace as? WorkspaceRequirement.Required)?.let { workspace ->
             workspace.workingDirectory?.let { put("workingDirectory", it) }

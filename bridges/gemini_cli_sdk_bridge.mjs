@@ -112,7 +112,7 @@ function startExecution(params) {
   const controller = new AbortController();
   const running = { controller, promise: undefined, sessionId };
   executions.set(executionId, running);
-  const prompt = activationPrompt(holder.spec, requiredString(input, "text"));
+  const prompt = taskPrompt(holder.spec, requiredString(input, "text"));
   running.promise = streamExecution(executionId, holder.session, prompt, controller)
     .finally(() => executions.delete(executionId));
   return { executionId };
@@ -201,11 +201,10 @@ function jsonReplacer(_key, value) {
   return value;
 }
 
-export function activationPrompt(spec, text) {
-  // Provider activation envelope: Gemini CLI activates a loaded skill through a
-  // `$name` mention. The user's text itself is not altered.
-  const skillMentions = (spec.skills ?? []).filter((skill) => skill.activate !== false).map((skill) => `$${skill.name}`).join(" ");
-  return skillMentions ? `${skillMentions}\n\n${text}` : text;
+export function taskPrompt(_spec, text) {
+  // Active skill bodies are materialized into the native system instruction.
+  // skillDir still provisions every referenced skill; the caller input stays exact.
+  return text;
 }
 
 if (process.env.HARNESS_GEMINI_BRIDGE_LIBRARY !== "1") {

@@ -66,10 +66,16 @@ def test_network_intent_rides_on_workspace_write_config_only():
     # The Kotlin validate() rejects network intent outside workspace-write; the host stays a dumb translator.
 
 
+def test_hard_workspace_boundary_and_deny_all_are_projected_together():
+    params = thread_start_params({"filesystem": "workspace_write", "network": "denied", "approval": "deny_all"})
+    assert params["sandbox"] == "workspace-write"
+    assert params["approvalPolicy"] == "never"
+    assert params["config"]["sandbox_workspace_write"]["network_access"] is False
+
+
 def test_skill_activation_envelope_keeps_user_text():
     items = make_inputs({"type": "text", "text": "do it"}, {"skills": [{"name": "s", "path": "/s"}]})
-    assert items[0] == {"type": "text", "text": "$s\n\ndo it"}
-    assert items[1] == {"type": "skill", "name": "s", "path": "/s"}
+    assert items == [{"type": "text", "text": "do it"}]
 
 
 # ------------------------------------------------------------ handler table

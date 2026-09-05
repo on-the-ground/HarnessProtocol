@@ -94,7 +94,6 @@ internal class NativeResponseFixture(directory: Path) : InteractionRaceFixture, 
     }
     override val spec = CodexNativeFactory.spec().copy(requirements = SessionRequirements(
         approval = ApprovalRequirement.CallerDecides,
-        execution = ExecutionConstraint.Required(filesystem = FilesystemAccess.ReadOnly),
     ))
     private val delivery = NativeDeliveryBridge(nativeBridge(CodexNativeFactory, observation, directory))
     override val response = delivery.responseControl

@@ -19,21 +19,26 @@ open class CodexHarness protected constructor(
         Capability.QUESTIONS to Support.Unsupported("The configured client exposes approval handlers, not a typed question channel"),
         Capability.PERSISTENCE to if (namespace != null) Support.Conditional(SupportScope.SESSION, "Same application process; no concurrent access") else Support.Unsupported("Configure storageNamespace"),
         Capability.WORKSPACE to Support.Supported,
-        Capability.EXECUTION_CONSTRAINT to Support.Conditional(SupportScope.SESSION, "Network policy requires an explicit workspace-write sandbox"),
+        Capability.EXECUTION_CONSTRAINT to Support.Conditional(SupportScope.SESSION, "Network policy requires workspace-write; restrictive constraints require DenyAll approval"),
         Capability.STRUCTURED_OUTPUT to Support.Unsupported("Schema enforcement is not configured"),
         Capability.DIAGNOSTICS to Support.Supported,
     ))
     override fun validate(spec: SessionSpec) = CompatibilityReport(buildList {
         addAll(persistenceIssues(spec))
+        addAll(workspaceIssues(spec))
         if (spec.requirements.questions != QuestionRequirement.NotRequired)
             add(CompatibilityIssue("requirements.questions", "Typed question mediation is not exposed by this client connection"))
         val execution = spec.requirements.execution as? ExecutionConstraint.Required
         if (execution?.network != null && execution.filesystem !is FilesystemAccess.WorkspaceWrite)
             add(CompatibilityIssue("requirements.execution.network", "Codex network policy requires workspace-write; the adapter will not silently change filesystem policy"))
+        val restrictive = execution != null &&
+            (execution.filesystem != FilesystemAccess.FullAccess || execution.network == NetworkAccess.DENIED)
+        if (restrictive && spec.requirements.approval != ApprovalRequirement.DenyAll)
+            add(CompatibilityIssue("requirements.approval", "Restrictive execution constraints require DenyAll because approved escalation could exceed the required boundary"))
     })
 
     override fun sessionPayload(spec: SessionSpec) = buildJsonObject {
-        spec.instructions?.let { put("instructions", it) }
+        effectiveInstructions(spec)?.let { put("instructions", it) }
         spec.model?.let { put("model", it) }
         (spec.requirements.workspace as? WorkspaceRequirement.Required)?.let { workspace ->
             workspace.workingDirectory?.let { put("workingDirectory", it) }
