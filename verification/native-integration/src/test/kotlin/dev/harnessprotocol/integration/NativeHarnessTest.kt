@@ -48,6 +48,28 @@ interface NativeHarnessFactory {
 class CodexNativeHarnessTest : NativePersistentHarnessTest() {
     override val supportsChangedInstructionsOnReopen = false
     override fun harness(model: ModelBoundary) = CodexNativeFactory.create(model, directory)
+
+    @Test
+    fun `ephemeral retention is confirmed after a real native turn without rollout materialization`() = runBlocking<Unit> {
+        ModelBoundary().use { model ->
+            val isolated = Files.createDirectories(directory.resolve("ephemeral"))
+            CodexHarness.launch(CodexNativeFactory.options(model, isolated)).use { harness ->
+                val spec = SessionSpec(requirements = SessionRequirements(retention = ContextRetentionRequirement.Ephemeral))
+                val session = harness.createSession(spec)
+                assertEquals(ContextRetentionDisposition.EPHEMERAL, session.disposition.retention)
+                assertEquals(UserHistoryVisibility.UNKNOWN, session.disposition.historyVisibility)
+                assertIs<TaskOutcome.Completed>(withTimeout(60_000) {
+                    session.startTask(TaskRequest(TaskInput.Text("ephemeral marker-epsilon"))).awaitOutcome()
+                })
+                session.release()
+            }
+            Files.walk(isolated.resolve("codex-home")).use { paths ->
+                kotlin.test.assertFalse(paths.anyMatch {
+                    Files.isRegularFile(it) && it.fileName.toString().startsWith("rollout-")
+                })
+            }
+        }
+    }
 }
 class GeminiNativeHarnessTest : NativePersistentHarnessTest() {
     override fun spec() = GeminiNativeFactory.spec()

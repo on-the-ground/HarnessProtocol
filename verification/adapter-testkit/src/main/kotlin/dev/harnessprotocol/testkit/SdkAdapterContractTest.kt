@@ -50,13 +50,26 @@ abstract class SdkAdapterContractTest : dev.harnessprotocol.conformance.HarnessL
                 val h = harness(bridge, scope)
                 h.use {
                     val report = h.validate(spec)
-                    if (report.isCompatible) {
-                        h.createSession(spec)
-                        val sent = bridge.paramsOf("create_session").single()
-                        projection().assertPreserved(spec, sent)
-                    } else {
-                        assertFailsWith<IncompatibleRequirementException>("spec $spec") { h.createSession(spec) }
-                        assertTrue(bridge.paramsOf("create_session").isEmpty(), "rejected spec must not reach the bridge: $spec")
+                    when (report.status) {
+                        CompatibilityStatus.COMPATIBLE -> {
+                            h.createSession(spec)
+                            val sent = bridge.paramsOf("create_session").single()
+                            projection().assertPreserved(spec, sent)
+                        }
+                        CompatibilityStatus.INCOMPATIBLE -> {
+                            assertFailsWith<IncompatibleRequirementException>("spec $spec") { h.createSession(spec) }
+                            assertTrue(bridge.paramsOf("create_session").isEmpty(), "incompatible spec must not reach the bridge: $spec")
+                        }
+                        CompatibilityStatus.UNCONFIRMED -> {
+                            val attempt = runCatching { h.createSession(spec) }
+                            val session = attempt.getOrNull()
+                            if (session != null) {
+                                val sent = bridge.paramsOf("create_session").single()
+                                projection().assertPreserved(spec, sent)
+                            } else {
+                                assertIs<RequirementUnconfirmedException>(attempt.exceptionOrNull(), "spec $spec")
+                            }
+                        }
                     }
                 }
             } finally {

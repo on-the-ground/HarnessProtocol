@@ -40,7 +40,7 @@ class KoogHarness(
     private val sessions = ConcurrentHashMap<SessionId, Session>()
     override val support = SupportReport(Capability.entries.associateWith { capability ->
         when (capability) {
-            Capability.DIAGNOSTICS -> Support.Supported
+            Capability.DIAGNOSTICS, Capability.CONTEXT_RETENTION, Capability.USER_HISTORY_VISIBILITY -> Support.Supported
             else -> Support.Unsupported("Not supplied by this configured in-process Koog adapter")
         }
     })
@@ -61,6 +61,7 @@ class KoogHarness(
     }
 
     private inner class Session(override val id: SessionId, override val spec: SessionSpec) : AgentSession {
+        override val disposition = SessionDisposition(ContextRetentionDisposition.EPHEMERAL, UserHistoryVisibility.HIDDEN)
         override val persistentRef: PersistentSessionRef? = null
         private val lock = Any()
         private var history: List<Message> = emptyList()
@@ -193,6 +194,8 @@ class KoogHarness(
             withContext(NonCancellable) {
                 withTimeoutOrNull(cleanupBudget.total) { settle() }
                 active?.takeUnless { it.isTerminal }?.unresolved(UnresolvedReason.CLEANUP_BOUND_EXCEEDED, "Session release reached its total bound")
+                synchronized(lock) { history = emptyList() }
+                sessions.remove(id, this@Session)
             }
         }
     }
