@@ -51,14 +51,19 @@ abstract class AgentHarnessContractTest {
                 val h = harness(bridge, scope)
                 h.use {
                     val report = h.validate(spec)
-                    if (report.isCompatible) {
-                        h.createSession(spec)
-                        val sent = bridge.paramsOf("create_session").single()
-                        projection().assertPreserved(spec, sent)
-                    } else {
-                        assertFailsWith<IncompatibleRequirementException>("spec $spec") { h.createSession(spec) }
-                        assertTrue(bridge.paramsOf("create_session").isEmpty(), "rejected spec must not reach the bridge: $spec")
+                    when (report.status) {
+                        CompatibilityStatus.COMPATIBLE -> {
+                            h.createSession(spec)
+                            val sent = bridge.paramsOf("create_session").single()
+                            projection().assertPreserved(spec, sent)
+                        }
+                        CompatibilityStatus.INCOMPATIBLE ->
+                            assertFailsWith<IncompatibleRequirementException>("spec $spec") { h.createSession(spec) }
+                        CompatibilityStatus.UNCONFIRMED ->
+                            assertFailsWith<RequirementUnconfirmedException>("spec $spec") { h.createSession(spec) }
                     }
+                    if (!report.isCompatible)
+                        assertTrue(bridge.paramsOf("create_session").isEmpty(), "rejected spec must not reach the bridge: $spec")
                 }
             } finally {
                 scope.cancel()

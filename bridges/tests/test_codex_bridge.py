@@ -59,6 +59,13 @@ def test_null_instructions_are_omitted_and_empty_string_is_sent():
     assert thread_start_params({"instructions": ""})["developerInstructions"] == ""
 
 
+def test_ephemeral_retention_is_explicit_and_provider_default_is_omitted():
+    assert thread_start_params({"retention": "ephemeral"})["ephemeral"] is True
+    assert "ephemeral" not in thread_start_params({"retention": "provider_default"})
+    with pytest.raises(ValueError, match="unsupported retention"):
+        thread_start_params({"retention": "unknown-mode"})
+
+
 def test_network_intent_rides_on_workspace_write_config_only():
     params = thread_start_params({"filesystem": "workspace_write", "network": "denied", "additionalWritableRoots": ["/x"]})
     assert params["sandbox"] == "workspace-write"
@@ -170,9 +177,49 @@ def test_end_to_end_completion_with_provider_default(stub_log):
         client.close()
     thread_start = next(e for e in _read_log(stub_log) if e["received"] == "thread/start")
     assert "approvalPolicy" not in thread_start["params"] and "approvalsReviewer" not in thread_start["params"]
+    assert session == {"sessionId": "thread-1", "retention": "materialized", "historyVisibility": "unknown"}
     assert started["executionId"].startswith("turn-")
     methods = [e[1] for e in bridge.captured]
     assert methods[-1] == "turn/completed"
+
+
+def test_ephemeral_retention_reaches_thread_start_and_is_observed(stub_log):
+    holder = {}
+    client = _stub_client("complete", stub_log, lambda m, p: holder["bridge"].on_server_request(m, p))
+    bridge = _CapturingBridge(client)
+    holder["bridge"] = bridge
+
+    async def scenario():
+        session = await bridge.dispatch("create_session", {"retention": "ephemeral"})
+        await bridge.dispatch("release_session", {"sessionId": session["sessionId"]})
+        return session
+
+    try:
+        session = _run(scenario())
+    finally:
+        client.close()
+    thread_start = next(e for e in _read_log(stub_log) if e["received"] == "thread/start")
+    assert thread_start["params"]["ephemeral"] is True
+    assert any(e["received"] == "thread/delete" for e in _read_log(stub_log))
+    assert session["retention"] == "ephemeral"
+    assert session["historyVisibility"] == "unknown"
+
+
+def test_discard_session_deletes_a_materialized_mismatch(stub_log):
+    holder = {}
+    client = _stub_client("complete", stub_log, lambda m, p: holder["bridge"].on_server_request(m, p))
+    bridge = _CapturingBridge(client)
+    holder["bridge"] = bridge
+
+    async def scenario():
+        session = await bridge.dispatch("create_session", {})
+        await bridge.dispatch("discard_session", {"sessionId": session["sessionId"]})
+
+    try:
+        _run(scenario())
+    finally:
+        client.close()
+    assert any(e["received"] == "thread/delete" for e in _read_log(stub_log))
 
 
 def test_caller_decides_round_trip_respond_resumes(stub_log):

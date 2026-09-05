@@ -46,7 +46,7 @@ AgentHarness                   하네스 제공 경계
 | 실증 근거       | [Koog 검증 계획](docs/koog-abstraction-validation-plan.md), [검증 결과](docs/koog-abstraction-validation-results.md)                                              |
 | 회귀 검토       | [문서 개편 후 회귀 검토](docs/regression-review.md): 복원한 보장, 새 설계의 경계 조건, 기존 suite 재실행 결과                                                                          |
 | 총평 반영       | [채택·수정·보류 판단](docs/review-disposition.md): 종결 증거, 문맥 조정, 지원 탐색, 이벤트 존치와 남은 검증                                                                             |
-| Codex 기반 선택 | [codex-agent 검토](docs/codex-agent-adoption-review.md), [저수준 client 조사](docs/spikes/2026-09-03-codex-low-level-client.md)                                  |
+| Codex 기반 선택 | [codex-agent 검토](docs/codex-agent-adoption-review.md), [저수준 client 조사](docs/spikes/2026-09-03-codex-low-level-client.md), [ephemeral retention 검증](docs/codex-ephemeral-validation.md) |
 
 공개 필드와 선택 계약 API는 선언돼 있다. 남은 작업은 실제 adapter의 미검증 보장과 선택 기능의 구현·검증이며, 기존 설계 이력은 Git에서 확인한다.
 

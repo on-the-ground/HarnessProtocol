@@ -28,6 +28,8 @@
 Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`를 사용하며 requirements는 0.147.0을 고정한다. 근거는 [client 조사](spikes/2026-09-03-codex-low-level-client.md)다.
 
 - thread/start·resume의 developerInstructions, model, cwd와 정책 wire 필드를 구성한다.
+- ephemeral retention 요구는 `thread/start.ephemeral=true`로 전달하고 반환된 `thread.ephemeral`을 `AgentSession.disposition.retention`으로 보고한다. false·누락을 요청값으로 덮어쓰지 않는다.
+- pinned SDK의 ephemeral 설명은 in-memory/no disk materialization까지다. account-wide remote retention이나 Codex Desktop Recents 비노출의 독립 응답은 없으므로 user-history visibility는 UNKNOWN이며 Hidden 요구는 UNCONFIRMED로 사전 거절한다.
 - PROVIDER_DEFAULT는 approval 필드를 생략한다. SDK convenience default로 의미를 바꾸지 않는다.
 - CALLER_DECIDES는 caller 응답을 기다린다. reader thread를 막는 handler의 pending 대기를 먼저 풀고 interrupt/close한다.
 - 현재 handler는 DENY_ALL에서 decline하며, PROVIDER_DEFAULT/AGENT_REVIEWED 경로에 예상 밖 요청이 오면 decline과 경고를 사용한다.
@@ -46,6 +48,8 @@ Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`�
 | Caller 승인 | handler 중재 | 명시적 요구 거절 |
 | 지시·모델 | developerInstructions/model | agent instructions/model |
 | 작업 위치·skills | cwd, skill 입력과 activation envelope | cwd, skillDir와 activation |
+| Context retention | ephemeral 요구를 thread/start에 전달하고 thread.ephemeral을 관측 | 명시적 요구를 거절 |
+| User history visibility | 독립 관측이 없어 Hidden 요구는 UNCONFIRMED | 명시적 요구를 거절 |
 
 개정에서는 문맥 설정·작업 요구·승인 중재·실행 환경 집행을 분리한다. 지원하지 않는 요구를 생략해 기본값으로 실행하지 않는다. 지시를 user prompt 앞에 붙이는 것과 지속 지시를 전달하는 것은 같은 보장이 아니다. skill 자료 제공과 실행별 활성화도 구별한다.
 

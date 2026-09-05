@@ -23,7 +23,35 @@ data class SessionRequirements(
     val workspace: WorkspaceRequirement = WorkspaceRequirement.NotRequired,
     val execution: ExecutionConstraint = ExecutionConstraint.ProviderDefault,
     val diagnostics: DiagnosticsRequirement = DiagnosticsRequirement.NotRequired,
+    val retention: ContextRetentionRequirement = ContextRetentionRequirement.ProviderDefault,
+    val historyVisibility: UserHistoryVisibilityRequirement = UserHistoryVisibilityRequirement.ProviderDefault,
 )
+
+/** Provider conversation state의 수명 요구. application 자체의 산출물 보관 정책과 다르다. */
+sealed interface ContextRetentionRequirement {
+    /** provider/runtime의 현재 기본값을 바꾸지 않는다. */
+    data object ProviderDefault : ContextRetentionRequirement
+
+    /**
+     * native session이 살아 있는 동안만 문맥을 유지하고 재개 가능한 conversation으로 materialize하지 않는다.
+     *
+     * provider의 abuse monitoring, 법적 보존, request telemetry 같은 service-side 데이터 정책은 이 계약의
+     * 범위가 아니다. 그런 보장이 필요하면 별도 provider 계약이 필요하다.
+     */
+    data object Ephemeral : ContextRetentionRequirement
+}
+
+/** Provider가 제공하는 일반 사용자 conversation history surface에서의 노출 요구. */
+sealed interface UserHistoryVisibilityRequirement {
+    /** provider/runtime의 현재 기본값을 바꾸지 않는다. */
+    data object ProviderDefault : UserHistoryVisibilityRequirement
+
+    /**
+     * 일반 사용자용 conversation history나 Recents에 session을 노출하지 않는다.
+     * 운영자 telemetry·법적 보존·보안 로그 삭제를 뜻하지 않는다.
+     */
+    data object Hidden : UserHistoryVisibilityRequirement
+}
 
 /** 승인이 필요한 효과를 누가 결정하는가. 무엇이 승인 대상인지는 provider 정책이 정한다. */
 sealed interface ApprovalRequirement {

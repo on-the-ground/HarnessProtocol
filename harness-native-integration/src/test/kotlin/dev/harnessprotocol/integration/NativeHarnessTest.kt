@@ -203,9 +203,11 @@ abstract class NativePersistentHarnessTest : NativeHarnessTest() {
 
 class CodexNativeHarnessTest : NativePersistentHarnessTest() {
     override val supportsChangedInstructionsOnReopen = false
+    private lateinit var codexHome: Path
     override fun harness(model: ModelBoundary): AgentHarness {
         val repo = Path.of(System.getProperty("ahp.repository"))
         val home = Files.createDirectories(directory.resolve("codex-home"))
+        codexHome = home
         Files.writeString(home.resolve("config.toml"), """
             model = "ahp-fixture"
             model_provider = "ahp_fixture"
@@ -218,6 +220,22 @@ class CodexNativeHarnessTest : NativePersistentHarnessTest() {
         val python = System.getenv("HARNESS_CODEX_PYTHON") ?: repo.resolve(".venv/Scripts/python.exe").toString()
         return CodexHarness.launch(CodexSdkOptions(pythonCommand = listOf(python), processWorkingDirectory = directory,
             environment = mapOf("CODEX_HOME" to home.toString())), storageNamespace = StorageNamespace(directory.toString()))
+    }
+
+    @Test fun `ephemeral retention is confirmed after a real native turn without rollout materialization`() = runBlocking<Unit> {
+        ModelBoundary().use { model -> harness(model).use { h ->
+            val spec = spec().copy(requirements = SessionRequirements(retention = ContextRetentionRequirement.Ephemeral))
+            val session = h.createSession(spec)
+            assertEquals(ContextRetentionDisposition.EPHEMERAL, session.disposition.retention)
+            assertEquals(UserHistoryVisibility.UNKNOWN, session.disposition.historyVisibility)
+            assertIs<TaskOutcome.Completed>(withTimeout(60_000) {
+                session.startTask(TaskRequest(TaskInput.Text("ephemeral marker-epsilon"))).awaitOutcome()
+            })
+            session.release()
+        } }
+        Files.walk(codexHome).use { paths ->
+            assertFalse(paths.anyMatch { Files.isRegularFile(it) && it.fileName.toString().startsWith("rollout-") })
+        }
     }
 }
 class GeminiNativeHarnessTest : NativePersistentHarnessTest() {
