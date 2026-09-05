@@ -1,151 +1,61 @@
-# 공통 시나리오 통합과 남은 검증
+# 공통 시나리오와 역사적 목록의 종결
 
-현재 연결은 [G01 요구 판정](requirement-admission-validation.md), [G02 수락 확인 유실](acceptance-loss-validation.md), [G03–G12 계약 경계 검증](contract-boundary-validation.md)을 따른다. G09는 계약 결정과 구현 수정이 남아 있다. C20/C21과 K13/K14를 실제 판정으로 대체했고, 원래 Core/Cleanup의 미연결 본문은 44개다. 아래 단계 1 실행 수는 당시의 검증 기록이다.
+현재 검사는 기능별로 가장 작은 실제 경계에 연결한다. 요구 판정은 [G01](requirement-admission-validation.md), 수락 확인 유실은 [G02](acceptance-loss-validation.md), 나머지 계약 경계는 [G03–G12](contract-boundary-validation.md)를 따른다. 실행 수는 concrete consumer의 JUnit 결과만 센다.
 
-2026-09-04. 단계 1은 검사 위치·목적·실행 증거를 통합하는 작업이다. 공개 Port의 의미를 변경하지 않는다. [기계 판독 목록](../harness-conformance/scenario-catalog.json)에 기존 48개 정의, SDK 공통/전용 20개, native 8개를 모두 대응시켰다. 76개 항목은 고유 업무 목적의 수나 통과 수가 아니다.
+초기에 작성한 `HarnessConformanceCoreTest` 29개와 `HarnessConformanceCleanupTest` 19개는 구현자가 모든 native 사실을 임의로 일으킬 수 있다는 하나의 거대한 `HarnessFixture`를 전제로 했다. C20/C21과 K13/K14는 앞 단계에서 먼저 실제 요구·수락 검사로 대체했다. 남아 있던 44개 본문도 실제 검사로 옮기거나, 현재 구성의 정직한 기능 거절로 닫거나, Port가 아닌 fixture 가정을 폐기한 뒤 제거했다. 삭제한 본문을 통과 수로 환산하지 않는다.
 
-## 코드 배치
+[기계 판독 목록](../harness-conformance/scenario-catalog.json)은 원래 C01–C29·K01–K19의 48개 identity와 각 `status`, `replacementEvidence`, `disposition`을 보존한다. 과거 source는 `historicalSource`이며 현재 실행 파일이 아니다.
 
-- HarnessLifecycleConformanceTest: 기존 testkit에서 순수 lifecycle 9개를 이동했다. Codex/Gemini의 실제 adapter에 RecordingBridge로 SDK 사실을 전달해 각각 실행한다.
-- HarnessRuntimeConformanceTest: 필수 runtime 5개. 실제 입력·지시·문맥, 중첩/독립 waiter, 정리, 확인된 취소를 검사한다.
-- HarnessRuntimeProfileConformanceTest: 현재 선택한 세 구성의 진단 지원·구조화 요구 거절 2개. 모든 adapter에 이 지원 조합을 강제하는 기본 계약이 아니다.
-- HarnessRuntimePersistenceConformanceTest: Codex/Gemini에 연결된 실제 영속 문맥 재개 1개.
-- HarnessAcceptanceConformanceTest.kt: 시작·응답의 미전달/확인 유실 공통 판정 7개. 실제 경계별 적용과 Koog의 로컬 handoff 검증은 G02 문서를 따른다.
-- HarnessRequirementsConformanceTest: 독립 profile별 지원·preflight·직접 호출을 실제 세 adapter에서 검사하는 동적 factory. 5개 profile·43개 요구 사례의 실행 기록은 G01 문서를 따른다.
-- HarnessConformanceCoreTest/CleanupTest: 기존 29+19개 중 C20/C21과 K13/K14를 실제 요구·수락 판정으로 대체했다. 남은 27+17개는 아직 전체 HarnessFixture에 연결되지 않은 정의다. 아래 가정을 고치고 실제 경계에 연결해야 한다.
-- SdkAdapterContractTest: 요청 전송·설정 투영·mailbox 해제·EOF·ID 정규화 등 SDK 경계 검사 11개와 lifecycle binding만 남겼다. 기존 AgentHarnessContractTest는 제거했다.
+## 현재 검사 배치
 
-공통 판정은 conformance의 testFixtures에 있고 provider 설정·SDK JSON·모델 서버는 외부 binding에 있다. TaskLifecycleControl은 기존 TaskControl의 lifecycle 부분을 공유한다. 어떤 binding도 AgentTask state/outcome을 직접 설정하지 않는다.
-
-목적이 겹쳐도 실제 runtime과 SDK 변환 경계의 증거를 합산해 인증하지 않는다. 미연결 C/K 정의는 대응 목적의 실행본과 다음 단계에서 병합하거나 부족한 조건을 보강한다. 기존 실행 검사를 삭제하고 미실행 정의로 대체하지 않았다.
-
-## 연결 전에 바로잡을 가정
-
-1. baseline/approval/questions라는 profile 이름과 cases.first()를 고정하고, persistence는 항상 거절·network ALLOWED는 항상 미확인이라고 가정한다. 독립 RequirementCase의 요구·검증·수락 기대값으로 선택해야 한다.
-2. 늦은 구독의 첫 이벤트를 terminal로 고정한다. 계약은 terminal 보존과 유한 종료를 요구한다.
-3. close/release 호출 뒤에만 timeout을 적용하거나 200ms 유예를 가정한다. 정리 진입을 동기화하고 실제 호출 시간·다중 자원의 total budget을 측정해야 한다.
-4. runtime 소유 여부만으로 Failed를 확정하거나 관찰 상실 직후 RUNNING만 허용한다. 실제 종료 근거와 즉시 Unresolved의 적법성을 구별해야 한다.
-5. 비협조적 작업의 gate를 열기만 하고 실제 후속 효과를 검사하지 않는다. effect count와 outcome 불변을 함께 확인하고 실패 시에도 남은 작업을 해제해야 한다.
-6. Conditional persistence를 건너뛰거나 필요한 interface가 없으면 조용히 return한다. 지원한 구체적 사례에서 미이행은 실패여야 한다.
-7. 승인 응답 전에 효과를 즉시 단정하거나 예상 답변을 주입해 문맥을 검증한다. 실제 수락·효과와 후속 모델 입력을 관찰해야 한다.
-8. 임의 사용량 값을 모든 native runtime에 주입할 수 있다고 가정한다. 공통 회계 의미와 SDK 변환 검사의 증거를 구별해야 한다.
-
-코드 목록의 beforeBinding에 해당 ID별 조건을 기록했다. 단계 1에서는 미연결 정의의 기대값을 고쳐 통과로 만들지 않았다. 이후 C20/C21은 특정 기능의 고정 상태 가정을 제거하고 독립 요구 사례 판정으로 대체했다.
-
-## 후속 단계의 연결 상태
-
-아래는 원래 C/K 정의와 새 실제 검사의 목적 대응이다. 원래 본문의 전체 실행 여부는 바꾸지 않는다. 세부 assertion·provider 적용 범위·실행 수는 단계별 증거를 따른다. 기계 판독 목록의 `boundaryVerification`과 `relatedValidationGates`에도 같은 구별을 남겼다.
-
-| 단계 | 실제 공통 판정 / 관련 원래 목적 | 현재 한계 |
+| 경계 | 공통 판정 | 실제 적용 |
 |---|---|---|
-| G03 | Interaction 5개 / C06·C15·K18 | Codex 승인 경쟁. 독립 철회·supersession·질문 채널은 미실증 |
-| G04 | Context 3개 / C11–C13·K07·K08 | Codex/Gemini 동일 프로세스 문맥·핸들 범위 |
-| G05 | Outcome 6개 / C03·C04·C16–C18·C27–C29·K10 | 세 runtime. 빈 응답 수락 차이와 관찰 상실/종료 미확정의 유도 경계 명시 |
-| G06 | CleanupBudget 3개와 Koog 도구 / K01·K02·K04–K06·K18 | 세 runtime 정리 상한, 실제 비협조 도구 후속 효과는 Koog |
-| G07 | ObservationLoad 1개 / C09·C10·K18 | 세 runtime의 독립 의미/진단 gap·terminal 보존 |
-| G08 | ApprovalScope 3개 | Codex 일회 승인 범위. 집행 가능한 session grant는 미제공 |
-| G09 | Workspace·ExecutionConstraint 작성 중 / C26 | 실제 활성화·실행 제약 검증 실패, 계약 결정 필요 |
-| G10 | 기존 G01 구조화 요구 거절 재사용 / C19 | 세 구성 미지원. 실제 schema 검증 성공/실패 분기는 미실증 |
-| G11 | Accounting 2개 + Sequence 1개 / K15–K17, G05 회귀 | 세 runtime 회계·일반 메시지 ID/역할. 구간 누락·도구 ID는 Koog, 승인/효과 ID는 Codex. 다른 native 변형은 별도 범위 |
-| G12 | PersistenceFailure 3개 / K07·K08·K19 | Codex/Gemini 저장 장애·설정. 별도 지원 철회 채널·재시작 조정은 제공하지 않음 |
+| 요구 수락 | `HarnessRequirementsConformanceTest` | Codex·Gemini·Koog의 5개 고정 profile, 49개 case, preflight/direct 98회와 support 5회 |
+| 작업 수명 | `HarnessLifecycleConformanceTest`, `HarnessRuntimeConformanceTest` | process SDK 경계와 세 native runtime |
+| 시작·응답 수락 | `HarnessAcceptanceConformanceTest` | Codex·Gemini 시작 경계, Codex 승인 응답, Koog의 동기 handoff |
+| 상호작용 | `HarnessInteractionConformanceTest`와 Codex interaction 회귀 | 실제 승인·효과·응답 경쟁, 완료/실패/취소 시 pending 정리 |
+| 문맥·영속성 | Context·Persistence suite | Codex·Gemini의 별칭·차단·저장 실패·재개 설정 |
+| 산출물·회계 | Outcome·Accounting suite | 세 runtime의 네 outcome, 부분 산출물, unknown/zero, message/work identity |
+| 정리·관찰 | CleanupBudget·ObservationLoad suite | 세 runtime의 total budget, 비협조 Koog 도구, 의미/진단 queue 격리 |
+| 작업 환경 | Workspace·ExecutionConstraint suite | Codex·Gemini skill 적용, Codex hard upper bound, 나머지 미지원 조합의 사전 거절 |
 
-통과한 기본 목적을 반복 구현하지 않고 아래 related ID의 실행본을 재사용한다. 지원하지 않는 선택 기능의 성공 시나리오를 강제로 만들지 않으며, 필수 동작이나 지원한다고 선언한 기능을 skip하여 완료하지 않는다. 실행마다 provider × scenario × profile × 증거 경계 × 결과를 기록한다.
+provider 설정·SDK JSON·모델 서버·실제 파일 효과는 consumer binding이 맡는다. 공통 판정은 provider wire를 알지 않으며 `AgentTask`의 state나 outcome을 직접 덮어쓰지 않는다. 하나의 만능 fault-injection fixture 대신 `RuntimeRequirementsFixture`, `AcceptanceFixture`, `LifecycleFixture`, `WorkspaceFixture`처럼 증명할 경계에 맞는 작은 seam만 둔다.
 
-## 전체 대응표
+## 원래 C/K 목적의 처리
 
-S는 이전 AgentHarnessContractTest의 원래 순번, R은 이전 NativeHarnessTest의 순번이다. C/K는 기존 Core/Cleanup 순번이다. related는 목적 중첩을 뜻하며 해당 C/K의 모든 조건을 이미 통과했다는 표시가 아니다. C20/C21은 요구 사례 factory로, K13/K14는 실제 시작 수락 검사로 대체했으며 나머지 C/K의 전체 fixture 연결 상태는 미연결이다. S는 Codex/Gemini SDK 경계에 연결돼 있고, R01–R07은 세 runtime, R08은 Codex/Gemini에 연결돼 있다.
+아래 표의 “대체”는 원래 본문을 실행했다는 뜻이 아니다. 같은 공개 목적을 더 실제적인 검사로 다시 작성해 실행했다는 뜻이다.
 
-| ID | 검사 | 현재 경계 | 관련 목적 |
-|---|---|---|---|
-| C01 | startTask accepts and returns a handle spanning several internal calls | 미연결 정의 | — |
-| C02 | completed outcome matches terminal state and settles exactly once | 미연결 정의 | — |
-| C03 | failed outcome matches terminal state and carries its kind | 미연결 정의 | — |
-| C04 | cancelled outcome matches terminal state | 미연결 정의 | — |
-| C05 | natural language failure without a classified kind reports UNKNOWN, not a fabricated kind | 미연결 정의 | — |
-| C06 | pending clears and terminal state is confirmed before awaitOutcome returns, on completion | 미연결 정의 | — |
-| C07 | pending clears and terminal state is confirmed before awaitOutcome returns, on failure | 미연결 정의 | — |
-| C08 | completes without any event collector | 미연결 정의 | — |
-| C09 | a slow collector observes a gap but still sees the terminal event last | 미연결 정의 | — |
-| C10 | a late subscriber still receives the terminal event | 미연결 정의 | — |
-| C11 | overlapping start on one session is rejected before it reaches the native boundary | 미연결 정의 | — |
-| C12 | a session accepts its next task only once the previous one is terminal | 미연결 정의 | — |
-| C13 | different sessions on one harness make progress concurrently without mixing context | 미연결 정의 | — |
-| C14 | natural completion wins the race against a cancellation request | 미연결 정의 | — |
-| C15 | cancellation requested after terminal is a no-op | 미연결 정의 | — |
-| C16 | a normal completion with no captured output is Completed with a null output | 미연결 정의 | — |
-| C17 | an actual empty string output is distinct from no output | 미연결 정의 | — |
-| C18 | completion's null output does not erase output already captured earlier | 미연결 정의 | — |
-| C19 | completion does not imply schema-valid structured output | 미연결 정의 | — |
-| C20 | an incompatible session requirement is rejected before any handle is issued | 실제 요구 사례로 대체 | G01 |
-| C21 | an unconfirmed session requirement is distinguished from a confirmed rejection | 공통 분기 존재, 실제 사례 미확보 | G01 |
-| C22 | a request-level rejection is distinguished from a post-handle failure | 미연결 정의 | — |
-| C23 | the same work key in two different tasks does not cross-contaminate effect counts | 미연결 정의 | — |
-| C24 | whitespace-only input text is preserved verbatim, not trimmed | 미연결 정의 | — |
-| C25 | null instructions and explicit empty instructions are distinguished | 미연결 정의 | — |
-| C26 | only activated skills are observed, even when more are provided | 미연결 정의 | — |
-| C27 | output captured before a failure is still recovered in the Failed outcome | 미연결 정의 | — |
-| C28 | output captured before a cancellation is still recovered in the Cancelled outcome | 미연결 정의 | — |
-| C29 | output captured before an Unresolved settlement is still recovered, not reported as final | 미연결 정의 | — |
-| K01 | release settles an active task as cancelled when confirmation arrives within budget | 미연결 정의 | — |
-| K02 | release settles an unconfirmed task as Unresolved once the cleanup budget elapses | 미연결 정의 | — |
-| K03 | a completion that arrives right after cleanup starts is still recovered within budget | 미연결 정의 | — |
-| K04 | harness close settles active tasks across sessions within the total cleanup budget | 미연결 정의 | — |
-| K05 | uncooperative work yields Unresolved with a cancellation-unconfirmed reason, not a fabricated Cancelled | 미연결 정의 | — |
-| K06 | false-cancel detection - work observed after Unresolved does not retroactively change the settled outcome | 미연결 정의 | — |
-| K07 | a session stays blocked for new tasks after its last task was Unresolved, even after release | 미연결 정의 | — |
-| K08 | a brand-new session on the same harness is unaffected by another session's block | 미연결 정의 | — |
-| K09 | ending only the inner turn does not terminate the task | 미연결 정의 | — |
-| K10 | pure observation loss without a terminal report settles Unresolved with an observation-lost reason | 미연결 정의 | — |
-| K11 | a runtime that owned the work reports a confirmed transport failure, not Unresolved | 미연결 정의 | — |
-| K12 | a runtime that did not own the work leaves it outstanding rather than fabricating a result | 미연결 정의 | — |
-| K13 | a start rejected before delivery does not block the session and can be retried | 실제 시작 수락 검사로 대체 | G02 |
-| K14 | losing the start acceptance acknowledgement blocks the session, distinct from a clean rejection | 실제 수락/미수락 양쪽으로 대체 | G02 |
-| K15 | usage deltas accumulate and unknown fields stay unknown rather than becoming zero | 미연결 정의 | — |
-| K16 | a fresh usage snapshot resets the baseline instead of double-counting prior deltas | 미연결 정의 | — |
-| K17 | task and session usage are reported and preserved separately | 미연결 정의 | — |
-| K18 | a late notification after the outcome is confirmed does not overwrite it | 미연결 정의 | — |
-| K19 | reopening a persistent session surfaces the storage's canonical id, not the caller's raw string | 미연결 정의 | — |
-| S01 | compatible specs reach the bridge with their intent intact | SDK 전용 회귀 | C20, C21, C25, C26 |
-| S02 | creates a session and completes an execution | SDK 전용 회귀 | C01, C02 |
-| S03 | state is terminal before awaitOutcome returns | SDK 경계의 공통 판정 | C02, C06 |
-| S04 | completes without an event collector | SDK 경계의 공통 판정 | C08 |
-| S05 | slow collector does not block lifecycle | SDK 경계의 공통 판정 | C09 |
-| S06 | failure is reported through state and awaitOutcome | SDK 경계의 공통 판정 | C03 |
-| S07 | cancellation is reported through state and awaitOutcome | SDK 전용 회귀 | C04 |
-| S08 | cancel after terminal is a no-op | SDK 전용 회귀 | C15 |
-| S09 | completion wins the race against cancel | SDK 경계의 공통 판정 | C14 |
-| S10 | terminal is exactly once and last | SDK 경계의 공통 판정 | C02, K18 |
-| S11 | stream ending without a terminal leaves outcome unresolved | SDK 전용 회귀 | K10, K07 |
-| S12 | stream failure leaves outcome unresolved | SDK 전용 회귀 | K10, K07 |
-| S13 | release is called after terminal | SDK 전용 회귀 | — |
-| S14 | rejects overlapping tasks on one session | SDK 전용 회귀 | C11, C12 |
-| S15 | different sessions execute concurrently | SDK 경계의 공통 판정 | C13 |
-| S16 | harness close without native termination evidence settles unresolved | SDK 경계의 공통 판정 | K04 |
-| S17 | overflow is explicit and terminal survives | SDK 경계의 공통 판정 | C09 |
-| S18 | session release is idempotent and rejects further tasks | SDK 전용 회귀 | K07 |
-| S19 | session release settles an active execution | SDK 전용 회귀 | K02 |
-| S20 | reopen uses the session id returned by the host | SDK 전용 회귀 | K19 |
-| R01 | native task completes without an observer and preserves state and output | 실제 runtime | C01, C02, C06, C08 |
-| R02 | same session carries prior native context while a new session stays isolated | 실제 runtime | C13 |
-| R03 | unsupported task requirements are rejected before a native model call | 실제 runtime | C22 |
-| R04 | overlap is rejected and cancelling one waiter does not cancel native work | 실제 runtime | C11, C12 |
-| R05 | close bounds active native work and settles the waiter | 실제 runtime | K04 |
-| R06 | independent semantic and diagnostic observers finish and late subscription retains terminal | 실제 runtime | C02, C10, C15 |
-| R07 | explicit cancellation waits for native termination and leaves the session reusable | 실제 runtime | C04, C12 |
-| R08 | persistent reopen preserves actual context and desired instructions across harness recreation | 실제 runtime | K19 |
+| 원래 ID | 처리 | 근거 |
+|---|---|---|
+| C01–C05 | Task 수명·terminal·실패 분류 검사로 대체 | R01, S02–S03, S06–S07, G05, G11 |
+| C06–C07 | Codex 실제 interaction이 열린 상태의 완료·실패·취소 정리로 대체 | G03, S21, S22 |
+| C08–C15 | observer 독립성·overflow·세션 배타성·취소 경쟁으로 대체 | G03, G04, G07, S04–S05, S08–S10, S14–S17, R01–R07 |
+| C16–C18 | 무산출물·빈 텍스트·선행 부분 산출물 보존으로 대체 | G05 |
+| C19 | 현재 세 구성은 구조화 산출물 요구를 작업 전에 거절 | G01, G10 |
+| C20 | 구체적 incompatible case의 실제 사전 거절로 대체 | G01 |
+| C21 | 세 구성에는 정직하게 `UNCONFIRMED`인 요구 사례가 없음. 공개 분기는 유지하고 실제 start/response 확인 유실은 별도 검증 | G01, G02 |
+| C22 | 요청 전 거절과 handle 이후 실패를 각 실제 경계에서 구별 | G01, G05, R03 |
+| C23 | private fixture의 effect counter 단언을 폐기. 공개 TaskId/WorkId 상관관계와 실제 효과 격리로 대체 | G08, G11 |
+| C24 | 공백만 있는 `TaskInput`이 세 native model 경계에 그대로 도달 | R09 |
+| C25 | process envelope의 null/빈 지시와 Koog 실제 system prompt를 각각 검증 | S01, R10 |
+| C26 | 활성 skill 본문 적용, 비활성 skill의 제공 상태, 잘못된 artifact 사전 거절로 대체 | G09 |
+| C27–C29 | Failed·Cancelled·Unresolved의 부분 산출물과 사용량 보존으로 대체 | G05, G11 |
+| K01–K02, K04–K08 | per-task/total cleanup, 다중 자원, 비협조 효과, 문맥 차단으로 대체 | G04, G06, G12, S11–S12, S16, S18–S19, R05 |
+| K03 | “예약한 완료가 cleanup 취소를 이긴다”는 보장을 폐기. 실제로 먼저 확인된 terminal fact가 이기고 이후 outcome은 불변 | G03, S09 |
+| K09–K10 | 여러 내부 호출과 관찰 상실을 Task 종결과 구별 | G05, G11, S11–S12 |
+| K11–K12 | `ownsRunningWork` boolean을 terminal 증거로 삼는 fixture 가정을 폐기. 확인된 native 실패는 Failed, 종결 증거 없는 stream 상실은 Unresolved | G05, S06, S11–S12 |
+| K13–K14 | 요청 전 미전달과 수락 acknowledgement 유실을 실제 제출·수락 identity로 대체 | G02 |
+| K15–K17 | 누적 snapshot·구간 delta·unknown·Task/Session 사용량을 실제 provider 측정으로 대체 | G11 |
+| K18 | terminal 뒤 늦은 알림·응답·효과가 outcome을 바꾸지 않음을 대체 검증 | G03, G06, G07, S10 |
+| K19 | host가 반환한 canonical ID와 실제 persistent reopen을 검증 | G12, S20, R08 |
 
-## 실행 중 발견한 정리 문제
+## 폐기한 가정
 
-전체 실행에서 Codex의 구조화 요구 사전 거절 assertion은 통과했지만, 종료 후 JUnit이 작업 폴더를 삭제하지 못했다. 부모 host의 강제 종료를 기다리는 보완만으로는 같은 실패가 남았다. 프로세스 목록을 관찰하니 종료 유예 중 생긴 git 하위 프로세스가 최초 snapshot에 없었다. 알려진 각 프로세스에서 자식을 종료 단계마다 다시 수집하고, 부모도 기존 마지막 대기 시간 안에서 함께 기다리도록 process bridge를 보완했다. 대기 시간 상수와 공개 계약은 유지했다.
+- `baseline`, `approval`, `questions`라는 profile 이름과 `cases.first()`를 공통 계약으로 강제하지 않는다.
+- 늦은 구독의 첫 이벤트를 terminal로 고정하지 않는다. terminal 보존과 유한 종료를 검사한다.
+- 정리 상한을 자원마다 새로 주지 않는다. 진입부터 total budget을 측정한다.
+- process 소유 여부나 stream EOF만으로 Failed·Cancelled를 합성하지 않는다.
+- 예상 답변, spec 복사본, private counter를 실제 context·효과 증거로 사용하지 않는다.
+- 지원하지 않는 질문·구조화 산출물·지속 승인을 가짜 fixture로 성공시키지 않는다.
 
-[첫 전체 실행](../harness-native-integration/evidence/scenario-consolidation-first-run.json), [부모 대기 보완 후 실행](../harness-native-integration/evidence/scenario-consolidation-parent-wait-run.json), [프로세스 관찰 기록](../harness-native-integration/evidence/scenario-consolidation-cleanup-diagnosis.json)을 보존했다. 이 수정은 관찰된 프로세스 정리 누락을 다루며, 미연결 cleanup 시나리오 전체의 통과를 뜻하지 않는다.
-
-## 단계 1 검증 결과
-
-`./gradlew.bat --offline test :harness-conformance:testFixturesClasses -PnativeHarnessTests --console=plain`은 통과했다. 변경된 consumer suite를 실행했고, 변경 없는 검사 일부는 Gradle up-to-date 결과를 재사용했다. 루트 JVM 결과는 105개이며 실패·오류·건너뜀은 0개다. 실제 runtime 25개가 이 집계에 포함된다.
-
-- 공통 정의 17개: SDK 경계 lifecycle 9개 × Codex/Gemini = 18회, 실제 runtime 7개 × 세 구현체 + 영속 재개 1개 × Codex/Gemini = 23회. 합계 41회다.
-- SDK 전용 정의 11개 × Codex/Gemini = 22회다. 기존 SDK 20개와 native 8개 정의의 검사 이름 및 실행 대응을 보존했다.
-- 미연결 Core/Cleanup 48개는 컴파일만 확인했다. 위 41회와 합쳐 새로 48개를 통과했다고 보고하지 않는다.
-
-[provider별 실행 대응과 검증 기록](../harness-native-integration/evidence/scenario-consolidation.json)은 63개 실행을 JUnit 검사 이름·suite·시각에 대응시킨다. Host·독립 Koog 실험·sample은 이번 단계에서 재실행하지 않았으며 [직전 검증](../harness-native-integration/evidence/before-scenario-consolidation.json)에 남겼다. README/docs 상대 파일 링크 누락은 0개이고, 현재 Kotlin 소스에는 legacy Port 및 삭제한 AgentHarnessContractTest 참조가 없다.
+이 정리는 원래 아이디어를 버린 작업이 아니다. 공개 목적은 실제 경계의 검사로 옮겼고, 특정 구현 제어법만을 요구하던 부분만 제거했다. 외부 실모델 호출과 현재 구성에서 제공하지 않는 선택 기능의 성공 경로는 별도 범위다.

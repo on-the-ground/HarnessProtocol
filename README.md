@@ -34,7 +34,7 @@ AgentHarness                   하네스 제공 경계
 
 **Codex·Gemini CLI·Koog adapter와 `Harnesses` factory는 새 `dev.harnessprotocol` Port를 사용한다.** 임시 참조 하네스와 legacy 실행 경로는 제거했다. 기본 연결 뒤 요구 수락·확인 유실·상호작용 경쟁·문맥 공유·부분 산출물·정리·관찰 부하·사용량·저장 장애를 실제 runtime에서 검증했다. 문맥을 다시 연 핸들의 자원 수명과 설정 보존 결함도 수정했다.
 
-현재 진행과 적용 한계는 [G03–G12 계약 경계 검증](docs/contract-boundary-validation.md)을 따른다. G09의 skill 활성화와 실행 제약/승인 관계는 미해결이며 전체 적합성 완료를 선언하지 않는다. [기본 adapter 검증](docs/native-port-validation.md), [요구 사례 검증](docs/requirement-admission-validation.md), [수락 확인 유실](docs/acceptance-loss-validation.md)은 각 단계의 실행 기록이다. 공개 의미는 [공개 모델](docs/public-model.md)을 따른다. 통제된 모델을 사용한 실제 runtime 검증과 외부 실모델 검증은 구별한다.
+현재 진행과 적용 한계는 [G03–G12 계약 경계 검증](docs/contract-boundary-validation.md)을 따른다. skill 활성화는 실제 본문 적용 보장으로, `ExecutionConstraint.Required`는 승인이 넓힐 수 없는 상한으로 확정했다. Codex·Gemini는 active skill을 적용하고, Codex는 집행 가능한 제한 조합만 수락하며, 나머지 구성은 이행할 수 없는 요구를 작업 전에 거절한다. [기본 adapter 검증](docs/native-port-validation.md), [요구 사례 검증](docs/requirement-admission-validation.md), [수락 확인 유실](docs/acceptance-loss-validation.md)은 각 단계의 실행 기록이다. 공개 의미는 [공개 모델](docs/public-model.md)을 따른다. 통제된 모델을 사용한 실제 runtime 검증과 외부 실모델 검증은 구별한다.
 
 | 읽는 순서       | 문서                                                                                                                                                        |
 |-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -50,7 +50,7 @@ AgentHarness                   하네스 제공 경계
 | 총평 반영       | [채택·수정·보류 판단](docs/review-disposition.md): 종결 증거, 문맥 조정, 지원 탐색, 이벤트 존치와 남은 검증                                                                             |
 | Codex 기반 선택 | [codex-agent 검토](docs/codex-agent-adoption-review.md), [저수준 client 조사](docs/spikes/2026-09-03-codex-low-level-client.md)                                  |
 
-공개 필드와 선택 계약 API는 선언돼 있다. 남은 작업은 실제 adapter의 미검증 보장과 선택 기능의 구현·검증이며, 기존 설계 이력은 Git에서 확인한다.
+공개 Port와 현재 세 adapter의 구성별 계약 검증은 G12까지 연결돼 있다. 현재 구성에서 제공하지 않는 선택 기능의 성공 경로와 외부 실모델·artifact 발행은 별도 범위이며, 기존 설계 이력은 Git에서 확인한다.
 
 ## 구현 구성
 
@@ -62,7 +62,7 @@ AgentHarness                   하네스 제공 경계
 | `harness-runtime` | adapter가 선택하여 사용하는 Task 수명·관찰 구현. 공개 Port의 필수 기반이 아니다. |
 | `harness-process-bridge`, `bridges` | 두 process adapter의 내부 transport와 host. 모든 하네스의 필수 기반이 아니다. |
 | `harness-adapter-testkit` | 현재 process adapter의 공통 회귀, 독립적인 설정 투영, SDK 이벤트 매핑 검사. |
-| `harness-conformance` | 공통 계약 판정과 fixture seam. 실제 binding의 단계별 검사·요구 사례 factory와 원래 미연결 정의 44개를 구별한다. [시나리오 대응표](docs/conformance-scenarios.md)를 따른다. |
+| `harness-conformance` | 목적별 공통 계약 판정과 작은 fixture seam. 원래 48개 C/K 목록은 실행 코드가 아니라 처리 근거를 보존한 역사적 inventory다. [시나리오 대응표](docs/conformance-scenarios.md)를 따른다. |
 | `harness-bundle` | Codex·Gemini·Koog adapter 구성 편의. Koog의 executor·model을 명시적으로 받는다. |
 | `harness-native-integration` | 세 실제 runtime과 통제된 모델 경계로 공개 동작을 검증한다. `-PnativeHarnessTests`로 실행한다. |
 | `experiments/koog-validation` | 현재 Port를 사용하는 별도 Koog 승인·질문·파일 보관 구성의 격리 실험. production 기본 구성과 구별한다. |

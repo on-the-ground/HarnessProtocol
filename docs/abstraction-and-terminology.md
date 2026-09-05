@@ -1,7 +1,7 @@
 # AHP 추상 개정과 용어
 
 작성일: 2026-09-04  
-상태: 공개 Port·KDoc과 세 adapter·factory 연결 완료. 실제 runtime 검사 25개 통과, 추가 계약 검증은 [전환 현황](port-revision-plan.md)을 따른다.
+상태: 공개 Port·KDoc과 세 adapter·factory 연결 완료. G01–G12의 현재 구성 검증과 원래 시나리오 종결은 [전환 현황](port-revision-plan.md)을 따른다.
 최상위 기준: [AHP 설계 선언](../AHP_CHARTER.md)  
 실험 근거: [Koog 검증 결과](koog-abstraction-validation-results.md)
 

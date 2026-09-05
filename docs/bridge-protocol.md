@@ -38,7 +38,7 @@ Payload는 Codex method/payload, Gemini type/value 등의 원본과 host 합성 
 4. Codex reader thread를 막는 승인 handler는 결정을 전달해 대기를 푼 뒤 interrupt/close해야 한다. 이 순서는 해당 SDK의 구현 책임이다.
 5. provider 기본 handler의 자동 accept로 caller 승인 요구를 우회하지 않는다.
 
-시작·응답 요청을 host가 받았지만 Kotlin이 acknowledgement를 잃을 수 있다. 이때 호출 실패를 확정적인 미수행·미응답으로 바꾸거나 새 요청으로 자동 재전송하지 않는다. 새 경로는 전달 상태와 요청 identity를 미확정 예외로 보존하며, 실제 native 경계에서 확인 유실을 유도하는 검증은 남아 있다.
+시작·응답 요청을 host가 받았지만 Kotlin이 acknowledgement를 잃을 수 있다. 이때 호출 실패를 확정적인 미수행·미응답으로 바꾸거나 새 요청으로 자동 재전송하지 않는다. 새 경로는 전달 상태와 요청 identity를 미확정 예외로 보존하며, 실제 native 경계의 확인 유실과 중복 방지는 [G02 검증](acceptance-loss-validation.md)에서 확인했다.
 
 ## 현재 의미 경계
 

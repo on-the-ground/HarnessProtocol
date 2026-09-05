@@ -100,6 +100,6 @@ Koog는 실제 runtime에 통제된 모델을 연결한 증거이고, Codex/Gemi
 
 ## 현재 구현과 남은 검증
 
-[전환 현황](port-revision-plan.md)의 새 Port·세 adapter와 공통 native 검사 25개가 현재 기준이다. 독립 실험은 현재 Port로 이전했고 승인·질문·저장소를 구성한다. 이 선택 기능을 production 기본 구현이 모두 제공하는 것은 아니며, core 필수성도 구현 가능성과 구별한다.
+[전환 현황](port-revision-plan.md)의 새 Port·세 adapter와 G01–G12 검증이 현재 기준이다. 독립 실험은 현재 Port로 이전했고 승인·질문·저장소를 구성한다. 이 선택 기능을 production 기본 구현이 모두 제공하는 것은 아니며, core 필수성도 구현 가능성과 구별한다.
 
 실모델 호출, 세 provider의 새 계약 전체 적합성, 원격 단절·재접속, production 저장소·crash recovery·다중 writer, native structured output 집행, 전체 오류·진단·usage 관찰은 완료 범위가 아니다. 해당 검증 없이 보편적 보장을 주장하지 않는다.

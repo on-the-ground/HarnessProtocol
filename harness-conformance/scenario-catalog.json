@@ -1,615 +1,799 @@
 {
   "version": 1,
-  "stage": "G03-G12 native boundary validation; G09 decisions and final coverage closure remain",
-  "countingRule": "76 original inventory identities are retained. C20/C21 and K13/K14 were replaced by actual requirement/admission checks; 44 original C/K definitions remain unattached. Count consumer executions from JUnit; do not equate purpose overlap with full coverage.",
+  "stage": "G03-G12 configured-runtime validation and historical scenario reconciliation complete; final full regression pending",
+  "countingRule": "The 76 original identities remain as historical review records. The last 44 unbound bodies were removed only after replacement, capability rejection, or invalid-fixture-assumption dispositions were recorded. Count only concrete consumer executions from JUnit.",
   "entries": [
     {
       "id": "C01",
       "title": "startTask accepts and returns a handle spanning several internal calls",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Verify several real internal calls; a single start/completion pair is not that evidence."
-      ],
       "relatedValidationGates": [
         "G11"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G11",
+        "R01",
+        "S02"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C02",
       "title": "completed outcome matches terminal state and settles exactly once",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "S03",
+        "S10",
+        "R01",
+        "R06"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C03",
       "title": "failed outcome matches terminal state and carries its kind",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G05"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G05",
+        "S06"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C04",
       "title": "cancelled outcome matches terminal state",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G05"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G05",
+        "S07",
+        "R07"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C05",
       "title": "natural language failure without a classified kind reports UNKNOWN, not a fabricated kind",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "S06"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C06",
       "title": "pending clears and terminal state is confirmed before awaitOutcome returns, on completion",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Choose accepted caller-approval cases rather than a mandatory profile named approval."
-      ],
       "relatedValidationGates": [
         "G03"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G03",
+        "S21"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C07",
       "title": "pending clears and terminal state is confirmed before awaitOutcome returns, on failure",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Choose accepted caller-question cases rather than a mandatory profile named questions."
-      ]
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G03",
+        "S22"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C08",
       "title": "completes without any event collector",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "S04",
+        "R01"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C09",
       "title": "a slow collector observes a gap but still sees the terminal event last",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Synchronize subscription and overflow; always release stalled collector in finally."
-      ],
       "relatedValidationGates": [
         "G07"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G07",
+        "S05",
+        "S17"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C10",
       "title": "a late subscriber still receives the terminal event",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Require a retained terminal and finite flow, not terminal as the first replayed item."
-      ],
       "relatedValidationGates": [
         "G07"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G07",
+        "R06"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C11",
       "title": "overlapping start on one session is rejected before it reaches the native boundary",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G04"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G04",
+        "S14",
+        "R04"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C12",
       "title": "a session accepts its next task only once the previous one is terminal",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G04"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G04",
+        "S14",
+        "R04",
+        "R07"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C13",
       "title": "different sessions on one harness make progress concurrently without mixing context",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Observe actual runtime context; separately scripted answers do not establish isolation."
-      ],
       "relatedValidationGates": [
         "G04"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G04",
+        "S15",
+        "R02"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C14",
       "title": "natural completion wins the race against a cancellation request",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "S09"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C15",
       "title": "cancellation requested after terminal is a no-op",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G03"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G03",
+        "S08",
+        "R06"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C16",
       "title": "a normal completion with no captured output is Completed with a null output",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G05"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G05"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C17",
       "title": "an actual empty string output is distinct from no output",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G05"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G05"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C18",
       "title": "completion's null output does not erase output already captured earlier",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G05"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G05"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C19",
       "title": "completion does not imply schema-valid structured output",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Select a structured-output requirement case; distinguish invalid observed output from promised schema enforcement."
-      ]
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "closed-by-current-capability-rejection",
+      "replacementEvidence": [
+        "G01",
+        "G10"
+      ],
+      "disposition": "All three configured adapters reject structured-output requirements before work. The historical success-path body is not applicable until an adapter declares that capability."
     },
     {
       "id": "C20",
       "title": "an incompatible session requirement is rejected before any handle is issued",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRequirementsConformanceTest.kt",
-      "layer": "replaced-by-requirement-cases",
+      "layer": "historical-contract-inventory",
       "bindings": [
         "codex",
         "gemini-cli",
         "koog"
       ],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "The fixed provider assumption was removed. Actual configured rejection cases run through the replacement factory."
+      "replacementFactory": "declared requirements match support validation and actual admission",
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRequirementsConformanceTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G01"
       ],
-      "replacementFactory": "declared requirements match support validation and actual admission"
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C21",
       "title": "an unconfirmed session requirement is distinguished from a confirmed rejection",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRequirementsConformanceTest.kt",
-      "layer": "unexercised-requirement-branch",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "The fixed network=UNCONFIRMED assumption was removed. The factory distinguishes this decision, but current native profiles have no truthful UNCONFIRMED case; this branch is not counted as executed."
+      "replacementFactory": "declared requirements match support validation and actual admission",
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRequirementsConformanceTest.kt",
+      "status": "retired-synthetic-unconfirmed-case",
+      "replacementEvidence": [
+        "G01",
+        "G02"
       ],
-      "replacementFactory": "declared requirements match support validation and actual admission"
+      "disposition": "The public UNCONFIRMED branch remains, but none of the pinned adapters has an honestly undecidable requirement case. Deterministic admission and actual start-acknowledgement loss are verified separately."
     },
     {
       "id": "C22",
       "title": "a request-level rejection is distinguished from a post-handle failure",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G01",
+        "G05",
+        "R03"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C23",
       "title": "the same work key in two different tasks does not cross-contaminate effect counts",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Wait for native accepted response/effect; asynchronous approval is not complete when the effect request returns."
-      ]
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-non-port-fixture-assertion",
+      "replacementEvidence": [
+        "G08",
+        "G11"
+      ],
+      "disposition": "The deleted body asserted a private fixture effect counter rather than public Port behavior. Actual TaskId/WorkId correlation and isolated effects replace it."
     },
     {
       "id": "C24",
       "title": "whitespace-only input text is preserved verbatim, not trimmed",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": []
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "R09"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C25",
       "title": "null instructions and explicit empty instructions are distinguished",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Observe effective instructions; provider default may include non-null default system text."
-      ]
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "S01",
+        "R10"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C26",
       "title": "only activated skills are observed, even when more are provided",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Select a supported workspace case and verify native activation, not only envelope construction."
-      ]
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G09"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C27",
       "title": "output captured before a failure is still recovered in the Failed outcome",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G05",
         "G11"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G05",
+        "G11"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C28",
       "title": "output captured before a cancellation is still recovered in the Cancelled outcome",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G05",
         "G11"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G05",
+        "G11"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "C29",
       "title": "output captured before an Unresolved settlement is still recovered, not reported as final",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Explicitly induce missing cancellation evidence; release alone need not yield Unresolved."
-      ],
       "relatedValidationGates": [
         "G05",
         "G11"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCoreTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G05",
+        "G11"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K01",
       "title": "release settles an active task as cancelled when confirmation arrives within budget",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Synchronize cancellation confirmation with cleanup entry; current RUNNING wait can finish before release."
-      ],
       "relatedValidationGates": [
         "G06"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G06"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K02",
       "title": "release settles an unconfirmed task as Unresolved once the cleanup budget elapses",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Control missing termination evidence and measure release itself."
-      ],
       "relatedValidationGates": [
         "G06"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G06",
+        "S19"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K03",
       "title": "a completion that arrives right after cleanup starts is still recovered within budget",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Derive timing from declared budget and synchronize cleanup entry; no fixed 200ms assumption."
-      ]
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "reframed-by-terminal-evidence-contract",
+      "replacementEvidence": [
+        "G03",
+        "S09"
+      ],
+      "disposition": "Cleanup does not promise that a scheduled completion beats cancellation. The terminal fact that arrives first wins and remains immutable."
     },
     {
       "id": "K04",
       "title": "harness close settles active tasks across sessions within the total cleanup budget",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Measure close itself and assert state/pending for all tasks against total budget."
-      ],
       "relatedValidationGates": [
         "G06"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G06",
+        "R05",
+        "S16"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K05",
       "title": "uncooperative work yields Unresolved with a cancellation-unconfirmed reason, not a fabricated Cancelled",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Tie reason to actual missing evidence; cleanup expiry can be CLEANUP_BOUND_EXCEEDED.",
-        "Release noncooperative work in finally."
-      ],
       "relatedValidationGates": [
         "G06"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G06"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K06",
       "title": "false-cancel detection - work observed after Unresolved does not retroactively change the settled outcome",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Assert a real late effect and stable outcome after it; releasing a fixture gate alone proves neither."
-      ],
       "relatedValidationGates": [
         "G06"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G06"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K07",
       "title": "a session stays blocked for new tasks after its last task was Unresolved, even after release",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Test all same-context handles and reopen, not only a released handle.",
-        "Release noncooperative work in finally."
-      ],
       "relatedValidationGates": [
         "G04",
         "G12"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G04",
+        "G12",
+        "S11",
+        "S12",
+        "S18"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K08",
       "title": "a brand-new session on the same harness is unaffected by another session's block",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Observe new runtime context and clean up surviving old work."
-      ],
       "relatedValidationGates": [
         "G04",
         "G12"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G04",
+        "G12"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K09",
       "title": "ending only the inner turn does not terminate the task",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G11"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G11"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K10",
       "title": "pure observation loss without a terminal report settles Unresolved with an observation-lost reason",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Observe loss outcome before release so cleanup does not substitute for loss detection."
-      ],
       "relatedValidationGates": [
         "G05"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G05",
+        "S11",
+        "S12"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K11",
       "title": "a runtime that owned the work reports a confirmed transport failure, not Unresolved",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Runtime ownership alone does not prove termination of all delegated effects; supply concrete termination evidence."
-      ]
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "reframed-by-terminal-evidence-contract",
+      "replacementEvidence": [
+        "G05",
+        "S06",
+        "S12"
+      ],
+      "disposition": "A fixture boolean saying the runtime owned work is not terminal evidence. Confirmed native failures are Failed; loss of an observation stream without termination proof is Unresolved."
     },
     {
       "id": "K12",
       "title": "a runtime that did not own the work leaves it outstanding rather than fabricating a result",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Do not require RUNNING after lost observation; immediate Unresolved is allowed."
-      ]
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "reframed-by-terminal-evidence-contract",
+      "replacementEvidence": [
+        "G05",
+        "S11",
+        "S12"
+      ],
+      "disposition": "Process ownership is an adapter detail. The public result follows observed termination evidence and blocks an uncertain context."
     },
     {
       "id": "K13",
       "title": "a start rejected before delivery does not block the session and can be retried",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessAcceptanceConformanceTest.kt",
-      "layer": "native-runtime-start-acceptance",
+      "layer": "historical-contract-inventory",
       "bindings": [
         "codex",
         "gemini-cli"
       ],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Replaced by native admission checks; the current local Koog handoff has no separate acknowledgement boundary and is verified independently."
-      ],
       "replacementTests": [
         "confirmed nondelivery permits retry without a native start"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessAcceptanceConformanceTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G02"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K14",
       "title": "losing the start acceptance acknowledgement blocks the session, distinct from a clean rejection",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessAcceptanceConformanceTest.kt",
-      "layer": "native-runtime-start-acceptance",
+      "layer": "historical-contract-inventory",
       "bindings": [
         "codex",
         "gemini-cli"
       ],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Replaced by native admission checks; the current local Koog handoff has no separate acknowledgement boundary and is verified independently."
-      ],
       "replacementTests": [
         "lost acknowledgement after native acceptance blocks resubmission",
         "lost acknowledgement without native acceptance still blocks resubmission"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessAcceptanceConformanceTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G02"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K15",
       "title": "usage deltas accumulate and unknown fields stay unknown rather than becoming zero",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Use native usage representation; do not require every runtime to accept arbitrary accounting values."
-      ],
       "relatedValidationGates": [
         "G11"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G11"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K16",
       "title": "a fresh usage snapshot resets the baseline instead of double-counting prior deltas",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Preserve native cumulative/reset semantics; use mapper-level evidence where model boundary cannot produce the fact."
-      ],
       "relatedValidationGates": [
         "G11"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G11"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K17",
       "title": "task and session usage are reported and preserved separately",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G11"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G11"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K18",
       "title": "a late notification after the outcome is confirmed does not overwrite it",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [],
       "relatedValidationGates": [
         "G03",
         "G06",
         "G07"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G03",
+        "G06",
+        "G07",
+        "S10"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "K19",
       "title": "reopening a persistent session surfaces the storage's canonical id, not the caller's raw string",
-      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
-      "layer": "unbound-contract-definition",
+      "layer": "historical-contract-inventory",
       "bindings": [],
       "relatedPurposeIds": [],
-      "beforeBinding": [
-        "Use compatible persistence requirement cases including Conditional support; never silently return on a missing interface."
-      ],
       "relatedValidationGates": [
         "G12"
-      ]
+      ],
+      "historicalSource": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessConformanceCleanupTest.kt",
+      "status": "retired-after-replacement",
+      "replacementEvidence": [
+        "G12",
+        "R08",
+        "S20"
+      ],
+      "disposition": "The unbound body was removed after its portable assertion was incorporated into the listed executed checks."
     },
     {
       "id": "S01",
@@ -1023,6 +1207,60 @@
         "K19"
       ],
       "beforeBinding": []
+    },
+    {
+      "id": "S21",
+      "title": "native completion clears a pending interaction before outcome",
+      "source": "harness-codex/src/test/kotlin/dev/harnessprotocol/codex/CodexInteractionTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex"
+      ],
+      "relatedPurposeIds": [
+        "C06"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "S22",
+      "title": "native failure clears a pending interaction before outcome",
+      "source": "harness-codex/src/test/kotlin/dev/harnessprotocol/codex/CodexInteractionTest.kt",
+      "layer": "sdk-specific-regression",
+      "bindings": [
+        "codex"
+      ],
+      "relatedPurposeIds": [
+        "C07"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "R09",
+      "title": "whitespace-only caller input reaches the native model without trimming",
+      "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessRuntimeConformanceTest.kt",
+      "layer": "native-runtime-common",
+      "bindings": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "relatedPurposeIds": [
+        "C24"
+      ],
+      "beforeBinding": []
+    },
+    {
+      "id": "R10",
+      "title": "null and explicit empty instructions remain distinct in Koog native prompt",
+      "source": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeHarnessTest.kt",
+      "layer": "native-runtime-specific",
+      "bindings": [
+        "koog"
+      ],
+      "relatedPurposeIds": [
+        "C25"
+      ],
+      "beforeBinding": []
     }
   ],
   "gaps": [
@@ -1030,7 +1268,7 @@
       "id": "G01",
       "purpose": "Independent support/validate/call decisions across accepted, rejected and unconfirmed requirement cases; no baseline-name assumptions",
       "priority": 1,
-      "progress": "Independent profiles and admission are connected to all three native runtimes. Fixed C20/C21 assumptions removed. Actual UNCONFIRMED cases and profile selection in the remaining effect-control definitions are still unverified."
+      "progress": "Independent profiles and admission are connected to all three runtimes. No pinned adapter has an honestly undecidable requirement case; actual start and response acknowledgement loss are verified in G02."
     },
     {
       "id": "G02",
@@ -1084,8 +1322,8 @@
       "id": "G09",
       "purpose": "Native workspace/skill activation and filesystem/network enforcement",
       "priority": 2,
-      "status": "awaiting-contract-decisions",
-      "progress": "Active skill bodies absent from actual model context in both process adapters. Combined filesystem probe is rejected as a whole by native policy, so no-write alone is not sandbox proof. Clarify required activation and approval precedence before implementing; do not report green."
+      "status": "validated-with-stated-limits",
+      "progress": "Codex and Gemini apply active skill bodies and retain inactive skills as available metadata. Codex enforces restrictive filesystem/network upper bounds only with DenyAll; approval policies that could expand those bounds are rejected. Gemini and Koog reject execution constraints they cannot enforce."
     },
     {
       "id": "G10",
@@ -1112,15 +1350,15 @@
   "requirementAdmission": {
     "source": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeRequirementsTest.kt",
     "profiles": 5,
-    "cases": 43,
+    "cases": 49,
     "modes": [
       "preflight",
       "direct"
     ],
     "supportChecks": 5,
-    "expectedExecutions": 91,
+    "expectedExecutions": 103,
     "unconfirmedNativeCaseAvailable": false,
-    "evidence": "../harness-native-integration/evidence/requirement-admission.json"
+    "evidence": "../harness-native-integration/evidence/g09-environment.json"
   },
   "acceptanceVerification": {
     "source": "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessAcceptanceConformanceTest.kt",
@@ -1308,6 +1546,25 @@
         "K19"
       ],
       "coverageRule": "Related purpose only; does not mark every assertion in the original C/K body executed. Regression overlaps must not be added as new cases."
+    },
+    {
+      "id": "G09",
+      "sharedSources": [
+        "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessWorkspaceConformanceTest.kt",
+        "harness-conformance/src/testFixtures/kotlin/dev/harnessprotocol/conformance/HarnessExecutionConstraintConformanceTest.kt"
+      ],
+      "nativeBinding": "harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeWorkspaceTest.kt; harness-native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeExecutionConstraintTest.kt",
+      "providers": [
+        "codex",
+        "gemini-cli",
+        "koog"
+      ],
+      "evidence": "../harness-native-integration/evidence/g09-environment.json",
+      "recordedExecutions": 7,
+      "relatedOriginalIds": [
+        "C26"
+      ],
+      "coverageRule": "Four workspace executions validate Codex/Gemini activation. Three Codex executions validate hard upper bounds; Gemini/Koog rejection is counted in the 103-case requirement matrix, not as sandbox execution."
     }
   ],
   "integrationCheckpoint": {

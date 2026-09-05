@@ -1,6 +1,6 @@
 # Protocol reference
 
-이 문서는 **개정된 AHP의 의미와 공개 명칭**을 정의한다. Kotlin 선언·KDoc과 세 adapter의 새 Port 경로는 dev.harnessprotocol 계약을 사용한다. 실제 검증 범위는 [native 검증 기록](native-port-validation.md)을 따른다. [공개 모델](public-model.md)이 선언을, [전환 계획](port-revision-plan.md)이 남은 적합성·실증 작업을 관리한다. 최상위 기준은 [설계 선언](../AHP_CHARTER.md)과 [Semantic contract](semantic-contract.md)다.
+이 문서는 **개정된 AHP의 의미와 공개 명칭**을 정의한다. Kotlin 선언·KDoc과 세 adapter의 새 Port 경로는 dev.harnessprotocol 계약을 사용한다. 실제 검증 범위는 [G03–G12 기록](contract-boundary-validation.md)을 따른다. [공개 모델](public-model.md)이 선언을, [전환 계획](port-revision-plan.md)이 구현·검증·발행 범위를 관리한다. 최상위 기준은 [설계 선언](../AHP_CHARTER.md)과 [Semantic contract](semantic-contract.md)다.
 
 ## 기본 모델
 
@@ -37,7 +37,11 @@
 
 기본 `SessionId`는 발급한 harness의 논리 session을 구별한다. 같은 ID 문자열이 다른 harness에 있더라도 같은 문맥이라는 뜻은 아니다. 영속 문맥은 `PersistentSessionRef(provider, namespace, id)`로 참조한다. `StorageNamespace`는 계정·endpoint·저장소 구성을 구별할 수 있어야 하며 자격 증명 자체를 식별자에 담지 않는다. provider 종류와 ID 문자열만으로 전역 동일성을 추정하지 않는다.
 
-`TaskInput.Text`는 빈 문자열을 거절하되 공백만 있는 문자열을 임의로 trim하거나 다른 값으로 바꾸지 않는다. caller 입력과 지속 지시의 의미를 유지한다. 요청한 skill 활성화 등 provider별 envelope를 구성할 수 있지만 다른 지시나 업무 입력으로 조용히 대체하지 않는다.
+`TaskInput.Text`는 빈 문자열을 거절하되 공백만 있는 문자열을 임의로 trim하거나 다른 값으로 바꾸지 않는다. caller 입력과 지속 지시의 의미를 유지한다. `SessionSpec.instructions=null`은 adapter의 구성된 기본 지시를 사용하고, `""`은 명시적으로 빈 지시를 요구하므로 둘을 합치지 않는다.
+
+`WorkspaceRequirement.Required.skills`의 `activate=true`는 해당 skill의 지침을 모든 Task의 실제 native 지시에 적용한다는 요구다. 이름·경로·활성화 명령만 전달하는 것으로 충족하지 않는다. `activate=false`인 skill은 사용할 수 있게 제공하되 본문을 자동 적용하지 않는다. artifact를 읽거나 이 차이를 보존할 수 없으면 session 생성 전에 거절한다. skill 지침을 caller의 Task 입력에 붙여 입력 의미를 바꾸지 않는다.
+
+`ExecutionConstraint.Required`의 filesystem과 network 값은 효과의 hard upper bound다. 승인이나 provider default가 이 범위를 넓힐 수 없다. 별도 승인 정책은 상한 안의 효과도 더 거절할 수 있다. adapter가 요청한 상한과 승인 정책의 조합을 집행할 수 없으면 작업 전에 거절한다.
 
 ## AgentSession과 영속성
 
@@ -133,4 +137,4 @@ Handle 생성 전의 검증·시작 실패는 호출 실패다. handle을 받은
 
 ## 구현 전환
 
-세 adapter와 factory·소비 예제는 새 Port를 사용한다. `AgentExecution`, `AgentResult`, 기본 `resumeSession`, `ExecutionPolicy` 등의 이전 타입과 그 실행 경로는 제거했다. [이름 전환표](abstraction-and-terminology.md)는 의미 변경을, [전환 현황](port-revision-plan.md)은 남은 검증·발행를 기록한다. 소비 예제의 source 컴파일은 통과했지만 새 artifact는 발행하지 않았다.
+세 adapter와 factory·소비 예제는 새 Port를 사용한다. `AgentExecution`, `AgentResult`, 기본 `resumeSession`, `ExecutionPolicy` 등의 이전 타입과 그 실행 경로는 제거했다. [이름 전환표](abstraction-and-terminology.md)는 의미 변경을, [전환 현황](port-revision-plan.md)은 검증 범위와 발행 상태를 기록한다. 소비 예제의 source 컴파일은 통과했지만 새 artifact는 발행하지 않았다.

@@ -103,4 +103,4 @@ Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요
 
 ## 전환·검증
 
-새 adapter는 `TaskEvent`와 별도 진단 경로를 사용하며 실제 native 검사에서 두 observer의 독립 종료를 확인했다. 기존 message 조립·usage·work ID 검사는 현재 mapper와 production task runtime으로 이전했다. 느린 observer overflow, 사용량 reset·누락, 하위 작업 상관관계 등 남은 조건은 [공통 검사 기준](testing.md)에 따라 새 Port에서 검증한다.
+새 adapter는 `TaskEvent`와 별도 진단 경로를 사용하며 실제 native 검사에서 두 observer의 독립 종료를 확인했다. 기존 message 조립·usage·work ID 검사는 현재 mapper와 production task runtime으로 이전했다. 느린 observer overflow, 사용량 reset·누락, 메시지·도구·승인 효과의 상관관계도 [G07·G11 검증](contract-boundary-validation.md)에서 확인했다. 제공하지 않는 native 변형은 지원 범위로 확대해 주장하지 않는다.

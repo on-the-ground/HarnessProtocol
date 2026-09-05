@@ -35,7 +35,9 @@
 
 ## 실행 환경 요구의 독립성
 
-`ExecutionConstraint.Required`의 filesystem과 network는 독립적으로 선택한다. 네트워크만 금지하는 요청 때문에 파일 권한까지 고르도록 강제하지 않는다. 둘 다 요구하지 않으면 ProviderDefault를 사용한다. 지원할 수 없는 조합은 구체적인 요구 검증에서 거절한다.
+`ExecutionConstraint.Required`의 filesystem과 network는 독립적으로 선택한다. 네트워크만 금지하는 요청 때문에 파일 권한까지 고르도록 강제하지 않는다. 둘 다 요구하지 않으면 ProviderDefault를 사용한다. Required 값은 승인이 넓힐 수 없는 hard upper bound이고, 승인 정책은 상한 안의 효과를 더 거절할 수 있다. 임의 명령의 실제 접근 범위를 판별하지 못하는 adapter를 포함해 이 조합을 집행할 수 없는 구성은 구체적인 요구 검증에서 거절한다.
+
+`WorkspaceRequirement.Required`의 skill 제공과 활성화도 독립적이다. `activate=true`는 본문을 실제 Task 지시에 적용하는 보장이고 `activate=false`는 사용 가능하게 제공하되 자동 적용하지 않는다는 뜻이다. 이름이나 경로 전달만으로 활성화 지원을 선언하지 않는다.
 
 ## 추가 실증이 필요한 목적
 

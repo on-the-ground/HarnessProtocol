@@ -2,7 +2,7 @@
 
 이 문서는 [개정 계약](protocol-reference.md)의 목적을 Codex·Gemini CLI·Koog의 서로 다른 수단에 대응시키고 구현 전환 상태를 기록한다. SDK 기능이 공통 목적을 결정하지 않는다.
 
-현재 세 adapter는 새 공개 Port에 연결돼 있다. 실제 runtime과 통제된 모델 응답의 검증 범위·revision·남은 gate는 [실제 adapter 검증](native-port-validation.md)을 따른다. 이 연결과 일부 시나리오 통과를 새 계약 전체의 적합성 인증으로 취급하지 않는다. Koog 격리 실험은 별도의 이전 증거다.
+현재 세 adapter는 새 공개 Port에 연결돼 있다. 실제 runtime과 통제된 모델 응답의 구성별 검증 범위는 [G03–G12 계약 경계 검증](contract-boundary-validation.md)을 따른다. 이 연결을 현재 구성에서 제공하지 않는 선택 기능이나 외부 실모델까지의 인증으로 확대하지 않는다. Koog 격리 실험은 별도의 이전 증거다.
 
 ## 목적별 대응과 전환
 
@@ -41,13 +41,13 @@ Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`�
 
 | 요구 | Codex 현재 경로 | Gemini 현재 경로 |
 |---|---|---|
-| FS 범위 | read-only/workspace-write/full-access를 sandbox로 대응 | 명시적 정책을 거절 |
-| Network | workspace-write의 network 설정을 대응. 다른 조합은 거절 | 명시적 정책을 거절 |
+| FS 범위 | read-only/workspace-write를 hard sandbox 상한으로 대응. 제한 조합은 DenyAll에서만 수락 | 명시적 정책을 거절 |
+| Network | 제한 filesystem과 독립된 상한으로 대응. 승인이 확장할 수 있는 조합은 거절 | 명시적 정책을 거절 |
 | Caller 승인 | handler 중재 | 명시적 요구 거절 |
 | 지시·모델 | developerInstructions/model | agent instructions/model |
-| 작업 위치·skills | cwd, skill 입력과 activation envelope | cwd, skillDir와 activation |
+| 작업 위치·skills | cwd, active skill 본문을 developer instructions에 적용하고 모든 skill 이름·경로를 제공 | cwd, active skill 본문을 system instructions에 적용하고 skillDir로 모든 skill을 제공 |
 
-개정에서는 문맥 설정·작업 요구·승인 중재·실행 환경 집행을 분리한다. 지원하지 않는 요구를 생략해 기본값으로 실행하지 않는다. 지시를 user prompt 앞에 붙이는 것과 지속 지시를 전달하는 것은 같은 보장이 아니다. skill 자료 제공과 실행별 활성화도 구별한다.
+개정에서는 문맥 설정·작업 요구·승인 중재·실행 환경 집행을 분리한다. 지원하지 않는 요구를 생략해 기본값으로 실행하지 않는다. 지시를 user prompt 앞에 붙이지 않고 native 지속 지시에 적용한다. active skill 본문 적용과 inactive skill 제공을 구별한다. 제한 실행 제약은 승인이 넓힐 수 없는 상한이며, Codex는 현재 `DenyAll`과 결합한 집행 가능한 조합만 수락한다.
 
 ## 상태·결과 매핑 원칙
 
@@ -80,6 +80,6 @@ Tool/effect의 이름·인자 key 매핑은 버전별 fixture로 검증한다. i
 
 ## 검증 상태
 
-[Koog 결과](koog-abstraction-validation-results.md)의 18개는 이전 계약의 실험 기록이다. 현재는 세 adapter에 같은 기본 시나리오를 적용한 21개와 구현별 4개, 총 25개 native 검사가 통과했다. 현재 Port로 이전한 SDK·bridge·bundle 회귀 71개와 공개 값 타입 9개는 별도다. 모든 계약 시나리오의 적합성과 실모델 검증은 완료 범위가 아니다.
+[Koog 결과](koog-abstraction-validation-results.md)의 18개는 이전 계약의 실험 기록이다. 현재 세 adapter는 G01–G12의 구성별 실제 경계 검사에 연결돼 있고, 구체적인 최신 실행 수는 [계약 경계 검증](contract-boundary-validation.md)의 최종 checkpoint를 따른다. 현재 Port의 SDK·bridge·host 회귀와 공개 값 타입 검사는 별도 경계를 확인한다. 외부 실모델 검증은 완료 범위가 아니다.
 
-Gemini SDK build entrypoint·지시 전달 결함, Codex 재개 설정 변경의 제한, 세 runtime의 기본 동작과 Koog 비협조적 정리는 [실제 adapter 검증](native-port-validation.md)에 새 증거로 기록했다. Codex 실제 승인 payload·효과, Koog production 저장소 및 선택 계약 전체 검증은 남아 있다. 독립 Koog 실험의 승인·질문·보관 구성도 현재 Port로 이전했으며 production 기본 지원과 구별한다. [Testing](testing.md)의 공통 행동과 구현별 검사를 구분한다.
+Gemini SDK build entrypoint·지시 전달, Codex 재개 설정 변경의 제한, 세 runtime의 기본 동작, Codex 실제 승인 효과, Koog 비협조적 정리는 [실제 adapter 검증](native-port-validation.md)과 [계약 경계 검증](contract-boundary-validation.md)에 기록했다. Koog production 저장소와 현재 구성에서 거절하는 선택 기능의 성공 경로는 제공 범위가 아니다. 독립 Koog 실험의 승인·질문·보관 구성은 production 기본 지원과 구별한다. [Testing](testing.md)의 공통 행동과 구현별 검사를 구분한다.

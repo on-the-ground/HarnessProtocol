@@ -1,12 +1,12 @@
 # 요구 사례의 실제 수락 검증
 
-이 문서는 G01 시점의 결과다. 이후 [G02 수락 확인 유실 검증](acceptance-loss-validation.md)을 추가하고 K13/K14를 대체해, 최신 미연결 정의는 44개다.
+이 문서는 G01 시점의 결과다. 이후 [G02 수락 확인 유실 검증](acceptance-loss-validation.md)과 G03–G12 검증을 추가했고, 원래 미연결 정의는 [목적별 종결](conformance-scenarios.md) 뒤 제거했다.
 
 단계 2의 첫 묶음인 G01은 지원 조회·사전 검증·호출 경계의 수락을 독립적인 기대값과 대조한다. 상위 기준은 [설계 선언](../AHP_CHARTER.md)과 공개 계약이며, 특정 provider의 기능 집합을 모든 구현의 필수 기능으로 만들지 않는다.
 
 ## 실행 구조
 
-`ProfileFixture`는 기존 `HarnessFixture`의 profile 선언·harness 생성을 분리한 검사 경계다. 새 비즈니스 Port가 아니다. `RuntimeRequirementsFixture`는 실제 runtime의 모델 관찰을 추가한다. 전체 fault injection을 구현했다고 가장하거나 AgentTask의 state/outcome을 직접 조작하지 않는다.
+`ProfileFixture`는 profile 선언·harness 생성을 담는 요구 검사의 작은 경계다. 새 비즈니스 Port가 아니다. `RuntimeRequirementsFixture`는 실제 runtime의 모델 관찰을 추가한다. 전체 fault injection을 구현했다고 가장하거나 AgentTask의 state/outcome을 직접 조작하지 않는다.
 
 공통 판정은 `HarnessRequirementsConformanceTest`에 있다. native binding은 기존 runtime 검사의 factory를 함께 사용한다. `NativeRequirementsFixture`의 기대 지원과 요구 사례는 고정한 제공 구성의 선언이며, `support`·`validate`의 결과에서 만들지 않는다. 지원 종류와 Conditional의 scope를 비교하고 이유·조건 설명이 비어 있지 않은지 확인한다. 설명 문구의 철자 일치는 요구하지 않는다.
 
@@ -39,13 +39,13 @@
 
 현재 구성에는 실제 UNCONFIRMED 지원/요구 사례가 없다. 공통 판정은 그 분기를 표현하지만, 실행하지 않은 분기를 통과했다고 계산하지 않는다. 이를 만들기 위해 임시 Port나 합성 지원 상태를 추가하지 않았다.
 
-기존 C20/C21의 고정된 거절·미확인 전제는 삭제하고 이 요구 사례 판정으로 대체했다. C20의 실제 거절 사례는 세 구현체에서 실행하며, C21의 UNCONFIRMED 분기는 현재 실행 근거가 없다. 나머지 Core 27개·Cleanup 19개, 총 46개 정의는 아직 전체 fixture에 미연결이다. 그 안의 profile 이름 등은 효과 제어 연결 시 함께 전환한다. 새 요구 검사를 기존 48개의 전체 통과로 환산하지 않는다.
+기존 C20/C21의 고정된 거절·미확인 전제는 삭제하고 이 요구 사례 판정으로 대체했다. C20의 실제 거절 사례는 세 구현체에서 실행하며, C21의 UNCONFIRMED 분기는 현재 세 구성에 정직한 실제 사례가 없다. 이 단계 당시 남아 있던 Core/Cleanup 정의는 이후 실제 증거·기능 거절·폐기할 fixture 가정으로 분류했다. 새 요구 검사를 기존 48개의 전체 통과로 환산하지 않는다.
 
 ## 실행 결과
 
 `./gradlew.bat --offline :harness-native-integration:test -PnativeHarnessTests --tests '*NativeRequirementsTest' --console=plain`은 통과했다. Codex 32개, Gemini 32개, Koog 27개로 총 91개이며 실패·오류·건너뜀은 0개다. 요구 사례 43개 × preflight/direct = 86개와 profile 지원 검사 5개로 구성된다.
 
-[기계 판독 결과](../harness-native-integration/evidence/requirement-admission.json)에 provider × profile × scenario × mode × 실제 경계 × 결과, JUnit suite·검사 이름·시각과 실행 소스 hash를 남겼다. 이 91개는 기존 runtime 25개와 별도 검사이며 기존 48개를 이름만 바꿔 통과로 집계한 결과가 아니다.
+[G01 기계 판독 결과](../harness-native-integration/evidence/requirement-admission.json)에 provider × profile × scenario × mode × 실제 경계 × 결과, JUnit suite·검사 이름·시각과 실행 소스 hash를 남겼다. 당시 91개는 기존 runtime 검사와 별도이며 기존 48개를 이름만 바꿔 통과로 집계한 결과가 아니다. G09에서 제한 조합의 거절 사례를 더한 현재 요구 행렬은 49개 case·103개 실행이며 [갱신 증거](../harness-native-integration/evidence/g09-environment.json)를 따른다.
 
 기존 회귀 검사도 `./gradlew.bat --offline test :harness-native-integration:test --tests '*NativeHarnessTest' --tests '*NativeToolTest' :harness-conformance:testFixturesClasses -PnativeHarnessTests --console=plain`로 확인했다. 기존 105개(실제 runtime 25개 포함)가 통과했으며, 변경 없는 일부 검사는 Gradle up-to-date 결과를 재사용했다. 새 요구 검사 소스 hash가 그대로인지 확인한 뒤 두 실행의 JUnit 결과를 합산했다. [현재 검증 기록](../harness-native-integration/evidence/verification.json)은 총 196개, 실패·오류·건너뜀 0개다. host·독립 Koog 실험·sample은 이 단계에서 재실행하지 않았다.
 

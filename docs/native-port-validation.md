@@ -54,7 +54,7 @@
 | baseline에 질문·승인·구조화 결과·skills 등을 일률적으로 요구 | 독립 작성한 profile/case에 따라 지원 시 이행, 미지원 시 사전 거절을 검사 |
 | 모든 입력 오류를 동일한 실패로 취급 | 실제 요청 전에 거절한 경우와 요청 수락 확인을 잃은 경우를 구별 |
 
-기존 `HarnessFixture`는 이 목적을 상당 부분 이미 표현한다. 따라서 Port 의미를 낮추는 대신 검사에서 `RequirementCase`, 실제 context/effect observation, response/start control을 사용해야 한다. 48개 시나리오 정의와 공통 지원 코드는 `harness-conformance/src/testFixtures`로 옮겼으며 `testFixtures(project(":harness-conformance"))`로 소비할 수 있다. 연결되지 않은 정의는 컴파일 대상이지 실행·통과 결과가 아니다.
+이 단계에서는 기존 `HarnessFixture`가 목적을 상당 부분 표현한다고 보아 48개 시나리오 정의를 `harness-conformance/src/testFixtures`로 옮겼다. 이후 검증에서 하나의 만능 제어면이 실제 provider 경계를 과도하게 가정한다는 점을 확인했다. 현재는 `RequirementCase`, 실제 context/effect observation, response/start control을 목적별 작은 fixture로 나눴고, 미연결 본문은 [처리 근거](conformance-scenarios.md)를 남긴 뒤 제거했다.
 
 참조 하네스·session·task·control·fixture·실행 subclass와 전용 Multicast, 총 8개 파일을 제거했다. 실제 Port 구현을 가장하는 대체 엔진을 다시 넣지 않는다. `reportUsageSnapshot`처럼 모델 경계만으로 임의의 native 누적값을 만들 수 없는 검사는 실제 SDK 변환 경계의 별도 검사로 분리해야 한다. 내부 상태를 직접 설정해서 적합성 점수를 채우지 않는다.
 
@@ -102,7 +102,7 @@ legacy 이전과 임시 참조 구현 제거 뒤 `test :harness-conformance:test
 | 새 native 통합 | 25: Codex 8, Gemini 8, Koog 기본 7 + 도구 2 | 0 / 0 |
 | 현재 Port adapter·bridge·bundle 회귀 | 71 | 0 / 0 |
 | PublicModelTest | 9 | 0 / 0 |
-| 미연결 Core/Cleanup 정의 | 실행·통과 0, 정의 48개 컴파일 확인 | 임시 실행 subclass 제거 |
+| 당시 미연결 Core/Cleanup 정의 | 실행·통과 0, 정의 48개 컴파일 확인 | 후속 단계에서 목적별 종결 후 제거 |
 | Python host | 15 | 실패 0, 기존 Pydantic 경고 4 |
 | Node host | 5 | 0 / 0 |
 
@@ -112,18 +112,18 @@ legacy 전환 검증의 루트 JVM 결과는 총 **105개**, host 결과는 **20
 
 ## 공통 시나리오 통합 후 배치
 
-공통 runtime 판정 7개와 영속 재개 판정 1개는 conformance의 testFixtures로 이동했다. native 모듈은 실제 provider 구성·모델 경계·실행 subclass와 Koog 전용 도구 검사 2개를 소유한다. SDK testkit의 순수 lifecycle 9개도 conformance로 이동했고 SDK 전용 검사 11개는 남겼다. 상세 중복 관계와 연결 전 수정 사항은 [시나리오 대응표](conformance-scenarios.md)를 따른다. 이 이동으로 미연결 Core/Cleanup 48개를 새로 실행했다고 집계하지 않는다.
+공통 runtime 판정 7개와 영속 재개 판정 1개는 conformance의 testFixtures로 이동했다. native 모듈은 실제 provider 구성·모델 경계·실행 subclass와 Koog 전용 도구 검사를 소유한다. SDK testkit의 순수 lifecycle도 conformance로 이동했고 SDK 전용 검사는 남겼다. 상세 중복 관계와 후속 종결은 [시나리오 대응표](conformance-scenarios.md)를 따른다. 이 이동으로 당시 미연결 Core/Cleanup 48개를 새로 실행했다고 집계하지 않는다.
 
-통합 후 전체 JVM 검사도 105개(실제 runtime 25개 포함), 실패·오류·건너뜀 0개로 통과했다. 공통 정의 17개의 consumer 실행 41회는 이 105개에 포함되며 추가 합산하지 않는다. 정리 유예 중 새로 생긴 Codex의 git 하위 process가 최초 종료 목록에서 빠지는 문제를 실제 실행에서 찾아 보완했다. 실패 이력·원인 관찰·최종 실행 대응은 [단계 1 결과](conformance-scenarios.md#단계-1-검증-결과)를 따른다. 이 단계에서는 host·독립 실험·sample을 다시 실행하지 않았다.
+통합 후 전체 JVM 검사도 105개(실제 runtime 25개 포함), 실패·오류·건너뜀 0개로 통과했다. 공통 정의 17개의 consumer 실행 41회는 이 105개에 포함되며 추가 합산하지 않는다. 정리 유예 중 새로 생긴 Codex의 git 하위 process가 최초 종료 목록에서 빠지는 문제를 실제 실행에서 찾아 보완했다. 후속 실행 대응과 역사적 목록의 종결은 [시나리오 기록](conformance-scenarios.md)을 따른다. 이 단계에서는 host·독립 실험·sample을 다시 실행하지 않았다.
 
 ## 독립 요구 사례 연결
 
-[요구 사례 검증](requirement-admission-validation.md)을 세 실제 adapter의 다섯 구성에 연결했다. 지원 선언 검사 5개와 요구 사례 43개의 preflight/direct 호출 86개, 총 91개가 통과했다. 기존 C20/C21의 고정 거절·미확인 전제를 제거해 이 판정으로 대체했으며 나머지 미연결 정의는 46개다. 수락·거절 검사를 승인 효과·sandbox·자원 접근 등의 전체 의미 검증으로 해석하지 않는다. 실제 미확인 요구 사례가 없는 범위도 별도로 남겼다.
+[요구 사례 검증](requirement-admission-validation.md)을 세 실제 adapter의 다섯 구성에 연결했다. 이 단계에서는 지원 선언 5개와 요구 사례 43개의 preflight/direct 호출 86개, 총 91개가 통과했다. 이후 G09 제한 조합을 더한 현재 행렬은 49개 case·103개 실행이다. 기존 C20/C21의 고정 거절·미확인 전제를 제거해 이 판정으로 대체했다. 수락·거절 검사를 승인 효과·sandbox·자원 접근 등의 전체 의미 검증으로 해석하지 않는다.
 
 G01 시점의 합산 JVM 결과는 기존 105개와 요구 검사 91개를 합한 **196개**, 실패·오류·건너뜀 0개다. 두 실행의 범위와 소스 일치 확인은 [G01 실행 결과](requirement-admission-validation.md#실행-결과), 개별 suite는 [현재 검증 기록](../harness-native-integration/evidence/verification.json)에 있다. 위 legacy 이전·단계 1의 105개 집계는 당시 결과로 보존한다.
 
 ## 실제 수락 확인 유실 연결
 
-[G02 검증](acceptance-loss-validation.md)은 실제 수락과 caller가 가진 확인 정보의 차이를 검사한다. Codex 시작 4개·응답 3개, Gemini 시작 4개, Koog 정상/비중단 handoff 2개를 연결했다. 없는 통신 단계나 미지원 승인 채널을 가짜 Port로 만들지 않는다. 기존 K13/K14는 이 검사로 대체했으며 미연결 정의는 44개다.
+[G02 검증](acceptance-loss-validation.md)은 실제 수락과 caller가 가진 확인 정보의 차이를 검사한다. Codex 시작 4개·응답 3개, Gemini 시작 4개, Koog 정상/비중단 handoff 2개를 연결했다. 없는 통신 단계나 미지원 승인 채널을 가짜 Port로 만들지 않는다. 기존 K13/K14는 이 검사로 대체했고, 이때 남아 있던 44개 본문은 후속 G03–G12 및 시나리오 종결 단계에서 정리했다.
 
 G02 이후 최신 고유 JVM 결과는 **209개**, 실패·오류·건너뜀 0개다. 기존 196개에 G02 13개를 더한 결과이며 native 모듈은 129개다. 마지막 요청 identity 판정 보강은 G02만 재검증하고 동일 검사의 결과를 교체했다. 실행별 범위는 [G02 결과](acceptance-loss-validation.md#검증-결과)를 따른다.

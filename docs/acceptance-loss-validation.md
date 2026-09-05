@@ -36,7 +36,7 @@ Codex 응답 검사에서는 모델 경계가 실제 command 도구 호출을 �
 
 첫 G02 실행에서 시작 관련 10개는 통과했고 승인 응답 3개는 pending 요청을 기다리다 시간 초과됐다. fixture가 해당 모델 구성에 노출된 `shell_command`를 처리하지 못해, 실제 승인 대상 호출을 만들지 못한 것이 원인이었다. 실제 모델 요청의 도구 이름을 선택하도록 보완한 뒤 응답 3개가 통과했고 파일 효과도 확인했다. [첫 실행 기록](../harness-native-integration/evidence/acceptance-loss-first-run.json)을 보존한다. Port나 production adapter의 계약을 바꿔 해결한 문제가 아니다.
 
-기존 K13/K14 정의는 실제 전달·수락 횟수와 identity까지 확인하는 이 검사로 대체했다. 나머지 Core 27개·Cleanup 17개, 총 44개 정의는 아직 미연결이다. C20/C21의 요구 판정과 G02의 수락 확인 유실은 별도 범위로 유지한다.
+기존 K13/K14 정의는 실제 전달·수락 횟수와 identity까지 확인하는 이 검사로 대체했다. 이 단계 당시 남아 있던 Core 27개·Cleanup 17개는 이후 [목적별로 종결](conformance-scenarios.md)하고 제거했다. C20/C21의 요구 판정과 G02의 수락 확인 유실은 별도 범위로 유지한다.
 
 ## 검증 결과
 
@@ -44,4 +44,4 @@ Codex 응답 검사에서는 모델 경계가 실제 command 도구 호출을 �
 
 `./gradlew.bat --offline test :harness-conformance:testFixturesClasses -PnativeHarnessTests --console=plain`으로 전체 209개가 통과했다. 마지막에 불확실한 시작의 reference를 실제 전달 기록과 정확히 대조하는 assertion을 보강하고 G02 13개를 별도로 다시 실행해 통과했다. [전체 실행 기록](../harness-native-integration/evidence/acceptance-loss-full-regression.json)과 [최신 검증 집계](../harness-native-integration/evidence/verification.json)는 두 실행을 구분한다. 최종 13개는 같은 검사의 이전 결과를 교체하며 다시 합산하지 않는다. 고유 검사는 총 209개, native 모듈은 129개다.
 
-변경 없는 일부 non-native 검사는 Gradle up-to-date 결과를 재사용했다. host·sample·독립 Koog 실험·JAR 감사는 이번 단계에서 재실행하지 않았다. 남은 44개 미연결 정의나 적용되지 않는 오류 주입을 통과 수에 넣지 않았다. 다음 묶음은 G03의 interaction 철회·응답·취소·종결 경쟁이다.
+변경 없는 일부 non-native 검사는 Gradle up-to-date 결과를 재사용했다. host·sample·독립 Koog 실험·JAR 감사는 이 단계에서 재실행하지 않았다. 당시의 44개 미연결 정의나 적용되지 않는 오류 주입을 통과 수에 넣지 않았다. 후속 G03–G12 결과는 [계약 경계 검증](contract-boundary-validation.md)을 따른다.

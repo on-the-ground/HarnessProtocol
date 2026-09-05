@@ -56,11 +56,11 @@ JUnit XML의 suite별 개수와 실행 시각을 확인했다. 기존 suite에�
 
 Git diff에서 tracked Kotlin·KDoc·host 코드·빌드 설정의 변경이 없음을 확인했고, [기존 실험 기록](../experiments/koog-validation/evidence/verification.json)의 소스·빌드 파일 SHA-256 11개와 현재 파일이 일치했다. 기존 실험 기록은 덮어쓰지 않았다. 재실행 결과는 각각 임시 build 경로의 test-results/test에 생성된다.
 
-## 현재 남은 검증
+## 이 검토 시점에 남아 있던 검증
 
-TaskOutcome의 필드·호출 실패 모델·수락 미확정 예외는 이미 선언했고 실제 adapter가 사용한다. 부분 산출물과 기본 문맥·취소·정리는 native 경계에서 검증했다. 남은 것은 시작·응답 확인 유실의 실제 주입, schema 집행, 영속 문맥의 경쟁·복구, 다중 자원·정확한 정리 상한 등의 조건이다.
+TaskOutcome의 필드·호출 실패 모델·수락 미확정 예외는 이미 선언했고 실제 adapter가 사용했다. 이 시점에는 시작·응답 확인 유실의 실제 주입, schema 지원 판정, 영속 문맥의 경쟁·복구, 다중 자원·정확한 정리 상한 등이 남아 있었다.
 
-새 Port에 적용한 native 25개를 바탕으로 미검증 시나리오를 확대한다. 이전 실험·legacy 회귀의 통과 수나 실행하지 않는 시나리오 정의 수로 전체 적합성을 대체하지 않는다.
+이 검토 이후 새 Port의 실제 검증을 G12까지 확대했다. 이전 실험·legacy 회귀의 통과 수나 역사적 시나리오 identity 수로 현재 적합성을 대체하지 않는다. 최신 범위는 [계약 경계 검증](contract-boundary-validation.md)과 [시나리오 종결](conformance-scenarios.md)을 따른다.
 
 ## 외부 총평 반영 후 추가 검토
 

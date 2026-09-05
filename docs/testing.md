@@ -4,9 +4,9 @@
 
 세 adapter의 새 Port 실행 검증은 `harness-native-integration`에서 수행한다. 실제 Codex App Server·Gemini SDK/core·Koog graph에 통제된 모델 경계를 연결하며, 실제 입력·지시·이력과 도구 효과를 확인한다. 준비·실행 결과·기존 시나리오에서 보완할 판정은 [실제 adapter 검증](native-port-validation.md)에 기록했다. factory·adapter·기존 회귀 suite·독립 Koog 실험 모두 현재 Port를 사용하며 구 실행 경로는 제거했다.
 
-임시 `ReferenceFixture`·참조 하네스·실행 subclass는 제거했다. `harness-conformance/src/testFixtures`의 공통 판정은 실제 runtime binding과 SDK 경계 binding에서 실행한다. 요구 수락·확인 유실에 이어 상호작용·문맥·네 outcome·다중 정리·관찰 부하·승인 범위·사용량·저장 장애 검사를 연결했다. [현재 단계별 증거와 한계](contract-boundary-validation.md), [전체 대응표](conformance-scenarios.md)를 따른다. G09의 활성화·실행 제약은 미해결이다.
+임시 `ReferenceFixture`·참조 하네스·실행 subclass는 제거했다. `harness-conformance/src/testFixtures`의 공통 판정은 실제 runtime binding과 SDK 경계 binding에서 실행한다. 요구 수락·확인 유실에 이어 상호작용·문맥·네 outcome·다중 정리·관찰 부하·승인 범위·사용량·저장 장애·작업 환경 검사를 G12까지 연결했다. [현재 단계별 증거와 한계](contract-boundary-validation.md), [전체 대응표](conformance-scenarios.md)를 따른다.
 
-기존 Core/Cleanup 본문 44개는 전체 HarnessFixture에 여전히 미연결이다. 대응하는 새 검사가 목적 일부를 실증했더라도 원래 본문 전체가 실행됐다고 세지 않는다. 미지원 선택 기능의 정확한 사전 거절과 지원 기능의 의미 이행을 구별하고, 실행 수는 JUnit에서 집계한다. 아래 계약 목록은 완료 목록이 아니다.
+기존 Core/Cleanup의 마지막 미연결 본문 44개는 목적별 대체·현재 구성의 기능 거절·잘못된 fixture 가정을 각각 기록한 뒤 제거했다. 원래 48개 identity는 역사적 inventory로만 남기며 통과 수로 세지 않는다. 미지원 선택 기능의 정확한 사전 거절과 지원 기능의 의미 이행을 구별하고, 실행 수는 JUnit에서 집계한다.
 
 검증 기준은 [Semantic contract](semantic-contract.md)와 [개정 계약](protocol-reference.md)이다. 기본 동작의 실행 주체는 실제 세 adapter이며 모델 경계만 통제한다. 별도로 adapter suite는 현재 구현의 SDK 변환·transport 회귀를, PublicModelTest는 값 타입을 검사한다. 아래 목록은 계약상 검사해야 할 범위로서 이미 실행한 항목과 미검증 항목을 모두 포함한다. 항목이 코드나 목록에 존재하는 것과 실제 검증을 통과한 것은 구별한다.
 
@@ -22,7 +22,7 @@
 
 공통 suite의 factory에 SdkBridge나 RecordingBridge를 요구하지 않는다. 기존 의도 투영 검사는 독립적인 선언으로 유지하고 adapter의 변환 코드 자체를 호출해 기대값을 만들지 않는다. Koog는 직접 연결하는 fixture로 같은 업무 판정을 검증한다.
 
-새 seam은 HarnessFixture.profiles()가 제공하는 고정된 구성·요구 사례다. expectedSupport·사전 검증·실제 수락의 기대값은 adapter의 조회 결과와 독립적으로 작성한다. 전체 profile에는 정상 기본 작업을 수락하는 사례가 있어야 한다. 조건부·미확인 지원을 Set<Capability>로 줄이지 않고 구체적인 수락·거절 사례로 검사한다. [공개 모델](public-model.md#독립-검증-경계)의 제어·관찰 수단을 따른다.
+요구 검사의 seam은 `ProfileFixture.profiles()`가 제공하는 고정된 구성·요구 사례다. expectedSupport·사전 검증·실제 수락의 기대값은 adapter의 조회 결과와 독립적으로 작성한다. 전체 profile에는 정상 기본 작업을 수락하는 사례가 있어야 한다. 조건부·미확인 지원을 `Set<Capability>`로 줄이지 않고 구체적인 수락·거절 사례로 검사한다. 다른 검사는 증명할 사실에 맞는 작은 fixture를 사용한다. [공개 모델](public-model.md#독립-검증-경계)의 제어·관찰 수단을 따른다.
 
 ## 필수 공통 시나리오
 
@@ -34,7 +34,7 @@
 - 취소 요청이 완료를 미리 확정하지 않는다. 자연 완료 경쟁, 즉시 취소, 정리 중 경쟁을 검사한다.
 - close/release는 공개한 적용 범위·전체 시간 상한 안에서 handle을 정리한다. 여러 자원과 비협조적 작업에서도 waiter가 남지 않으며, 실제 종료를 확인하지 못하면 Unresolved를 회수한다.
 - Unresolved 뒤에도 실제 효과가 발생할 수 있는 fixture로 거짓 취소를 검출한다. 같은 문맥의 새 작업은 [차단·복구 범위](lifecycle-and-concurrency.md#문맥-차단과-복구-범위)에 따라 거절한다.
-- 정리 시작 직후 종결 보고가 도착하는 fixture를 검사한다. 공개한 상한 안이면 그 결과를 회수하고 상한을 넘기면 Unresolved로 종결한다. 확인할 수 있는 결과를 조기 종결로 잃지 않아야 한다.
+- 정리와 native terminal이 경쟁하면 실제로 먼저 확인된 terminal fact를 보존하고 이후 알림이 outcome을 덮어쓰지 않게 한다. 예약된 완료가 취소보다 우선한다고 가정하지 않는다.
 - 반대 방향으로 Task 범위에 해당하는 충분한 종결 근거를 전달한 fixture에서 Unresolved를 반환하면 실패한다. Completed·Failed·Cancelled 각각을 검사하고, handle 확정 뒤 도착한 알림이 outcome을 덮어쓰지 않는 경우와 구별한다.
 - 관찰 stream 종료와 실제 실행 종료를 분리한다. 내부 turn만 끝나고 Task는 진행 중인 경우, 귀속된 실행 전체의 종료를 입증한 경우, process 밖 작업이 남아 있는 경우를 구별해 [종결 증거 규칙](lifecycle-and-concurrency.md#종결-확인의-근거)을 검사한다. 공통 판정에는 provider 신호 이름을 넣지 않는다.
 - 같은 harness가 소유한 동일 문맥의 모든 handle에 차단이 적용된다. release 뒤에도 차단을 우회하지 못하고, 독립된 새 session에서는 기존 문맥을 자동 복사하지 않고 시작할 수 있다. 새 session 생성이 이전 작업의 외부 효과를 중단했다는 판정을 만들지 않는다.
@@ -42,7 +42,7 @@
 - 산출물이 없는 정상 종결도 Completed(output=null)로 회수한다. 실제 빈 문자열을 제공한 경우와 구별하며 이전에 확보한 부분 산출물은 종결 보고의 null 때문에 지우지 않는다.
 - 잘못된 값·지원 불가 요구·호출 실패와 handle을 얻은 이후 outcome을 구별한다.
 - 시작 요청 수락 뒤 응답을 잃은 경우를 요청 전 거절과 구별한다. handle 반환 실패만 보고 재시도하거나 같은 문맥에 새 작업을 시작하지 않는다.
-- 같은 하위 ID를 가진 서로 다른 Task의 이벤트·응답이 섞이지 않는다. 입력의 공백·지시·활성화 envelope 의미와 reopen의 정규화된 응답 ID를 보존한다.
+- 같은 하위 ID를 가진 서로 다른 Task의 이벤트·응답이 섞이지 않는다. 공백 입력을 그대로 전달하고, null/빈 지시를 구별하며, active skill 본문을 실제 native 지시에 적용하고, reopen의 정규화된 응답 ID를 보존한다.
 - 완료가 업무 성공이나 산출물 schema 검증을 뜻하지 않음을 확인한다.
 
 사용량을 관찰하는 경로에서는 provider 증분과 누적 입력을 각각 사용해 공통 누적 snapshot이 같은 의미가 되는지 검사한다. 반복 snapshot, 누락·reset, Task/Session 분리와 최종 관찰을 확인한다. 실패 분류는 구조화 정보·확인된 native 예외와 자연어 문구만 있는 경우를 구별한다.
@@ -66,7 +66,7 @@ reportUsageSnapshot은 누적값 전체, reportUsageDelta는 겹치지 않는 �
 
 한 선택 기능의 지원이 다른 보장을 의미하지 않는다. checkpoint 복원이 이력 조회나 외부 효과의 exactly-once를 자동 보장하는지 검사하지 말고, 그런 별도 계약을 제공할 때 별도 시나리오로 검증한다.
 
-세션 승인에서는 PermissionScenario의 실제 대상 집합을 준비하고 허용 범위 안의 후속 행위와 범위 밖 행위를 각각 실행한다. 같은 scopeId의 권한 확장·다른 session 전파를 허용하지 않는다. 범위를 제공할 수 없는 구현은 지속 승인 선택지를 생략하되 지원한다고 선언한 일회 승인 계약은 그대로 검사한다.
+세션 승인을 제공하는 adapter는 `SessionApprovalGrant`가 설명하는 실제 대상 집합을 준비하고 허용 범위 안의 후속 행위와 범위 밖 행위를 각각 실행해야 한다. 같은 scopeId의 권한 확장·다른 session 전파를 허용하지 않는다. 현재 세 구성은 그 범위를 집행할 수 없어 지속 승인 선택지를 제공하지 않으며, Codex의 일회 승인은 실제 효과로 검사한다.
 
 ResponseControl로 실제 수락·미수락 각각에서 acknowledgement를 잃게 한다. InteractionResponseUnconfirmedException과 Task/Interaction identity, pending 제거·RESPONSE_UNCONFIRMED, 재응답 거절·native 중복 제출 없음으로 판정한다. 이때 Task의 Cancelled나 provider의 거절을 합성하지 않는다.
 
@@ -78,13 +78,13 @@ TaskDiagnostics가 지원되면 진단 observer만 느리게 하거나 진단을
 
 ## 현재 검증 위치와 실행 명령
 
-현재 검증 자산은 다음과 같다. native·값 타입·SDK 경계 회귀와 실행되지 않는 시나리오 라이브러리를 구별한다.
+현재 검증 자산은 다음과 같다. native·값 타입·SDK 경계 회귀와 역사적 scenario inventory를 구별한다.
 
 | 위치 | 현재 내용 / 전환 |
 |---|---|
 | harness-adapter-testkit | RecordingBridge, SdkAdapterContractTest, SpecSpace/IntentProjection. SDK 경계 검사 11개와 공통 lifecycle binding. TaskMappingProbe는 production ManagedTask의 mapper 출력을 관찰한다 |
 | harness-protocol/src/test | PublicModelTest: 미확인·부재·unknown 합산·독립 제약·명시 승인 범위의 값 타입 회귀 |
-| harness-conformance | main의 evidence-control seam, testFixtures의 lifecycle 9개·runtime 8개·수락 확인 7개·요구 사례 factory 및 미연결 Core 27개·Cleanup 17개. testFixtures 의존으로 소비한다. concrete 검사 실행은 consumer 모듈에서 집계하며 conformance 단독 실행은 0 |
+| harness-conformance | main의 목적별 evidence seam과 testFixtures의 공통 판정. testFixtures 의존으로 소비하며 concrete 실행은 consumer 모듈에서 집계한다. 만능 HarnessFixture와 미연결 Core/Cleanup 본문은 없다 |
 | harness-codex/src/test, harness-gemini-cli/src/test | 현재 Port 공통 suite, mapper·정책·interaction 검사. Gemini에는 실제 process를 구동하는 ProcessLifecycleTest도 포함 |
 | harness-process-bridge/src/test | BridgeProtocolTest |
 | harness-native-integration/src/test | 세 실제 runtime의 구성·모델 경계와 공통 suite binding, Koog 실제 도구 효과 검사. 공통 판정 본문은 conformance에 있다 |
@@ -110,6 +110,6 @@ Koog 실험 18개와 기존 회귀 71개의 [검증 기록](../experiments/koog-
 
 참조 하네스에서 얻었던 48개 통과는 제거 전의 이력이며 현재 검증 수에서 제외한다. 현재 집계와 제거 전 기록은 [native 검증 기록](native-port-validation.md#실행-결과)에서 구별한다. 이전 suite의 유효한 공통 행동과 SDK 특정 검사는 현재 adapter로 이전했다. 관찰 상실·정리 만료는 Unresolved, 재개는 명시적 persistence 요구, 범위 없는 지속 승인은 선택지 제외로 검증한다. `RecordingBridge`, stub App Server, 모델 응답 제어는 이 구현 경계 검사용이며 삭제한 임시 Port 구현과 역할이 다르다.
 
-실제 App Server 승인 payload 검증과 Gemini SDK build의 제약 확인은 남아 있다. 통합 결과는 세 구현별로 보고하며 일부 환경이 준비되지 않으면 부분 완료로 표시한다.
+실제 App Server 승인 payload와 Gemini SDK build의 현재 고정 경로는 host/native suite에서 검증한다. 외부 실모델과 다른 SDK 버전은 별도 통합 범위이며, 일부 환경이 준비되지 않으면 부분 완료로 표시한다.
 
 문서 개편 후 기존·계획된 보장의 누락을 검토하고 기존 suite를 재실행한 결과는 [회귀 검토](regression-review.md)에 기록한다. 위 새 시나리오를 문서에 추가한 사실과 그 시나리오를 구현·실행하여 통과한 사실은 구별한다.

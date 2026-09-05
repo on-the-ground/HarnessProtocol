@@ -2,7 +2,7 @@
 
 기준일: 2026-09-04. [설계 선언](../AHP_CHARTER.md) → [Semantic contract](semantic-contract.md) → 상세 계약을 따른다. 선언은 harness-protocol의 dev.harnessprotocol에, 적합성 fixture는 harness-conformance에 있다.
 
-공개 선언에 이어 세 adapter와 factory를 새 Port에 연결했다. 기존 회귀 검사도 현재 Port·adapter로 이전했고 legacy 타입·구현을 제거했다. 현재 동작 증거와 미검증 범위는 [실제 adapter 검증](native-port-validation.md)에 기록하며 전체 적합성 통과·발행은 [전환 계획](port-revision-plan.md)을 따른다.
+공개 선언에 이어 세 adapter와 factory를 새 Port에 연결했다. 기존 회귀 검사도 현재 Port·adapter로 이전했고 legacy 타입·구현을 제거했다. G01–G12의 현재 동작 증거와 적용 범위는 [계약 경계 검증](contract-boundary-validation.md)에 기록하며 artifact 발행은 [전환 계획](port-revision-plan.md)을 따른다.
 
 ## 공개 형태
 
@@ -55,28 +55,28 @@ ContextManaged와 ReasoningDelta를 독립적인 기본 이벤트로 되살리�
 
 ## 독립 검증 경계
 
-HarnessFixture.profiles()는 고정한 runtime 구성별 expectedSupport와 RequirementCase를 제공한다. 단순 supported() 집합으로 조건부·미확인 지원을 축소하지 않는다. 기대값을 adapter.support나 validate에서 복사하는 것도 금지한다.
+`ProfileFixture.profiles()`는 고정한 runtime 구성별 expectedSupport와 RequirementCase를 제공한다. 단순 supported() 집합으로 조건부·미확인 지원을 축소하지 않는다. 기대값을 adapter.support나 validate에서 복사하는 것도 금지한다.
 
 각 case에는 SessionSpec·TaskRequest, 사전 검증과 실제 create/start의 기대 판정이 있다. 전체 profile에는 기본 작업을 수락하는 사례가 있어야 하며, 조건부 지원의 수락·거절·미확인을 해당 구체적 사례로 검사한다.
 
 | 시나리오 | fixture 수단 |
 |---|---|
-| 문맥 연속성·지시·skill | observedInput / observedInstructions / observedActivatedSkills / observedContextContains. 실제 runtime 경계에서 관찰하며 예정 답변이나 spec으로 역산하지 않는다. |
+| 문맥 연속성·입력·skill | 통제된 모델 경계의 실제 prompt와 decoded input을 관찰한다. active 본문 적용, inactive 본문 부재, 작업 위치를 spec으로 역산하지 않는다. |
 | 시작·응답 확인 유실 | StartControl·ResponseControl로 실제 수락 여부를 통제하고 native 제출·수락 횟수를 관찰한다. |
-| 세션 권한 범위 | PermissionScenario의 실제 coveredTargets를 준비한다. 승인 후 범위 안·밖 효과를 시도하고 observedEffects로 판정한다. |
-| 사용량 | reportUsageSnapshot과 reportUsageDelta의 의미를 고정한다. null이 patch 생략인지 unknown인지 구현별로 바뀌지 않는다. |
-| 부분·구조화 산출물 | reportOutput(OutputObservation)으로 종료 전 사실을 제공하고 네 outcome으로 종결한다. 구조화 원문과 native 검증 여부를 구별한다. |
-| 저장·재개 | SessionControl로 실제 저장·재개 실패와 정규화 참조를 유도한다. |
-| 진단 격리 | reportDiagnostic으로 진단을 넘치게 해도 기본 의미 이벤트·outcome이 영향을 받지 않는지 검사한다. |
-| 실행·재시작 | RuntimeControl은 실제 귀속 범위·지원 철회·process 경계를 제어한다. 단순 harness 재생성을 process 재시작 통과로 세지 않는다. |
+| 세션 권한 범위 | 실제 native 승인과 격리된 업무 자원을 사용해 허용 전·후와 다른 Task/session의 효과를 센다. |
+| 사용량 | provider의 실제 누적 snapshot과 구간 delta를 사용한다. null이 patch 생략인지 unknown인지 구현별로 바뀌지 않는다. |
+| 부분·구조화 산출물 | 실제 model stream·Koog tool에서 부분 산출물을 만든 뒤 네 outcome으로 종결한다. 구조화 요구를 지원하지 않는 현재 구성은 작업 전에 거절한다. |
+| 저장·재개 | 실제 임시 저장 파일의 상실·복원과 native host가 반환한 정규화 참조를 관찰한다. |
+| 진단 격리 | 실제 model stream/tool 부하로 진단과 의미 event queue를 독립적으로 넘치게 한다. |
+| 실행 제약 | 격리된 파일·network 효과를 각각 시도한다. 승인이 hard upper bound를 넓히지 못하며 집행할 수 없는 조합은 사전 거절한다. |
 
 검증자는 공개 Port·fixture·계약 문서를 사용한다. 구현자는 같은 명령을 자신의 native 경계에 연결한다. 의미가 모호하면 검사를 구현에 맞춰 낮추지 않고 계약을 함께 고친다.
 
-## 기존 실험과 남은 실행 검증
+## 기존 실험과 현재 실행 검증
 
 Koog 독립 실험도 현재 Port와 production ManagedTask를 참조하도록 이전했다. 과거 revision 소스 추출은 제거했으며 승인·질문·보관·비협조적 정리를 현행 계약으로 검사한다. 과거 evidence는 덮어쓰지 않고 [실험 안내](../experiments/koog-validation/README.md)에 현재 실행과 구별했다.
 
-공개 값 타입의 회귀 검사는 harness-protocol의 PublicModelTest다. 실제 세 runtime의 실행 검사는 harness-native-integration의 25개다. 임시 ReferenceFixture 구현은 제거했고, harness-conformance의 48개 정의는 testFixtures로 옮겨 실제 adapter 검증에 재사용한다. 미연결 정의의 컴파일은 적합성 통과가 아니다. 전체 적합성을 값 타입 검사·SDK 경계 suite·일부 native 시나리오 통과로 대체하지 않는다.
+공개 값 타입의 회귀 검사는 harness-protocol의 PublicModelTest다. 실제 세 runtime의 실행 검사는 harness-native-integration에 있고, process SDK·host 검사는 별도 경계를 확인한다. 임시 ReferenceFixture와 만능 HarnessFixture는 제거했다. 원래 C/K 48개 identity는 [처리 근거](conformance-scenarios.md)를 보존하되 실행 코드로 남기지 않는다. 전체 적합성을 과거 통과 수나 역사적 정의 수로 대체하지 않는다.
 
 ## 공개 Port 선언 당시 검증 기록
 

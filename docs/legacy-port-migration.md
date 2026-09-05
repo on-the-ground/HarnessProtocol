@@ -28,7 +28,7 @@ Codex에서 구조화된 실패 코드가 없으면 UNKNOWN을 유지한다. Gem
 
 기존 질문의 표현 불가 검사는 현재 Question·Answer로 실제 질문 도구를 이어 실행하는 검사로 바꿨다. 반복 한도는 산출물 null을 보존하고, 비협조적 효과는 Unresolved 이후에도 실제 발생할 수 있으며 판정이 바뀌지 않는지 검사한다. 이 구성의 승인·질문·파일 보관 지원을 production bare Koog 구성의 지원으로 일반화하지 않는다.
 
-과거 evidence JSON은 당시 기록으로 유지한다. 현재 실행 결과는 [native 검증 기록](native-port-validation.md#실행-결과)과 [Koog 이전 기록](../experiments/koog-validation/evidence/current-port-migration.json)에 구분한다. 48개 미연결 conformance 정의는 계속 컴파일만 하며 실행·통과 수에 넣지 않는다.
+과거 evidence JSON은 당시 기록으로 유지한다. 현재 실행 결과는 [native 검증 기록](native-port-validation.md#실행-결과)과 [Koog 이전 기록](../experiments/koog-validation/evidence/current-port-migration.json)에 구분한다. 당시 미연결 conformance 정의는 실행·통과 수에 넣지 않았고, 이후 [목적별 처리 근거](conformance-scenarios.md)를 남긴 뒤 실행 코드에서 제거했다.
 
 ## 검증 범위
 

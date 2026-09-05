@@ -118,7 +118,7 @@ respond, requestCancellation은... 아무래도 interrupt/exception 형태로 �
 
 **2) 한 Task에 TaskEvent가 여럿?** — 네, 당연히. `events: Flow<TaskEvent>`는 Task 생명주기 전체에 걸친 스트림이에요. `TaskStarted` → (수많은 `MessageDelta`/`ToolCallChanged`/`EffectChanged`...) → 마지막에 딱 하나의 `Terminal` 서브타입(`TaskCompleted`/`Failed`/`Cancelled`/`Unresolved`)으로 끝나요. 다대일(N events : 1 outcome) 구조.
 
-**3) TaskOutcome을 바꾸는 주체는?** — 소비자(당신) 쪽에선 절대 못 바꿔요. 오직 **adapter 구현체**가 내부적으로 바꿔요 — 실제 provider(Codex/Gemini SDK)의 원본 신호를 받아서 내부 제어 API(`TaskControl`류 — `reportRunning`, `reportCompletion`, `reportFailure`...)를 호출하는 식으로. 이건 harness 소비자에게는 안 보이는 내부 계약이에요. 소비자는 오직 `events`/`awaitOutcome()`로 "관찰"만 하고, `requestCancellation()`으로 "요청"만 할 수 있어요.
+**3) TaskOutcome을 바꾸는 주체는?** — 소비자(당신) 쪽에선 바꿀 수 없어요. **adapter 구현체**가 실제 provider/runtime의 종결 근거를 해석해 한 번 확정합니다. process adapter와 Koog adapter가 내부적으로 같은 runtime helper를 쓸 수 있지만 이는 공개 Port가 아닙니다. 소비자는 `events`/`awaitOutcome()`로 관찰하고 `requestCancellation()`으로 중단을 요청합니다.
 
 **4) respond/requestCancellation이 interrupt/exception인가?** — 아니요, 그건 좀 다른 프레임이에요. 둘 다 **협조적 요청(cooperative request)**이지 강제 인터럽트가 아니에요.
    - `respond()`는 Task가 띄운 `InteractionRequest`(승인/질문)에 대한 응답이고, 응답이 늦어서 유실되면 `InteractionResponseUnconfirmedException`이 나긴 하지만 이건 "응답 자체가 실패했다"는 신호지 Task를 강제로 끊는 게 아니에요.
@@ -406,4 +406,3 @@ PersistentSessions       (추가 interface)
 **더 크게 보면 이건 이 프로토콜 전체에 반복되는 원칙의 또 다른 사례예요** — "진실은 harness/storage가 결정하고, 호출자의 입력은 어디까지나 요청일 뿐 신뢰의 근거가 아니다." `CompatibilityReport`가 호출자 짐작이 아니라 harness가 답하는 것도 같은 원리고, `TaskState`가 호출자의 이벤트 재구성이 아니라 harness가 직접 보장하는 것도 같은 원리였잖아요. 여기선 그 원리가 "세션 정체성"이라는 영역에 적용된 거예요.
 
 이제 (1) harness 재생성/process 재시작까지 버티는 더 강한 영속성 케이스로 갈까요, 아니면 (2) 다시 위로 올라가서 지금까지 본 개념 전체를 한 장으로 정리해볼까요?
-

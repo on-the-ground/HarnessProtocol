@@ -2,7 +2,7 @@
 
 이 기록은 [기존 계획](port-revision-plan.md)의 후속 단계다. 실제 SDK/runtime에 통제된 모델 응답을 공급하며, 전달 지연·유실은 명시한 경계에만 주입한다. 검증 수는 JUnit 실행 결과이며 미지원 기능이나 실행되지 않은 공통 정의를 통과로 세지 않는다. 전체 회귀 수는 최종 전체 실행에서 다시 산정한다.
 
-현재 G09는 미해결이며 전체 계약 적합성 완료를 선언하지 않는다. 각 단계의 통과는 아래 명시한 구성과 경계의 증거다. 기존 Core/Cleanup 본문 44개와의 목적 대응은 [시나리오 목록](conformance-scenarios.md)을 따른다.
+G03–G12의 현재 구성 검증은 모두 닫혔다. 각 단계의 통과는 아래 명시한 구성과 경계의 증거이며, 제공하지 않는 선택 기능의 성공 경로나 외부 실모델 검증까지 뜻하지 않는다. 원래 Core/Cleanup 목록의 처리 근거는 [시나리오 목록](conformance-scenarios.md)을 따른다.
 
 ## G03 — 상호작용 경쟁
 
@@ -54,26 +54,26 @@ Koog에서는 네 실제 도구를 NonCancellable 상태로 보류하고 200ms p
 
 Codex에 연결한 공통 [3개 검사](../harness-native-integration/evidence/g08-approval-scope.json)가 통과했다. sessionGrant와 APPROVE_FOR_SESSION이 노출되지 않으며 억지로 제출해도 native 전달 전에 거절된다. APPROVE_ONCE로 실제 파일 효과를 한 번 허용한 뒤 같은 session의 다음 Task와 독립 session에서 같은 명령이 다시 승인을 요구한다. 두 번째 요청을 거절하면 파일 효과 수는 한 번으로 유지되고 Task 자체는 정상 완료할 수 있다. `APPROVE_FOR_SESSION`의 공개 계약을 삭제하거나 일회 승인을 세션 권한으로 확대하지 않았다.
 
-## G09 — 활성화와 실행 제약: 결정 대기
+## G09 — 활성화와 실행 제약
 
-[첫 실행 5개 중 4개 실패](../harness-native-integration/evidence/g09-environment-first-run.json)를 보존한다. Codex·Gemini에 active/inactive skill을 함께 제공했지만 실제 모델 문맥에서 active skill의 본문을 찾지 못했다. 현재 `$name` envelope를 전달했다는 것과 skill 본문이 실제 적용됐다는 것은 다른 증거다. Gemini SDK의 skill 활성화는 실제 도구 실행을 거치므로, 그 절차의 승인·적용 의미도 보존해야 한다.
+[첫 실행 5개 중 4개 실패](../harness-native-integration/evidence/g09-environment-first-run.json)는 두 모호성을 드러냈다. `$name` 같은 activation envelope만 전달해서는 active skill 본문이 모델 문맥에 적용됐음을 증명하지 못했고, 여러 파일·네트워크 효과를 한 명령에 묶으면 명령 전체의 거절을 sandbox 집행 증거로 오판할 수 있었다.
 
-Codex의 파일/네트워크 검사는 workspace·추가 허용 root·바깥 경로의 쓰기를 한 명령에 묶었다. native 정책이 명령 전체를 거절하여 허용 대상의 쓰기도 발생하지 않았다. 따라서 ReadOnly 검사의 녹색 결과도 sandbox 집행의 독립 증거가 아니다. 허용·거절 효과를 분리하고 실행 경계를 관찰하는 보완이 필요하다.
+계약을 다음과 같이 확정했다.
 
-별도로 G02/G08의 실제 승인 fixture는 ReadOnly와 CallerDecides를 함께 요구하고, 명시적인 권한 상승을 승인하면 파일 쓰기가 성공한다. 이 관찰은 Required 제약이 승인보다 우선하는 경계인지, 승인이 확장할 수 있는 초기 정책인지에 대한 공개 의미를 확정해야 함을 드러낸다. 기존의 녹색 승인 검사가 이 조합의 계약 적합성까지 증명하지는 않는다.
+1. `SkillReference.activate=true`는 모든 Task의 실제 native 지시에 skill 본문을 적용한다는 보장이다. 이름이나 경로만 제공하는 것으로 충족하지 않는다. `activate=false`인 skill은 사용할 수 있게 제공하되 본문을 강제로 적용하지 않는다.
+2. `ExecutionConstraint.Required`는 승인이 넓힐 수 없는 hard upper bound다. 승인 정책은 그 경계 안의 효과를 더 거절할 수 있다. adapter가 임의 명령의 실제 접근 범위를 판별하지 못하면 제한 제약과 확장 가능한 승인 정책의 조합을 작업 전에 거절한다.
 
-사용자에게 요청한 결정은 다음 두 가지다. 권장안은 아직 확정된 계약 변경이 아니다.
+Codex·Gemini process adapter는 작업 폴더와 각 skill directory/`SKILL.md`를 실제 시작 전에 검증하고, active 본문을 native 지속 지시에 포함한다. 원래 Task 입력은 skill 명령을 붙이지 않고 그대로 보낸다. 두 adapter의 [workspace 검사 4개](../harness-native-integration/evidence/g09-environment.json)는 두 Task 모두에서 active 본문·작업 위치·active/inactive 이름과 경로를 확인하고 inactive 본문의 부재 및 잘못된 artifact의 사전 거절을 확인한다. Koog 기본 구성은 workspace/skill 요구를 거절한다.
 
-1. `activate=true`는 실제 적용 보장인가, native 활성화 요청 전달인가? 실제 적용 보장을 유지하고 이행 불가능한 구성을 사전 거절하는 방향을 권장한다.
-2. Required 실행 제약을 승인이 확장할 수 있는가? 승인이 넘을 수 없는 요구 경계로 유지하고 집행 불가능한 조합을 거절하는 방향을 권장한다.
+Codex의 제한 실행은 `DenyAll`과 결합한 세 실제 효과 검사로 확인했다. ReadOnly는 쓰기를 노출하지 않고, WorkspaceWrite는 허용 root 밖 쓰기와 network를 허용하지 않으며, network 허용이 filesystem 상한을 넓히지 않는다. `DenyAll`이 상한 안 효과도 거절할 수 있음은 승인과 실행 제약이 독립임을 보여 준다. Codex의 `CallerDecides`·`AgentReviewed`와 제한 실행 제약 조합, Gemini·Koog의 명시적 실행 제약은 집행할 수 없어 요구 판정에서 사전 거절한다.
 
-결정 후 Port·KDoc·요구 수락 표·host 설정과 실제 효과 검사를 함께 맞춘다. 현 구현에 맞춰 의미를 암묵적으로 낮추거나, 실패 검사를 건너뛰어 단계를 닫지 않는다.
+G09 workspace/실행 7개와 갱신된 요구 판정 103개를 함께 실행한 [110개 결과](../harness-native-integration/evidence/g09-environment.json)는 모두 통과했다. 복합 명령의 “아무 효과도 없음”을 개별 상한의 증거로 재사용하지 않았다.
 
 ## G10 — 구조화 산출물 요구의 적용 범위
 
 현재 세 production 구성은 schema를 집행하는 실행 경로를 제공하지 않는다. 따라서 이 단계의 적합성 조건은 JSON처럼 보이는 텍스트를 Structured로 포장하는 것이 아니라, 구조화 산출물 요구를 작업 시작 전에 거절하는 것이다. `validatedByHarness=false`도 산출물 형태 요구를 제거하지 않는다.
 
-[G01 실행 증거](../harness-native-integration/evidence/requirement-admission.json)의 세 native 구성 × 검증 책임 두 종류 × preflight/direct = 12개 요구 검사가 이 조건을 검증한다. 다섯 profile의 지원 표 검사도 미지원을 확인한다. 기존 91개 실행에 포함된 검사이며 신규 12개로 더하지 않는다. 선택 기능을 새로 구현하거나, 미지원 선택 보장을 기본 계약으로 강제하지 않았다. 향후 schema 실행 경로를 추가하면 VALID/INVALID/NOT_VALIDATED와 부분 산출물의 실제 의미를 별도 실증해야 한다.
+[갱신된 요구 판정 증거](../harness-native-integration/evidence/g09-environment.json)의 세 native 구성 × 검증 책임 두 종류 × preflight/direct = 12개 요구 검사가 이 조건을 검증한다. 다섯 profile의 지원 표 검사도 미지원을 확인한다. 103개 요구 판정 실행에 포함된 검사이며 신규 12개로 더하지 않는다. 선택 기능을 새로 구현하거나, 미지원 선택 보장을 기본 계약으로 강제하지 않았다. 향후 schema 실행 경로를 추가하면 VALID/INVALID/NOT_VALIDATED와 부분 산출물의 실제 의미를 별도 실증해야 한다.
 
 ## G11 — 사용량의 측정 범위와 보존
 
@@ -93,10 +93,10 @@ Koog의 실제 두 도구 호출을 포함한 세 모델 호출에서는 일부 
 
 범위는 명시된 동일 애플리케이션 프로세스다. G04에서 미확정 문맥 차단의 하네스 재생성 후 보존, G01에서 프로세스 재시작·동시 writer 요구의 사전 거절을 검증한다. 영속 지원을 외부 저장소의 항상 가용함으로 해석하지 않으며, 저장 접근 실패를 정상 재개로 숨기지 않는다. 별도의 동적 capability 변경 통로가 없는 구성에 지원 철회 알림을 합성하지 않았다.
 
-## 통합 회귀 checkpoint
+## 이전 통합 회귀 checkpoint
 
 `./gradlew.bat --offline test :harness-conformance:testFixturesClasses hostTests -PnativeHarnessTests -PstrictHostTests --continue --console=plain`을 실행했다. [JVM·host 집계](../harness-native-integration/evidence/g03-g12-regression-summary.json)는 JVM 272개 중 실패 4개·오류/건너뜀 0개, Python host 15개·Node host 5개 통과를 기록한다. JVM에는 [실제 native 192개](../harness-native-integration/evidence/g03-g12-full-regression.json)가 포함된다. 변경 없는 protocol 값 타입 검사는 Gradle up-to-date 결과를 재사용했고 나머지 결과가 있는 JVM test task는 실행했다.
 
-실패는 G09의 active skill 본문 부재 2개와 허용 쓰기까지 차단된 복합 명령 유도 2개다. G09의 ReadOnly 통과 1개도 집행의 독립 증거로 세지 않는다. G09를 제외한 native 187개와 다른 JVM 80개에서는 새 실패가 없었다. G04·G12의 production 문맥 수정은 기존 SDK 회귀와 실제 runtime 회귀를 함께 통과했다. 현재 Kotlin 소스·sample·독립 실험에 legacy Port 및 제거한 참조 하네스/AgentHarnessContractTest 참조는 없다.
+이 checkpoint의 실패는 G09의 active skill 본문 부재 2개와 허용 쓰기까지 차단된 복합 명령 유도 2개였다. 이후 G09 계약·구현·검사를 위와 같이 수정해 110개 집중 실행이 통과했다. G04·G12의 production 문맥 수정은 기존 SDK 회귀와 실제 runtime 회귀를 함께 통과했다. 현재 Kotlin 소스·sample·독립 실험에 legacy Port 및 제거한 참조 하네스/AgentHarnessContractTest 참조는 없다.
 
-이 실행 뒤 G11/G03의 identity assertion을 보강한 12개를 재검증해 통과했다. production 변경은 없었다. 단계별 재실행을 서로 더해 고유 검사 수를 부풀리지 않는다. 44개 미연결 원본 본문, 외부 실모델, sample 빌드, artifact 발행, 독립 Koog 실험은 이번 실행에 포함되지 않는다. G09 결정·구현·재검증 후 최종 상태를 다시 기록해야 한다.
+이 실행 뒤 G11/G03의 identity assertion을 보강한 12개를 재검증해 통과했다. production 변경은 없었다. 단계별 재실행을 서로 더해 고유 검사 수를 부풀리지 않는다. 원래 44개 미연결 본문은 이후 [목적별로 종결](conformance-scenarios.md)하고 제거했다. 외부 실모델, artifact 발행, 독립 Koog 실험은 현재 구성의 최종 회귀 집계와 별도다.
