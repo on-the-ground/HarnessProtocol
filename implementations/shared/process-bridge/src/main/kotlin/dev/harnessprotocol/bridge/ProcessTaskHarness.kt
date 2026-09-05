@@ -22,7 +22,9 @@ abstract class ProcessTaskHarness(
     protected val storageNamespace: StorageNamespace? = null,
 ) : AgentHarness {
     private val closed = AtomicBoolean(false)
+    private val lifecycle = Mutex()
     private val contexts = ConcurrentHashMap<SessionId, Context>()
+    private val discardObligations = ConcurrentHashMap.newKeySet<SessionId>()
     protected abstract fun sessionPayload(spec: SessionSpec): JsonObject
     protected abstract fun ingest(task: ManagedTask, spec: SessionSpec, request: TaskRequest): (JsonObject) -> Unit
     protected open fun validateReopen(ref: PersistentSessionRef, spec: SessionSpec): CompatibilityReport = CompatibilityReport.Compatible
@@ -81,20 +83,20 @@ abstract class ProcessTaskHarness(
         }
     }
 
-    final override suspend fun createSession(spec: SessionSpec): AgentSession {
+    final override suspend fun createSession(spec: SessionSpec): AgentSession = lifecycle.withLock {
         check(!closed.get()) { "Harness is closed" }
         validate(spec).requireCompatible()
         val result = call("create_session", sessionPayload(spec))
-        return open(result, spec, false)
+        open(result, spec, false)
     }
 
-    protected suspend fun reopen(ref: PersistentSessionRef, spec: SessionSpec): AgentSession {
+    protected suspend fun reopen(ref: PersistentSessionRef, spec: SessionSpec): AgentSession = lifecycle.withLock {
         check(!closed.get()) { "Harness is closed" }
         require(ref.provider == provider && ref.namespace == storageNamespace) { "Foreign persistent session reference" }
         validate(spec).requireCompatible()
         validateReopen(ref, spec).requireCompatible()
         val existing = contexts.computeIfAbsent(SessionId(ref.id)) { Context(it) }
-        return existing.mutex.withLock {
+        existing.mutex.withLock {
             if (isBlocked(existing)) throw SessionBlockedException(existing.id, "Prior work on this context is unresolved")
             check(existing.active?.isTerminal != false) { "Context has an active task" }
             if (existing.handles.get() > 0 && existing.spec != spec) {
@@ -106,15 +108,60 @@ abstract class ProcessTaskHarness(
         }
     }
 
-    private fun open(result: JsonObject, spec: SessionSpec, resumed: Boolean): AgentSession {
+    private suspend fun open(result: JsonObject, spec: SessionSpec, resumed: Boolean): AgentSession {
         val id = SessionId(result.getValue("sessionId").jsonPrimitive.content)
+        val disposition = SessionDisposition(
+            retention = when ((result["retention"] as? JsonPrimitive)?.contentOrNull) {
+                "ephemeral" -> ContextRetentionDisposition.EPHEMERAL
+                "materialized" -> ContextRetentionDisposition.MATERIALIZED
+                else -> ContextRetentionDisposition.UNKNOWN
+            },
+            historyVisibility = when ((result["historyVisibility"] as? JsonPrimitive)?.contentOrNull) {
+                "visible" -> UserHistoryVisibility.VISIBLE
+                "hidden" -> UserHistoryVisibility.HIDDEN
+                else -> UserHistoryVisibility.UNKNOWN
+            },
+        )
+        val unconfirmed = buildList {
+            if (spec.requirements.retention == ContextRetentionRequirement.Ephemeral &&
+                disposition.retention != ContextRetentionDisposition.EPHEMERAL
+            ) add(CompatibilityIssue(
+                "requirements.retention",
+                "Native session creation did not confirm ephemeral retention",
+                CompatibilityIssueKind.UNCONFIRMED,
+            ))
+            if (spec.requirements.historyVisibility == UserHistoryVisibilityRequirement.Hidden &&
+                disposition.historyVisibility != UserHistoryVisibility.HIDDEN
+            ) add(CompatibilityIssue(
+                "requirements.historyVisibility",
+                "Native session creation did not confirm hidden user-history visibility",
+                CompatibilityIssueKind.UNCONFIRMED,
+            ))
+        }
+        if (unconfirmed.isNotEmpty()) {
+            discardObligations += id
+            val discardConfirmed = withContext(NonCancellable) {
+                withTimeoutOrNull(cleanupBudget.total) {
+                    runCatching {
+                        bridge.confirmedRequest("discard_session", buildJsonObject { put("sessionId", id.value) })
+                    }.isSuccess
+                } ?: false
+            }
+            if (discardConfirmed) discardObligations -= id
+            val issues = if (discardConfirmed) unconfirmed else unconfirmed + CompatibilityIssue(
+                "session.discard",
+                "Native session discard is unconfirmed; harness close will retry it",
+                CompatibilityIssueKind.UNCONFIRMED,
+            )
+            throw RequirementUnconfirmedException(issues)
+        }
         sessionOpened(id, spec, resumed)
         val context = contexts.computeIfAbsent(id) { Context(id) }
         context.spec = spec
         context.handles.incrementAndGet()
         val ref = if (spec.requirements.persistence is PersistenceRequirement.Required)
             PersistentSessionRef(provider, requireNotNull(storageNamespace), id.value) else null
-        return Session(context, spec, ref)
+        return Session(context, spec, disposition, ref)
     }
 
     private class Context(val id: SessionId) {
@@ -136,6 +183,7 @@ abstract class ProcessTaskHarness(
     private inner class Session(
         private val context: Context,
         override val spec: SessionSpec,
+        override val disposition: SessionDisposition,
         override val persistentRef: PersistentSessionRef?,
     ) : AgentSession {
         override val id get() = context.id
@@ -204,15 +252,21 @@ abstract class ProcessTaskHarness(
 
         override suspend fun release() {
             if (!released.compareAndSet(false, true)) return
-            context.handles.decrementAndGet()
+            val ephemeral = spec.requirements.retention == ContextRetentionRequirement.Ephemeral
+            val remainingHandles = context.handles.decrementAndGet()
+            if (ephemeral && remainingHandles == 0) discardObligations += id
             withContext(NonCancellable) {
                 withTimeoutOrNull(cleanupBudget.total) {
                     context.mutex.withLock {
                         settle(context.active)
                         // Reopened handles share a native context. Releasing one handle must not
                         // discard the context still owned by another live handle.
-                        if (context.handles.get() == 0)
-                            runCatching { call("release_session", buildJsonObject { put("sessionId", id.value) }) }
+                        if (remainingHandles == 0) {
+                            val releaseConfirmed = runCatching {
+                                call("release_session", buildJsonObject { put("sessionId", id.value) })
+                            }.isSuccess
+                            if (releaseConfirmed && ephemeral) discardObligations -= id
+                        }
                     }
                 }
                 context.active?.takeUnless { it.isTerminal }?.unresolved(UnresolvedReason.CLEANUP_BOUND_EXCEEDED, "Session release reached its time bound")
@@ -239,7 +293,18 @@ abstract class ProcessTaskHarness(
         if (!closed.compareAndSet(false, true)) return
         runBlocking {
             withTimeoutOrNull(cleanupBudget.total) {
-                coroutineScope { contexts.values.map { async { settle(it.active) } }.awaitAll() }
+                lifecycle.withLock {
+                    coroutineScope {
+                        val activeCleanup = contexts.values.map { async { settle(it.active) } }
+                        val obligationCleanup = discardObligations.toList().map { id -> async {
+                            if (runCatching {
+                                bridge.confirmedRequest("discard_session", buildJsonObject { put("sessionId", id.value) })
+                            }.isSuccess) discardObligations -= id
+                        } }
+                        activeCleanup.awaitAll()
+                        obligationCleanup.awaitAll()
+                    }
+                }
             }
             contexts.values.forEach { context ->
                 context.active?.takeUnless { it.isTerminal }?.unresolved(UnresolvedReason.CLEANUP_BOUND_EXCEEDED, "Harness close reached its total bound")

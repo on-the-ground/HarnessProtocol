@@ -9,6 +9,8 @@
 | 목적 | 지원할 때 지켜야 할 보장 | 분리 이유 / 검증 상태 |
 |---|---|---|
 | 영속 문맥 보관·재개 | 보관 범위·수명·성공 여부, release/재생성 후 `reopenSession`, 모르는 ID 거절, desired configuration 적용 | 기본 문맥 연속성과 다른 목적. Koog의 완료 이력 저장 사례가 있으나 production 저장·복구는 미검증이다. |
+| Provider 문맥 retention | ephemeral이면 live native session 밖의 재개 가능한 conversation materialization 금지, 생성 응답의 실제 disposition 보고 | `createSession`이나 persistence 미요구만으로 ephemeral을 뜻하지 않는다. service-side telemetry·법적 보존은 별도 provider 정책이다. |
+| 사용자 history visibility | 일반 사용자 conversation history·Recents 노출 여부의 명시 요구와 실제 관측 | ephemeral materialization과 관련될 수 있지만 같은 계약은 아니다. 독립 근거가 없으면 UNKNOWN/UNCONFIRMED다. |
 | Caller 승인 | 대상 행위·허용 범위·decision, 승인 전 효과 없음, 거절·취소·중복 응답 처리 | Interaction 공통 구조 위의 구체적 판단. 도구별 중재를 전체 OS 권한 집행으로 해석하지 않는다. |
 | 질문·정보 응답 | 질문/답변 타입, 현재 요청, 일회 응답·철회, 같은 작업 계속 | 공개 Question/Answer 타입은 선언됐다. 현재 세 production adapter 구성은 요구를 거절한다. 독립 Koog 실험은 실제 질문 도구를 Question/Answer로 연결하며 production 구성으로의 통합은 별도다. |
 | 구조화 산출물 | 요구한 schema, 검증 책임, 유효/불완전/검증 실패의 구별 | 텍스트 전달과 schema 보증은 다르다. JSON 문자열 실험은 native schema 집행 검증이 아니다. |
@@ -32,6 +34,8 @@
 정적 선언과 런타임 조회는 함께 사용할 수 있다. 지원 정보에는 적용 구성·scope와 유효 조건이 있어야 하며, 이를 지원 보장으로 사용하는 기간이나 고정된 구성의 수명을 명시한다. 정적 정보만으로 판단할 수 없는 인증·자원 상태 등을 확인했다고 주장하지 않는다. 사전 검증은 실행 성공의 보장이 아니며, 종결 판정은 [Lifecycle](lifecycle-and-concurrency.md#종결-확인의-근거)을 따른다.
 
 영속성 지원에는 저장 namespace·재개 가능한 수명 경계와 [문맥 조정 범위](lifecycle-and-concurrency.md#문맥-차단과-복구-범위)를 포함한다. 다른 harness·process의 접근 요구를 이행할 수 없으면 그 구성을 거절한다. 단일 소유 조건을 문서화한 것만으로 임의의 동시 접근을 조정한다고 주장하지 않는다.
+
+Ephemeral retention과 영속 persistence를 동시에 요구하면 모순으로 거절한다. history visibility를 provider의 ephemeral boolean에서 추정하지 않는다. 요청한 retention은 native 생성 응답의 관측과 일치해야 하며, 응답이 없거나 반대면 handle을 성공으로 반환하지 않는다.
 
 ## 실행 환경 요구의 독립성
 

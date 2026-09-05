@@ -26,7 +26,7 @@ class RecordingBridge(
     private val recorded = java.util.concurrent.CopyOnWriteArrayList<Request>()
     private val channels = java.util.concurrent.ConcurrentHashMap<String, Channel<JsonObject>>()
     private val releasedIds = java.util.concurrent.CopyOnWriteArrayList<String>()
-    private val handlers = java.util.concurrent.ConcurrentHashMap<String, (JsonObject) -> JsonObject>()
+    private val handlers = java.util.concurrent.ConcurrentHashMap<String, suspend (JsonObject) -> JsonObject>()
 
     /** Ordered requests received so far. */
     val requests: List<Request> get() = recorded.toList()
@@ -50,7 +50,7 @@ class RecordingBridge(
         private set
 
     /** Overrides the response for [method]; throwing inside simulates a failed request. */
-    fun respondTo(method: String, handler: (JsonObject) -> JsonObject) {
+    fun respondTo(method: String, handler: suspend (JsonObject) -> JsonObject) {
         handlers[method] = handler
     }
 
@@ -64,7 +64,10 @@ class RecordingBridge(
             "create_session" -> {
                 val id = sessionIds.next()
                 lastSessionId = id
-                buildJsonObject { put("sessionId", id) }
+                buildJsonObject {
+                    put("sessionId", id)
+                    if ((params["retention"] as? JsonPrimitive)?.content == "ephemeral") put("retention", "ephemeral")
+                }
             }
             "resume_session" -> buildJsonObject { put("sessionId", (params["sessionId"] as JsonPrimitive).content) }
             "start_execution" -> {
