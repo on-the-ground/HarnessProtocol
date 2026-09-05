@@ -25,6 +25,9 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 /** Native construction only. Reusable assertions live in harness-conformance. */
 abstract class NativeHarnessTest : dev.harnessprotocol.conformance.HarnessRuntimeProfileConformanceTest<ModelBoundary>() {
@@ -52,6 +55,30 @@ class GeminiNativeHarnessTest : NativePersistentHarnessTest() {
 }
 class KoogNativeHarnessTest : NativeHarnessTest() {
     override fun harness(model: ModelBoundary) = KoogNativeFactory.create(model, directory)
+
+    @Test fun `null instructions use the configured default while explicit empty instructions stay empty`() = runBlocking<Unit> {
+        val systems = CopyOnWriteArrayList<String>()
+        val harness = KoogHarness({ object : PromptExecutor() {
+            override suspend fun execute(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): Message.Assistant {
+                systems += prompt.messages.filterIsInstance<Message.System>().single().textContent()
+                return Message.Assistant("native-result", ResponseMetaInfo.Empty)
+            }
+            override fun executeStreaming(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): Flow<StreamFrame> = error("Streaming is not used")
+            override suspend fun moderate(prompt: Prompt, model: LLModel): ModerationResult = error("Moderation is not used")
+            override fun close() = Unit
+        } }, OpenAIModels.Chat.GPT4o, defaultInstructions = "AHP_CONFIGURED_DEFAULT")
+        harness.use { h ->
+            val omitted = h.createSession(SessionSpec(instructions = null))
+            assertIs<TaskOutcome.Completed>(withTimeout(60_000) {
+                omitted.startTask(TaskRequest(TaskInput.Text("omitted"))).awaitOutcome()
+            })
+            val empty = h.createSession(SessionSpec(instructions = ""))
+            assertIs<TaskOutcome.Completed>(withTimeout(60_000) {
+                empty.startTask(TaskRequest(TaskInput.Text("empty"))).awaitOutcome()
+            })
+        }
+        assertEquals(listOf("AHP_CONFIGURED_DEFAULT", ""), systems)
+    }
 }
 
 object CodexNativeFactory : NativeHarnessFactory {
@@ -93,7 +120,7 @@ object KoogNativeFactory : NativeHarnessFactory {
     override val provider = ProviderId("koog")
     override fun create(model: ModelBoundary, directory: Path, persistent: Boolean): AgentHarness = KoogHarness({ object : PromptExecutor() {
         override suspend fun execute(prompt: Prompt, modelDescriptor: LLModel, tools: List<ToolDescriptor>): Message.Assistant {
-            model.requests += prompt.messages.joinToString { it.textContent() }
+            model.record(prompt)
             model.awaitRelease()
             return Message.Assistant("native-result", ResponseMetaInfo.Empty)
         }
@@ -107,7 +134,9 @@ object KoogNativeFactory : NativeHarnessFactory {
 class ModelBoundary(val overrideResponse: ((String) -> String?)? = null) : dev.harnessprotocol.conformance.RuntimeObservation {
     var streamResponse: ((com.sun.net.httpserver.HttpExchange, String) -> Boolean)? = null
     override val observedContexts: List<String> get() = requests
+    override val observedTextValues: List<String> get() = textValues
     val requests = CopyOnWriteArrayList<String>()
+    private val textValues = CopyOnWriteArrayList<String>()
     private val workers = Executors.newCachedThreadPool()
     private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
     val url get() = "http://127.0.0.1:${server.address.port}"
@@ -121,6 +150,7 @@ class ModelBoundary(val overrideResponse: ((String) -> String?)? = null) : dev.h
             try {
                 val body = exchange.requestBody.bufferedReader().readText()
                 requests += body
+                runCatching { collectStrings(Json.parseToJsonElement(body), textValues) }
                 gate?.await(75, TimeUnit.SECONDS)
                 if (streamResponse?.invoke(exchange, body) == true) return@createContext
                 val response = overrideResponse?.invoke(body) ?: if (exchange.requestURI.path.contains("responses")) codexResponse() else geminiResponse()
@@ -130,6 +160,20 @@ class ModelBoundary(val overrideResponse: ((String) -> String?)? = null) : dev.h
             } finally { exchange.close() }
         }
         server.start()
+    }
+    fun record(prompt: Prompt) {
+        val values = prompt.messages.map { it.textContent() }
+        requests += values.joinToString()
+        textValues += values
+    }
+
+    private fun collectStrings(value: JsonElement, destination: MutableList<String>) {
+        when (value) {
+            is JsonObject -> value.values.forEach { collectStrings(it, destination) }
+            is JsonArray -> value.forEach { collectStrings(it, destination) }
+            is JsonPrimitive -> if (value.isString) destination += value.content
+            else -> Unit
+        }
     }
     private fun codexResponse(): String {
         val item = """{"id":"msg_native","type":"message","role":"assistant","phase":"final_answer","status":"completed","content":[{"type":"output_text","text":"native-result","annotations":[]}]}"""

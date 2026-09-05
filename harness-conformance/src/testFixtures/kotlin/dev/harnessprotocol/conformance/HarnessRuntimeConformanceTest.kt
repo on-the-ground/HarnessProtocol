@@ -31,6 +31,16 @@ abstract class HarnessRuntimeConformanceTest<B : RuntimeObservation> {
         } }
     }
 
+    @Test fun `whitespace-only caller input reaches the native model without trimming`() = runBlocking<Unit> {
+        boundary().use { model -> harness(model).use { h ->
+            val whitespace = " \t  "
+            val task = h.createSession(spec()).startTask(TaskRequest(TaskInput.Text(whitespace)))
+            assertIs<TaskOutcome.Completed>(withTimeout(60_000) { task.awaitOutcome() })
+            assertTrue(whitespace in model.observedTextValues,
+                "The native model boundary must receive the exact whitespace-only TaskInput")
+        } }
+    }
+
     @Test fun `same session carries prior native context while a new session stays isolated`() = runBlocking<Unit> {
         boundary().use { model -> harness(model).use { h ->
             val session = h.createSession(spec())

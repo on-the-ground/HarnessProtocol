@@ -8,7 +8,7 @@ interface LifecycleFixture : AutoCloseable {
     fun control(task: AgentTask): TaskLifecycleControl
 }
 
-/** Minimal lifecycle evidence controls, also used by the full [TaskControl] contract. */
+/** Minimal lifecycle evidence controls for SDK-boundary lifecycle assertions. */
 interface TaskLifecycleControl {
     suspend fun reportRunning()
     suspend fun reportMessageDelta(messageKey: String, text: String, role: MessageKind? = null)
@@ -24,6 +24,9 @@ interface TaskLifecycleControl {
 /** Actual model/runtime observations, independent from the expected Port output. */
 interface RuntimeObservation : AutoCloseable {
     val observedContexts: List<String>
+
+    /** Decoded string values that crossed the actual model boundary; used for exact input preservation. */
+    val observedTextValues: List<String>
     fun hold()
     fun release()
 }

@@ -60,6 +60,8 @@ abstract class HarnessLifecycleConformanceTest {
             driver.control(execution).reportFailure("boom")
             val failure = assertIs<TaskOutcome.Failed>(withTimeout(5_000) { execution.awaitOutcome() })
             assertEquals("boom", failure.message)
+            assertEquals(FailureKind.UNKNOWN, failure.kind,
+                "A natural-language failure without structured evidence must not gain a fabricated classification")
             assertEquals(TaskState.FAILED, execution.state.value)
         }
     }

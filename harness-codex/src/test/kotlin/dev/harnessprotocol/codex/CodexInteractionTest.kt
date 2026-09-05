@@ -136,6 +136,35 @@ class CodexInteractionTest {
     }
 
     @Test
+    fun `native completion while an interaction is pending clears it before returning the outcome`() = withHarness { bridge, harness ->
+        val execution = harness.createSession(callerDecides).startTask(TaskRequest(TaskInput.Text("go")))
+        bridge.emit(notification("turn/started"))
+        bridge.emit(requested())
+        waitFor { execution.state.value == TaskState.AWAITING_RESPONSE }
+        val id = execution.pendingInteractions.value.single().interactionId
+        bridge.emit(notification("turn/completed", buildJsonObject { put("turn", buildJsonObject { put("status", "completed") }) }))
+        assertIs<TaskOutcome.Completed>(withTimeout(5_000) { execution.awaitOutcome() })
+        assertTrue(execution.pendingInteractions.value.isEmpty())
+        assertFailsWith<IllegalStateException> { execution.respond(id, InteractionResponse.Approval(ApprovalDecision.DECLINE)) }
+    }
+
+    @Test
+    fun `native failure while an interaction is pending clears it before returning the outcome`() = withHarness { bridge, harness ->
+        val execution = harness.createSession(callerDecides).startTask(TaskRequest(TaskInput.Text("go")))
+        bridge.emit(notification("turn/started"))
+        bridge.emit(requested())
+        waitFor { execution.state.value == TaskState.AWAITING_RESPONSE }
+        bridge.emit(notification("turn/completed", buildJsonObject {
+            put("turn", buildJsonObject {
+                put("status", "failed")
+                put("error", buildJsonObject { put("message", "controlled failure") })
+            })
+        }))
+        assertIs<TaskOutcome.Failed>(withTimeout(5_000) { execution.awaitOutcome() })
+        assertTrue(execution.pendingInteractions.value.isEmpty())
+    }
+
+    @Test
     fun `harness close while waiting clears the snapshot`() = runBlocking<Unit> {
         val bridge = RecordingBridge()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
