@@ -34,6 +34,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from openai_codex.client import CodexClient, CodexConfig
+from openai_codex.generated.v2_all import ThreadDeleteResponse
 
 APPROVAL_REQUEST_METHODS = {
     "item/commandExecution/requestApproval": "command",
@@ -121,24 +122,48 @@ class Bridge:
         if method == "create_session":
             await self.ensure_started()
             started = await asyncio.to_thread(self.client.thread_start, thread_start_params(params))
+            retention = "ephemeral" if started.thread.ephemeral else "materialized"
             thread_id = started.thread.id
             self.sessions[thread_id] = params
-            return {"sessionId": thread_id}
+            return {
+                "sessionId": thread_id,
+                "retention": retention,
+                # The SDK response has no independent account-history/Recents observation.
+                "historyVisibility": "unknown",
+            }
 
         if method == "resume_session":
             await self.ensure_started()
             session_id = required_string(params, "sessionId")
             spec = required_object(params, "spec")
+            if spec.get("retention") == "ephemeral":
+                raise ValueError("ephemeral sessions cannot be resumed")
             resumed = await asyncio.to_thread(self.client.thread_resume, session_id, thread_resume_params(spec))
             thread_id = resumed.thread.id
             self.sessions[thread_id] = spec
-            return {"sessionId": thread_id}
+            return {
+                "sessionId": thread_id,
+                "retention": "ephemeral" if resumed.thread.ephemeral else "materialized",
+                "historyVisibility": "unknown",
+            }
 
         if method == "release_session":
             session_id = required_string(params, "sessionId")
             for execution in list(self.executions.values()):
                 if execution.session_id == session_id:
                     await self.cancel_execution(execution)
+            spec = self.sessions.get(session_id)
+            if spec is not None and spec.get("retention") == "ephemeral":
+                await self.delete_thread(session_id)
+            self.sessions.pop(session_id, None)
+            return {}
+
+        if method == "discard_session":
+            session_id = required_string(params, "sessionId")
+            for execution in list(self.executions.values()):
+                if execution.session_id == session_id:
+                    await self.cancel_execution(execution)
+            await self.delete_thread(session_id)
             self.sessions.pop(session_id, None)
             return {}
 
@@ -172,6 +197,15 @@ class Bridge:
             return {}
 
         raise ValueError(f"unknown bridge method: {method}")
+
+    async def delete_thread(self, session_id: str) -> None:
+        # 0.147.0 generates the method schema but does not expose a convenience wrapper.
+        await asyncio.to_thread(
+            self.client.request,
+            "thread/delete",
+            {"threadId": session_id},
+            response_model=ThreadDeleteResponse,
+        )
 
     # ------------------------------------------------------------ executions
 
@@ -360,7 +394,13 @@ def common_thread_params(spec: dict[str, Any]) -> dict[str, Any]:
 
 
 def thread_start_params(spec: dict[str, Any]) -> dict[str, Any]:
-    return common_thread_params(spec)
+    result = common_thread_params(spec)
+    retention = spec.get("retention", "provider_default")
+    if retention == "ephemeral":
+        result["ephemeral"] = True
+    elif retention != "provider_default":
+        raise ValueError(f"unsupported retention requirement: {retention!r}")
+    return result
 
 
 def thread_resume_params(spec: dict[str, Any]) -> dict[str, Any]:

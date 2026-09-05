@@ -58,6 +58,8 @@ reportUsageSnapshot은 누적값 전체, reportUsageDelta는 겹치지 않는 �
 | Caller 승인 | 승인 전 효과 0, 허용 범위 내 효과, 거절 시 효과 없음, 중복·만료·취소 처리. 응답 수락 뒤 acknowledgement 유실 시 이중 응답 방지 | 필수 승인 요구를 작업 전에 거절 |
 | 질문 | 현재 요청, typed 답변, 같은 작업 계속, 응답·철회 경쟁. 전달 확인 유실과 미전달을 구별 | 필수 질문 요구를 거절; 승인 enum으로 위장하지 않음 |
 | 영속성 | 약속한 보관 범위, release/재생성 후 reopen, desired configuration, 모르는 ID, 저장 실패 | 영속 요구를 거절; 기본 session ID로 재개 보장하지 않음 |
+| Context retention | ephemeral 요구의 native 전달, 생성 응답 관측, 반대·누락 응답의 fail-closed | 요구를 provider default로 생략하지 않고 사전 거절 |
+| User history visibility | 독립 visibility 관측과 일반 사용자 history 비노출 | 관측할 수 없으면 UNKNOWN으로 보고하고 Hidden 요구를 UNCONFIRMED/미지원으로 거절 |
 | 권한·작업 자원 | 요청 scope의 실제 집행·자료 해석·활성화 | 요청을 default로 낮추지 않고 거절 |
 | 구조화 산출물 | schema 요구·검증 성공·실패·부분 산출물의 구별 | JSON 문자열 전달만으로 지원 선언하지 않음 |
 | 진단 | 선언한 범위·유실·상관관계 | 원본 이벤트 부재가 기본 Task 적합성을 막지 않음 |

@@ -14,6 +14,8 @@ open class GeminiCliHarness protected constructor(bridge: SdkBridge, scope: Coro
         Capability.CALLER_APPROVAL to Support.Unsupported("The SDK connection has no approval handler"),
         Capability.QUESTIONS to Support.Unsupported("The SDK connection has no typed question handler"),
         Capability.PERSISTENCE to if (namespace != null) Support.Conditional(SupportScope.SESSION, "Same application process; no concurrent access") else Support.Unsupported("Configure storageNamespace"),
+        Capability.CONTEXT_RETENTION to Support.Unsupported("The SDK connection exposes no provider retention control or observation"),
+        Capability.USER_HISTORY_VISIBILITY to Support.Unsupported("The SDK connection exposes no user-history visibility control or observation"),
         Capability.WORKSPACE to Support.Supported,
         Capability.EXECUTION_CONSTRAINT to Support.Unsupported("The SDK does not expose policy enforcement"),
         Capability.STRUCTURED_OUTPUT to Support.Unsupported("Schema enforcement is not configured"),
@@ -21,6 +23,10 @@ open class GeminiCliHarness protected constructor(bridge: SdkBridge, scope: Coro
     ))
     override fun validate(spec: SessionSpec) = CompatibilityReport(buildList {
         addAll(persistenceIssues(spec))
+        if (spec.requirements.retention != ContextRetentionRequirement.ProviderDefault)
+            add(CompatibilityIssue("requirements.retention", "The SDK does not expose provider retention control"))
+        if (spec.requirements.historyVisibility != UserHistoryVisibilityRequirement.ProviderDefault)
+            add(CompatibilityIssue("requirements.historyVisibility", "The SDK does not expose user-history visibility control"))
         if (spec.requirements.approval != ApprovalRequirement.ProviderDefault)
             add(CompatibilityIssue("requirements.approval", "The SDK does not expose approval mediation"))
         if (spec.requirements.questions != QuestionRequirement.NotRequired)

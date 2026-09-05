@@ -46,9 +46,9 @@ def send(message: dict) -> None:
         sys.stdout.flush()
 
 
-def thread_payload(thread_id: str) -> dict:
+def thread_payload(thread_id: str, ephemeral: bool = False) -> dict:
     return {
-        "id": thread_id, "cliVersion": "stub", "createdAt": 0, "cwd": "/", "ephemeral": False,
+        "id": thread_id, "cliVersion": "stub", "createdAt": 0, "cwd": "/", "ephemeral": ephemeral,
         "modelProvider": "openai", "preview": "", "sessionId": thread_id, "source": "appServer",
         "status": {"type": "idle"}, "turns": [], "updatedAt": 0,
     }
@@ -59,7 +59,7 @@ def thread_response(thread_id: str, params: dict) -> dict:
         "approvalPolicy": params.get("approvalPolicy", "on-request"),
         "approvalsReviewer": params.get("approvalsReviewer", "user"),
         "cwd": params.get("cwd", "/"), "model": params.get("model", "stub-model"), "modelProvider": "openai",
-        "sandbox": {"type": "readOnly"}, "thread": thread_payload(thread_id),
+        "sandbox": {"type": "readOnly"}, "thread": thread_payload(thread_id, params.get("ephemeral", False)),
     }
 
 

@@ -75,6 +75,16 @@ class PublicModelTest {
     }
 
     @Test
+    fun `ephemeral retention is distinct from user history visibility and durable persistence`() {
+        val requirements = SessionRequirements(retention = ContextRetentionRequirement.Ephemeral)
+        assertEquals(UserHistoryVisibilityRequirement.ProviderDefault, requirements.historyVisibility)
+        assertEquals(PersistenceRequirement.NotRequired, requirements.persistence)
+        val observed = SessionDisposition(ContextRetentionDisposition.EPHEMERAL, UserHistoryVisibility.UNKNOWN)
+        assertEquals(ContextRetentionDisposition.EPHEMERAL, observed.retention)
+        assertEquals(UserHistoryVisibility.UNKNOWN, observed.historyVisibility)
+    }
+
+    @Test
     fun `session approval cannot be offered without an explicit grant`() {
         fun request(grant: SessionApprovalGrant?, decisions: Set<ApprovalDecision>) = InteractionRequest.Approval(
             InteractionId("approval"), WorkId("effect"), "update the report", EffectKind.FILE_CHANGE,

@@ -18,6 +18,8 @@ open class CodexHarness protected constructor(
         Capability.CALLER_APPROVAL to Support.Supported,
         Capability.QUESTIONS to Support.Unsupported("The configured client exposes approval handlers, not a typed question channel"),
         Capability.PERSISTENCE to if (namespace != null) Support.Conditional(SupportScope.SESSION, "Same application process; no concurrent access") else Support.Unsupported("Configure storageNamespace"),
+        Capability.CONTEXT_RETENTION to Support.Supported,
+        Capability.USER_HISTORY_VISIBILITY to Support.Unknown("Codex ephemeral confirms local conversation materialization, not every account history surface"),
         Capability.WORKSPACE to Support.Supported,
         Capability.EXECUTION_CONSTRAINT to Support.Conditional(SupportScope.SESSION, "Network policy requires an explicit workspace-write sandbox"),
         Capability.STRUCTURED_OUTPUT to Support.Unsupported("Schema enforcement is not configured"),
@@ -25,6 +27,15 @@ open class CodexHarness protected constructor(
     ))
     override fun validate(spec: SessionSpec) = CompatibilityReport(buildList {
         addAll(persistenceIssues(spec))
+        if (spec.requirements.persistence is PersistenceRequirement.Required &&
+            spec.requirements.retention == ContextRetentionRequirement.Ephemeral
+        ) add(CompatibilityIssue("requirements.retention", "Ephemeral retention cannot provide a persistent session reference"))
+        if (spec.requirements.historyVisibility == UserHistoryVisibilityRequirement.Hidden)
+            add(CompatibilityIssue(
+                "requirements.historyVisibility",
+                "The pinned Codex SDK does not independently confirm account history or Recents visibility",
+                CompatibilityIssueKind.UNCONFIRMED,
+            ))
         if (spec.requirements.questions != QuestionRequirement.NotRequired)
             add(CompatibilityIssue("requirements.questions", "Typed question mediation is not exposed by this client connection"))
         val execution = spec.requirements.execution as? ExecutionConstraint.Required
@@ -35,6 +46,7 @@ open class CodexHarness protected constructor(
     override fun sessionPayload(spec: SessionSpec) = buildJsonObject {
         spec.instructions?.let { put("instructions", it) }
         spec.model?.let { put("model", it) }
+        if (spec.requirements.retention == ContextRetentionRequirement.Ephemeral) put("retention", "ephemeral")
         (spec.requirements.workspace as? WorkspaceRequirement.Required)?.let { workspace ->
             workspace.workingDirectory?.let { put("workingDirectory", it) }
             put("skills", buildJsonArray { workspace.skills.forEach { skill -> add(buildJsonObject {

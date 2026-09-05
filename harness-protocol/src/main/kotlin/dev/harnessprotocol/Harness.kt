@@ -62,6 +62,9 @@ interface AgentSession {
     /** 이 session을 열 때 사용한 설정의 snapshot. */
     val spec: SessionSpec
 
+    /** Native session 생성 응답에서 확인한 보관·사용자 history 노출 상태. 요구값을 그대로 복사하지 않는다. */
+    val disposition: SessionDisposition
+
     /**
      * 영속 보관을 요구하고 지원받았을 때의 재개 참조. 요구하지 않았다면 `null`이다.
      *
@@ -98,6 +101,25 @@ interface AgentSession {
      */
     suspend fun release()
 }
+
+/** Session 생성 시점에 adapter가 실제로 관찰한 provider disposition. */
+data class SessionDisposition(
+    val retention: ContextRetentionDisposition = ContextRetentionDisposition.UNKNOWN,
+    val historyVisibility: UserHistoryVisibility = UserHistoryVisibility.UNKNOWN,
+)
+
+/** Provider conversation state의 관찰된 materialization 상태. */
+enum class ContextRetentionDisposition {
+    /** Live native session 밖에서 재개할 conversation state를 materialize하지 않는다고 provider가 보고했다. */
+    EPHEMERAL,
+    /** Provider가 재개 가능한 conversation state를 materialize하도록 session을 만들었다. */
+    MATERIALIZED,
+    /** 생성 응답만으로 상태를 판정할 수 없다. */
+    UNKNOWN,
+}
+
+/** 일반 사용자용 provider conversation history에서 관찰·확인한 노출 상태. */
+enum class UserHistoryVisibility { VISIBLE, HIDDEN, UNKNOWN }
 
 /**
  * 영속 문맥을 다시 여는 선택 계약.

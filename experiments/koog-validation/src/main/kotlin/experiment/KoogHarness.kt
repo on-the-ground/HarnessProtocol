@@ -42,6 +42,8 @@ class KoogHarness(
         if (spec.model != null && spec.model != OpenAIModels.Chat.GPT4o.id) add(CompatibilityIssue("model", "One configured model descriptor"))
         if (spec.requirements.workspace != WorkspaceRequirement.NotRequired) add(CompatibilityIssue("requirements.workspace", "No workspace loader"))
         if (spec.requirements.execution != ExecutionConstraint.ProviderDefault) add(CompatibilityIssue("requirements.execution", "No execution sandbox"))
+        if (spec.requirements.retention != ContextRetentionRequirement.ProviderDefault) add(CompatibilityIssue("requirements.retention", "This research adapter persists conversation history"))
+        if (spec.requirements.historyVisibility != UserHistoryVisibilityRequirement.ProviderDefault) add(CompatibilityIssue("requirements.historyVisibility", "No user-history visibility contract is configured"))
         if (spec.requirements.approval == ApprovalRequirement.AgentReviewed) add(CompatibilityIssue("requirements.approval", "No automatic reviewer"))
         if (spec.requirements.diagnostics != DiagnosticsRequirement.NotRequired) add(CompatibilityIssue("requirements.diagnostics", "No diagnostic stream configured"))
         val persistence = spec.requirements.persistence as? PersistenceRequirement.Required
@@ -64,6 +66,7 @@ class KoogHarness(
         Session(id, spec).also { sessions[id] = it }
     }
     private inner class Session(override val id: SessionId, override val spec: SessionSpec) : AgentSession {
+        override val disposition = SessionDisposition(historyVisibility = UserHistoryVisibility.HIDDEN)
         override val persistentRef = if (spec.requirements.persistence is PersistenceRequirement.Required)
             PersistentSessionRef(provider, store.namespace, id.value) else null
         var released = false

@@ -31,6 +31,8 @@
 
 `createSession`은 새 문맥 공유 범위의 handle을 만든다. 영속 conversation 생성이나 OS process 시작을 기본 의미에 포함하지 않는다. `close`는 소유한 handle과 자원을 정리한다. 실제 작업 종료 확인은 별도의 outcome 판정이다.
 
+`ContextRetentionRequirement.Ephemeral`은 native session 밖에서 재개 가능한 provider conversation을 materialize하지 말라는 요구다. `UserHistoryVisibilityRequirement.Hidden`은 일반 사용자 conversation history·Recents 비노출이라는 별도 요구다. 둘은 서로를 암시하지 않으며 provider telemetry, abuse monitoring, 법적 보존 같은 service-side 정책도 자동으로 포함하지 않는다. 지원하지 않거나 확인할 수 없는 요구는 provider default로 완화하지 않고 각각 INCOMPATIBLE 또는 UNCONFIRMED로 거절한다.
+
 ## 식별자와 입력의 기본 보장
 
 식별자는 비어 있지 않은 opaque 값이다. consumer가 native ID의 구조를 해석하거나 임의로 합성하지 않는다. `TaskId`는 소유 harness 안에서 작업을 구별하고, `WorkId`와 `InteractionId`는 해당 Task 안에서 대상을 구별한다. 서로 다른 Task에서 같은 하위 ID가 나타나도 섞이지 않아야 한다. provider가 같은 작업의 tool/effect를 식별한 경우 같은 WorkId로 연결한다.
@@ -48,6 +50,8 @@
 이전 작업의 outcome이 `Unresolved`이면 handle은 종결됐어도 실제 작업이 남아 있을 수 있다. 같은 문맥의 시작 거절, 조정 범위와 독립된 새 session·기존 문맥 복구의 차이는 [문맥 차단과 복구](lifecycle-and-concurrency.md#문맥-차단과-복구-범위)를 따른다. 서로 다른 session은 논리적으로 격리되며 실제 병렬 처리량은 보장하지 않는다.
 
 `release`는 해당 session handle을 정리한다. 작업에 취소를 요청하고 제한된 시간 동안 종료를 확인한다. 이후 handle은 사용할 수 없다. 영속 보관을 요청하지 않았다면 release 이후의 문맥 보존은 보장하지 않는다.
+
+`AgentSession.disposition`은 요청을 되풀이한 값이 아니라 native 생성 응답에서 확인한 retention과 user-history visibility다. 관측할 수 없는 축은 `UNKNOWN`으로 남긴다. `createSession`이라는 논리 handle 생성과 provider-native conversation materialization은 별개의 사실이다.
 
 ### 영속성 선택 계약
 

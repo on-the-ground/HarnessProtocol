@@ -12,12 +12,14 @@ object SpecSpace {
             FilesystemAccess.WorkspaceWrite(setOf("/extra")), FilesystemAccess.FullAccess)
         val approvals = listOf(ApprovalRequirement.ProviderDefault, ApprovalRequirement.DenyAll,
             ApprovalRequirement.AgentReviewed, ApprovalRequirement.CallerDecides)
+        val retentions = listOf(ContextRetentionRequirement.ProviderDefault, ContextRetentionRequirement.Ephemeral)
+        val visibilities = listOf(UserHistoryVisibilityRequirement.ProviderDefault, UserHistoryVisibilityRequirement.Hidden)
         for (instructions in listOf(null, "", "Be precise")) for (model in listOf(null, "model-x"))
             for (workspace in workspaces) for (fs in filesystems) for (network in listOf(null, NetworkAccess.DENIED, NetworkAccess.ALLOWED))
-                for (approval in approvals) {
+                for (approval in approvals) for (retention in retentions) for (visibility in visibilities) {
                     yield(SessionSpec(instructions, model, SessionRequirements(workspace = workspace,
                         execution = if (fs == null && network == null) ExecutionConstraint.ProviderDefault else ExecutionConstraint.Required(fs, network),
-                        approval = approval)))
+                        approval = approval, retention = retention, historyVisibility = visibility)))
                 }
     }
 }
