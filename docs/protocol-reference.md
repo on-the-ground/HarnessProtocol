@@ -20,7 +20,7 @@
 
 `validate`는 요청한 의미를 보존할 수 있는지 진단한다. harness는 `SessionSpec`, session은 `TaskRequest`를 검증하며 문맥 설정·작업 요구·선택 계약의 적용 범위를 구별한다.
 
-현재 선언은 harness의 `validate(SessionSpec)`과 session의 `validate(TaskRequest)`다. `CompatibilityReport.status`는 COMPATIBLE·INCOMPATIBLE·UNCONFIRMED를 구별한다. 미지원이 확인되면 `IncompatibleRequirementException`, 실제 수락 경계에서도 이행 여부를 확인할 수 없으면 `RequirementUnconfirmedException`으로 작업 전에 거절한다. 사전 검증의 미확인을 실제 경계에서 추가 확인해 수락할 수는 있다.
+현재 선언은 harness의 `validate(SessionSpec)`과 session의 `validate(TaskRequest)`다. `CompatibilityReport.status`는 COMPATIBLE·INCOMPATIBLE·UNCONFIRMED를 구별한다. `validate`는 예외를 던지지 않고 보고를 반환한다. 이를 예외로 바꾸는 것은 `CompatibilityReport.requireCompatible()`이며, 미지원이 확인되면 `IncompatibleRequirementException`, 실제 수락 경계에서도 이행 여부를 확인할 수 없으면 `RequirementUnconfirmedException`으로 작업 전에 거절한다. 보고의 `issues`는 각 항목에 `path`(예: `requirements.persistence`)와 kind를 담으며, `ADVISORY` 항목은 status를 COMPATIBLE로 유지하므로 호환 보고에도 항목이 있을 수 있다. 사전 검증의 미확인을 실제 경계에서 추가 확인해 수락할 수는 있다.
 
 지원 정보의 범위·유효 조건, 요청별 검증과 실제 수락의 관계는 [지원 탐색과 요구 수락](capability-candidates.md#지원-탐색과-요구-수락)을 따른다. 소비자는 기능 목록을 먼저 조회하지 않고도 필수 요구를 전달할 수 있어야 한다.
 
@@ -55,11 +55,13 @@
 
 `release`는 해당 session handle을 정리한다. 작업에 취소를 요청하고 제한된 시간 동안 종료를 확인한다. 이후 handle은 사용할 수 없다. 영속 보관을 요청하지 않았다면 release 이후의 문맥 보존은 보장하지 않는다.
 
-`AgentSession.disposition`은 요청을 되풀이한 값이 아니라 native 생성 응답에서 확인한 retention과 user-history visibility다. 관측할 수 없는 축은 `UNKNOWN`으로 남긴다. `createSession`이라는 논리 handle 생성과 provider-native conversation materialization은 별개의 사실이다.
+`AgentSession.disposition`은 요청을 되풀이한 값이 아니라 native 생성 응답에서 확인한 retention과 user-history visibility다. `SessionDisposition.retention`은 `ContextRetentionDisposition`(EPHEMERAL·MATERIALIZED·UNKNOWN), `historyVisibility`는 `UserHistoryVisibility`(VISIBLE·HIDDEN·UNKNOWN)이며 요구 타입인 `ContextRetentionRequirement`·`UserHistoryVisibilityRequirement`와 구별한다. 관측할 수 없는 축은 `UNKNOWN`으로 남긴다. `createSession`이라는 논리 handle 생성과 provider-native conversation materialization은 별개의 사실이다.
 
 ### 영속성 선택 계약
 
 영속성은 기본 `AgentSession`에 포함되지 않는 [선택 계약](capability-candidates.md)이다. 지원하는 harness는 `PersistentSessions.reopenSession(ref, spec)`을 제공한다. 보관 범위·수명·저장 성공·재개 조건과 조정 범위를 명시해야 한다. 지원한 경우 release나 harness 재생성 이후에도 약속한 범위에서 문맥을 다시 열 수 있어야 한다.
+
+`reopenSession`에 넘기는 `ref`는 `AgentSession.persistentRef: PersistentSessionRef?`로 얻는다. 영속 보관을 요구하지 않았으면 `null`이며, 기본 `SessionId`만으로 재개 가능성을 추론하지 않는다.
 
 `reopenSession`은 보관된 문맥의 새 handle을 얻는다. 모르는 ID나 다른 저장 namespace의 참조는 거절하며 새 session으로 바꾸지 않는다. 재개 설정은 이후 적용할 desired configuration이며 의미를 보존할 수 없는 변경을 거절한다. checkpoint 복원·Task 재접속·외부 효과의 복원은 포함하지 않는다. 차단된 문맥을 reopen했다는 이유로 작업 가능하다고 보고하지 않는다.
 
@@ -125,7 +127,7 @@ Handle 생성 전의 검증·시작 실패는 호출 실패다. handle을 받은
 
 `Completed`도 종료 사유를 보존한다. StopReason은 FINISHED·ITERATION_LIMIT·LOOP_DETECTED·PROVIDER_STOPPED를 구별하며 내부 step/turn을 보편적 업무 단위로 승격하지 않는다.
 
-확인된 실패에는 인증, 정책, 문맥 한도, 예산, 일시적 오류 등 후속 판단에 필요한 분류를 제공한다. 통신 오류만 관찰했다면 원격 작업의 실패·취소를 추정하지 않는다. 재시도 가능성과 이미 발생한 효과의 중복 위험은 별개다.
+확인된 실패에는 후속 판단에 필요한 분류를 제공한다. `FailureKind`는 TRANSIENT·AUTHENTICATION·POLICY_BLOCKED·CONTEXT_OVERFLOW·BUDGET_EXCEEDED·PROVIDER·TRANSPORT·UNKNOWN을 구별한다. `TRANSPORT`는 실행 수단의 실패가 Task 실패로 이어졌음을 확인한 경우이며, 관찰만 끊겼다면 Unresolved다. 통신 오류만 관찰했다면 원격 작업의 실패·취소를 추정하지 않는다. 재시도 가능성과 이미 발생한 효과의 중복 위험은 별개다.
 
 구체적인 실패 분류는 구조화된 provider code, 의미가 확인된 native 예외, 직접 확인한 runtime 사실에 근거한다. 자연어 오류 문구의 추측만으로 인증 실패·재시도 가능 등을 확정하지 않는다. 근거가 부족하면 알려진 설명과 미분류 상태를 보존한다.
 

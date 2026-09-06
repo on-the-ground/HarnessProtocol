@@ -31,6 +31,8 @@
 | 실제 수락 | 사전 조회·검증 여부와 무관하게 해당 호출 경계에서 요구를 검증한다. 필수 의미를 이행할 근거가 없으면 작업을 시작하기 전에 명시적으로 거절한다. 지원 목록의 과거 조회 성공을 수락 근거로 대체하지 않는다. |
 | 수락 뒤 변화 | 수락한 요구는 작업에 적용한다. 환경 변화로 이행할 수 없게 되면 해당 요구에 어긋나는 실행을 계속하도록 조용히 완화하지 않고, 확인된 실패와 종결 미확정을 구별해 보고한다. |
 
+공개 형태는 `AgentHarness.support: SupportReport`다. capability로 조회하면 `Support.Supported`, `Support.Conditional(scope, condition)`, `Support.Unsupported(reason)`, `Support.Unknown(reason)` 중 하나를 돌려준다. adapter가 선언하지 않은 capability도 `Unknown`으로 답하므로 보고서가 전체를 열거할 의무는 없다. `SupportScope`는 조건의 적용 범위를 PROVIDER·HARNESS·SESSION으로 구별한다. `Capability`는 CALLER_APPROVAL·QUESTIONS·PERSISTENCE·WORKSPACE·EXECUTION_CONSTRAINT·STRUCTURED_OUTPUT·DIAGNOSTICS·CONTEXT_RETENTION·USER_HISTORY_VISIBILITY 아홉이며 위 표의 목적과 대응한다.
+
 정적 선언과 런타임 조회는 함께 사용할 수 있다. 지원 정보에는 적용 구성·scope와 유효 조건이 있어야 하며, 이를 지원 보장으로 사용하는 기간이나 고정된 구성의 수명을 명시한다. 정적 정보만으로 판단할 수 없는 인증·자원 상태 등을 확인했다고 주장하지 않는다. 사전 검증은 실행 성공의 보장이 아니며, 종결 판정은 [Lifecycle](lifecycle-and-concurrency.md#종결-확인의-근거)을 따른다.
 
 영속성 지원에는 저장 namespace·재개 가능한 수명 경계와 [문맥 조정 범위](lifecycle-and-concurrency.md#문맥-차단과-복구-범위)를 포함한다. 다른 harness·process의 접근 요구를 이행할 수 없으면 그 구성을 거절한다. 단일 소유 조건을 문서화한 것만으로 임의의 동시 접근을 조정한다고 주장하지 않는다.
@@ -39,7 +41,7 @@ Ephemeral retention과 영속 persistence를 동시에 요구하면 모순으로
 
 ## 실행 환경 요구의 독립성
 
-`ExecutionConstraint.Required`의 filesystem과 network는 독립적으로 선택한다. 네트워크만 금지하는 요청 때문에 파일 권한까지 고르도록 강제하지 않는다. 둘 다 요구하지 않으면 ProviderDefault를 사용한다. Required 값은 승인이 넓힐 수 없는 hard upper bound이고, 승인 정책은 상한 안의 효과를 더 거절할 수 있다. 임의 명령의 실제 접근 범위를 판별하지 못하는 adapter를 포함해 이 조합을 집행할 수 없는 구성은 구체적인 요구 검증에서 거절한다.
+`ExecutionConstraint.Required`의 filesystem과 network는 독립적으로 선택한다. filesystem은 `FilesystemAccess.ReadOnly`, `WorkspaceWrite(additionalWritableRoots)`, `FullAccess` 중 하나이고 network는 `NetworkAccess.DENIED`나 `ALLOWED`다. `ALLOWED`도 승인 통과나 연결·자격 증명·서비스 가용성을 보장하지 않는다. 네트워크만 금지하는 요청 때문에 파일 권한까지 고르도록 강제하지 않는다. 둘 다 요구하지 않으면 ProviderDefault를 사용한다. Required 값은 승인이 넓힐 수 없는 hard upper bound이고, 승인 정책은 상한 안의 효과를 더 거절할 수 있다. 임의 명령의 실제 접근 범위를 판별하지 못하는 adapter를 포함해 이 조합을 집행할 수 없는 구성은 구체적인 요구 검증에서 거절한다.
 
 `WorkspaceRequirement.Required`의 skill 제공과 활성화도 독립적이다. `activate=true`는 본문을 실제 Task 지시에 적용하는 보장이고 `activate=false`는 사용 가능하게 제공하되 자동 적용하지 않는다는 뜻이다. 이름이나 경로 전달만으로 활성화 지원을 선언하지 않는다.
 
