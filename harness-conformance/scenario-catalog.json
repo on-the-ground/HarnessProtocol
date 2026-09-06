@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "stage": "G03-G12 configured-runtime validation and historical scenario reconciliation complete; final full regression pending",
+  "stage": "G01-G12 configured-runtime validation, historical scenario reconciliation, and final full regression complete",
   "countingRule": "The 76 original identities remain as historical review records. The last 44 unbound bodies were removed only after replacement, capability rejection, or invalid-fixture-assumption dispositions were recorded. Count only concrete consumer executions from JUnit.",
   "entries": [
     {
@@ -1568,14 +1568,18 @@
     }
   ],
   "integrationCheckpoint": {
-    "summary": "../harness-native-integration/evidence/g03-g12-regression-summary.json",
-    "nativeEvidence": "../harness-native-integration/evidence/g03-g12-full-regression.json",
-    "jvmTests": 272,
-    "jvmFailures": 4,
-    "nativeTests": 192,
-    "hostTests": 20,
+    "summary": "../harness-native-integration/evidence/final-regression-summary.json",
+    "nativeEvidence": "../harness-native-integration/evidence/final-g01-g12.json",
+    "jvmTests": 292,
+    "jvmFailures": 0,
+    "jvmErrors": 0,
+    "jvmSkipped": 0,
+    "nativeTests": 210,
+    "hostTests": 21,
     "hostFailures": 0,
-    "status": "not-complete; G09 remains unresolved",
+    "status": "complete-for-pinned-configurations-with-stated-limits",
+    "previousFailingCheckpoint": "../harness-native-integration/evidence/g03-g12-regression-summary.json",
+    "g09FocusedEvidence": "../harness-native-integration/evidence/g09-environment.json",
     "identityFollowup": "../harness-native-integration/evidence/g11-observation-identity.json"
   }
 }

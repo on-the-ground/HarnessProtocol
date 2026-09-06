@@ -50,7 +50,7 @@ AgentHarness                   하네스 제공 경계
 | 총평 반영       | [채택·수정·보류 판단](docs/review-disposition.md): 종결 증거, 문맥 조정, 지원 탐색, 이벤트 존치와 남은 검증                                                                             |
 | Codex 기반 선택 | [codex-agent 검토](docs/codex-agent-adoption-review.md), [저수준 client 조사](docs/spikes/2026-09-03-codex-low-level-client.md)                                  |
 
-공개 Port와 현재 세 adapter의 구성별 계약 검증은 G12까지 연결돼 있다. 현재 구성에서 제공하지 않는 선택 기능의 성공 경로와 외부 실모델·artifact 발행은 별도 범위이며, 기존 설계 이력은 Git에서 확인한다.
+공개 Port와 현재 세 adapter의 구성별 계약 검증은 G12까지 연결돼 있다. 최종 통합 회귀에서 JVM 292개(세 native runtime 검사 210개 포함)와 host 21개가 실패·오류·건너뜀 없이 통과했다. [최종 집계](harness-native-integration/evidence/final-regression-summary.json)와 [native 실행 기록](harness-native-integration/evidence/final-g01-g12.json)을 보존한다. 현재 구성에서 제공하지 않는 선택 기능의 성공 경로와 외부 실모델·artifact 발행은 별도 범위이며, 기존 설계 이력은 Git에서 확인한다.
 
 ## 구현 구성
 

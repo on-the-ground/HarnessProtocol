@@ -93,10 +93,10 @@ Koog의 실제 두 도구 호출을 포함한 세 모델 호출에서는 일부 
 
 범위는 명시된 동일 애플리케이션 프로세스다. G04에서 미확정 문맥 차단의 하네스 재생성 후 보존, G01에서 프로세스 재시작·동시 writer 요구의 사전 거절을 검증한다. 영속 지원을 외부 저장소의 항상 가용함으로 해석하지 않으며, 저장 접근 실패를 정상 재개로 숨기지 않는다. 별도의 동적 capability 변경 통로가 없는 구성에 지원 철회 알림을 합성하지 않았다.
 
-## 이전 통합 회귀 checkpoint
+## 최종 통합 회귀 checkpoint
 
-`./gradlew.bat --offline test :harness-conformance:testFixturesClasses hostTests -PnativeHarnessTests -PstrictHostTests --continue --console=plain`을 실행했다. [JVM·host 집계](../harness-native-integration/evidence/g03-g12-regression-summary.json)는 JVM 272개 중 실패 4개·오류/건너뜀 0개, Python host 15개·Node host 5개 통과를 기록한다. JVM에는 [실제 native 192개](../harness-native-integration/evidence/g03-g12-full-regression.json)가 포함된다. 변경 없는 protocol 값 타입 검사는 Gradle up-to-date 결과를 재사용했고 나머지 결과가 있는 JVM test task는 실행했다.
+`./gradlew.bat --offline test :harness-conformance:testFixturesClasses hostTests -PnativeHarnessTests -PstrictHostTests --continue --console=plain`을 실행했다. [최종 JVM·host 집계](../harness-native-integration/evidence/final-regression-summary.json)는 JVM 292개와 host 21개가 실패 없이 통과했음을 기록한다. 오류와 건너뜀도 0개다. JVM 집계에는 Codex·Gemini CLI·Koog의 실제 SDK/runtime에 통제된 모델 경계를 연결한 [native 검사 210개](../harness-native-integration/evidence/final-g01-g12.json)가 포함된다. Python Codex host 16개와 Node Gemini host 5개도 strict 조건으로 통과했다.
 
-이 checkpoint의 실패는 G09의 active skill 본문 부재 2개와 허용 쓰기까지 차단된 복합 명령 유도 2개였다. 이후 G09 계약·구현·검사를 위와 같이 수정해 110개 집중 실행이 통과했다. G04·G12의 production 문맥 수정은 기존 SDK 회귀와 실제 runtime 회귀를 함께 통과했다. 현재 Kotlin 소스·sample·독립 실험에 legacy Port 및 제거한 참조 하네스/AgentHarnessContractTest 참조는 없다.
+[이전 실패 checkpoint](../harness-native-integration/evidence/g03-g12-regression-summary.json)의 JVM 4개 실패는 G09의 active skill 본문 부재와 복합 명령 유도 오류를 드러냈다. 계약·구현·검사를 수정한 뒤 G09 집중 실행 110개와 최종 통합 회귀가 모두 통과했다. G04·G12의 production 문맥 수정, G03·G11의 identity 보강, 원래 44개 미연결 본문의 [목적별 종결](conformance-scenarios.md)도 최종 소스 상태에 포함된다. Kotlin 소스·sample·독립 실험에는 legacy Port 및 제거한 참조 하네스/`AgentHarnessContractTest` 참조가 없다.
 
-이 실행 뒤 G11/G03의 identity assertion을 보강한 12개를 재검증해 통과했다. production 변경은 없었다. 단계별 재실행을 서로 더해 고유 검사 수를 부풀리지 않는다. 원래 44개 미연결 본문은 이후 [목적별로 종결](conformance-scenarios.md)하고 제거했다. 외부 실모델, artifact 발행, 독립 Koog 실험은 현재 구성의 최종 회귀 집계와 별도다.
+이 checkpoint는 현재 저장소에 고정된 세 adapter 구성과 통제된 모델 경계의 증거다. 외부 실모델 호출, 현재 구성이 거절하는 선택 기능의 성공 경로, artifact 발행과 독립 Koog 실험은 집계에 포함하지 않았다. 단계별 재실행은 최종 고유 검사 수에 더하지 않았다.

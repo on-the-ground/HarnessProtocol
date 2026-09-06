@@ -1,6 +1,6 @@
 # Port 개정과 구현 전환 계획
 
-기준일: 2026-09-04. [설계 선언](../AHP_CHARTER.md) → [Semantic contract](semantic-contract.md) → [추상과 용어](abstraction-and-terminology.md) 및 상세 계약을 구현의 기준으로 삼는다.
+기준일: 2026-09-06. [설계 선언](../AHP_CHARTER.md) → [Semantic contract](semantic-contract.md) → [추상과 용어](abstraction-and-terminology.md) 및 상세 계약을 구현의 기준으로 삼는다.
 
 공개 Port·KDoc·fixture 선언에 이어 실제 세 adapter와 factory를 새 Port에 연결했다. 기존 회귀와 독립 Koog 실험도 현재 Port로 이전하고 legacy를 제거했다. G03–G12의 실제 계약 경계 검사를 추가했고 문맥 핸들의 자원 수명·설정 보존·skill 적용·실행 상한 결함을 수정했다. 원래 미연결 시나리오도 목적별 증거와 폐기 근거를 남기고 종결했다. [현재 단계별 증거](contract-boundary-validation.md), [기본 연결 기록](native-port-validation.md)을 구별하며 이전 개정 이력은 Git에서 확인한다.
 
@@ -14,7 +14,7 @@
 | 이전 실증 | Koog native·부분 adapter 실험 18개. [당시 기록](../experiments/koog-validation/evidence/verification.json) |
 | 문서 기준 | README와 docs를 새 추상의 규범으로 갱신. 실험 사실과 현 구현 상태는 구분해 기록 |
 | 정리 완료 | 임시 ReferenceHarness 계열, 만능 HarnessFixture, 미연결 Core/Cleanup 본문 제거. 원래 48개 identity는 처리 근거와 함께 역사적 catalog로 보존 |
-| 현재 작업 | 전체 JVM·native·host 회귀를 한 번에 다시 실행하고 최종 수치·한계를 기록 |
+| 검증 완료 | 전체 JVM 292개(native 210개 포함)와 host 21개를 한 번에 실행해 실패·오류·건너뜀 0개를 기록 |
 | 별도 후속 범위 | 미지원 선택 기능의 구현 확장, 외부 실모델 연동, artifact 발행. G12까지의 현재 구성 검증과 구별 |
 
 ## 1. 확정한 공개 모델
@@ -103,4 +103,4 @@ samples/basic과 새 factory·bundle은 세 adapter의 새 Port 경로를 가리
 4. 실연동과 미검증 범위가 provider별로 기록된다.
 5. 예제·배포 정보가 실제 구현과 일치한다.
 
-현재 문서 정리를 위 구현 완료로 세지 않는다. 작업은 단계별 결과를 보고하며 진행한다.
+다섯 기준은 현재 고정 구성에서 충족했다. 최종 근거는 [계약 경계 검증](contract-boundary-validation.md), [시나리오 종결표](conformance-scenarios.md), [통합 회귀 집계](../harness-native-integration/evidence/final-regression-summary.json)에 기록한다. 별도 후속 범위가 추가되면 그 구성과 보장을 새 검증 단위로 다룬다.

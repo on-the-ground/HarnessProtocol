@@ -1,0 +1,55 @@
+{
+  "stage": "final-g01-g12-full-regression",
+  "recordedAt": "2026-09-06T00:01:36.7039239Z",
+  "sourceRevision": "ac3f532f27b6de7b6e91c050ce50c48b3f605839",
+  "command": "./gradlew.bat --offline test :harness-conformance:testFixturesClasses hostTests -PnativeHarnessTests -PstrictHostTests --continue --console=plain",
+  "jvm": {
+    "tests": 292,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "modules": [
+      {
+        "name": "harness-bundle",
+        "tests": 1
+      },
+      {
+        "name": "harness-codex",
+        "tests": 37
+      },
+      {
+        "name": "harness-gemini-cli",
+        "tests": 34
+      },
+      {
+        "name": "harness-native-integration",
+        "tests": 210
+      },
+      {
+        "name": "harness-process-bridge",
+        "tests": 1
+      },
+      {
+        "name": "harness-protocol",
+        "tests": 9
+      }
+    ]
+  },
+  "host": {
+    "tests": 21,
+    "failures": 0,
+    "python": 16,
+    "node": 5
+  },
+  "nativeEvidence": "final-g01-g12.json",
+  "scope": [
+    "All current JVM test tasks, including three controlled native runtimes",
+    "Strict Python and Node host suites",
+    "Historical C/K inventory is not counted as executed tests"
+  ],
+  "excluded": [
+    "External live-model calls",
+    "Artifact publication",
+    "Optional capabilities rejected by the pinned configurations"
+  ]
+}
