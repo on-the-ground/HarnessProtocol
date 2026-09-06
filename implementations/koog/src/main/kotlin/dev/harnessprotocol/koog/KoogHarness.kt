@@ -70,6 +70,10 @@ class KoogHarness(
         private var active: ManagedTask? = null
         override fun validate(request: TaskRequest) = CompatibilityReport(buildList {
             if (request.requirements.output != OutputRequirement.Text) add(CompatibilityIssue("requirements.output", "No schema-constrained graph is configured"))
+            if (request.requirements.reasoning is ReasoningOptionRequirement.Selected) add(CompatibilityIssue(
+                "requirements.reasoning",
+                "This configured Koog graph exposes no reasoning option selection",
+            ))
         })
 
         override suspend fun startTask(request: TaskRequest): AgentTask = synchronized(lock) {

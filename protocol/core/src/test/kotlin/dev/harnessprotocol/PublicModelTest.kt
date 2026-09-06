@@ -87,6 +87,23 @@ class PublicModelTest {
     }
 
     @Test
+    fun `reasoning options are provider model scoped requirements rather than a shared enum`() {
+        val low = ReasoningOptionDescriptor(ReasoningOptionId("low"), "Low", "Lower latency")
+        val high = ReasoningOptionDescriptor(ReasoningOptionId("high"), "High")
+        val catalog = ReasoningOptionCatalog("model-a", listOf(low, high), defaultOptionId = low.id)
+        assertEquals("model-a", catalog.model)
+        assertEquals(high.id, ReasoningOptionRequirement.Selected("model-a", high.id).optionId)
+        assertFailsWith<IllegalArgumentException> { ReasoningOptionRequirement.Selected(" ", high.id) }
+        assertEquals(ReasoningOptionRequirement.ProviderDefault, TaskRequirements().reasoning)
+        assertFailsWith<IllegalArgumentException> { ReasoningOptionId(" ") }
+        assertFailsWith<IllegalArgumentException> { ReasoningOptionDescriptor(low.id, " ") }
+        assertFailsWith<IllegalArgumentException> { ReasoningOptionCatalog("model-a", listOf(low, low)) }
+        assertFailsWith<IllegalArgumentException> {
+            ReasoningOptionCatalog("model-a", listOf(low), defaultOptionId = high.id)
+        }
+    }
+
+    @Test
     fun `session approval cannot be offered without an explicit grant`() {
         fun request(grant: SessionApprovalGrant?, decisions: Set<ApprovalDecision>) = InteractionRequest.Approval(
             InteractionId("approval"), WorkId("effect"), "update the report", EffectKind.FILE_CHANGE,

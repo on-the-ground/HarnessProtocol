@@ -147,6 +147,17 @@ interface PersistentSessions {
 }
 
 /**
+ * 현재 provider/model이 노출하는 reasoning option을 조회하는 선택 계약.
+ *
+ * 반환값은 요청 준비를 위한 관찰이며 이후 Task의 수락 보장이 아니다. [AgentSession.validate]와
+ * [AgentSession.startTask]는 실제 Task 경계에서 선택값을 다시 검증한다.
+ */
+interface ReasoningOptionDiscovery {
+    /** `model == null`이면 provider가 현재 기본으로 제시하는 model의 목록을 조회한다. */
+    suspend fun reasoningOptions(model: String? = null): ReasoningOptionCatalog
+}
+
+/**
  * 한 번 위임한 작업의 관찰·개입·종결 handle.
  *
  * provider의 turn, 모델 호출, 내부 graph node와 일대일 대응하지 않는다. 여러 내부 호출이 한

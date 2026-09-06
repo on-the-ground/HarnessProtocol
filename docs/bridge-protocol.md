@@ -20,7 +20,7 @@ Host는 stdin 요청과 stdout 응답·이벤트를 한 줄에 하나의 JSON �
 | cancel_execution | executionId | 빈 객체 |
 | respond_interaction | executionId, interactionId, response(decision) | 빈 객체 또는 error |
 
-현재 envelope는 instructions/model/workingDirectory, skills(name/path/activate), filesystem/additionalWritableRoots/network/approval과 선택적 retention을 사용한다. Codex의 `retention=ephemeral`은 `thread/start.ephemeral=true`로 전달하고 응답의 `thread.ephemeral`을 `ephemeral` 또는 `materialized`로 반환한다. user-history visibility는 SDK 응답에 독립 관측이 없어 `unknown`이다. 관측 필드를 제공하지 않는 host는 adapter에서 UNKNOWN으로 보존한다. 생략과 빈 문자열의 차이를 보존하며 Gemini 경로는 앞선 validation에서 지원하지 않는 policy를 거절한다. 이전 host decision에는 approve_for_session이 남아 있지만 새 Port mapper는 명시적인 승인 범위를 받지 못한 요청에 그 선택지를 제공하지 않는다.
+현재 envelope는 instructions/model/workingDirectory, skills(name/path/activate), filesystem/additionalWritableRoots/network/approval과 선택적 retention을 사용한다. Codex의 `retention=ephemeral`은 `thread/start.ephemeral=true`로 전달하고 응답의 `thread.ephemeral`을 `ephemeral` 또는 `materialized`로 반환한다. user-history visibility는 SDK 응답에 독립 관측이 없어 `unknown`이다. `list_reasoning_options`은 model/list 관찰을 provider/model 범위의 catalog로 반환하고, start_execution의 선택적 reasoningOption은 `turn/start.effort`로 전달한다. Task 선택은 구성된 harness 기본값보다 우선하며 둘 다 없으면 effort field를 생략한다. 관측 필드를 제공하지 않는 host는 adapter에서 UNKNOWN으로 보존한다. 생략과 빈 문자열의 차이를 보존하며 Gemini 경로는 앞선 validation에서 지원하지 않는 policy를 거절한다. 이전 host decision에는 approve_for_session이 남아 있지만 새 Port mapper는 명시적인 승인 범위를 받지 못한 요청에 그 선택지를 제공하지 않는다.
 
 공유 Kotlin encoder에는 `InteractionResponse.Answer`의 text 형태가 있지만 현재 Codex host는 approval decision만 해석하고 Gemini host는 interaction 응답 경로를 제공하지 않는다. 두 adapter가 질문 요구를 사전 거절하므로 text 형태는 현재 end-to-end bridge 지원으로 기록하지 않는다.
 

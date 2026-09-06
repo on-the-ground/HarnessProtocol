@@ -14,6 +14,7 @@
 | Caller 승인 | 대상 행위·허용 범위·decision, 승인 전 효과 없음, 거절·취소·중복 응답 처리 | Interaction 공통 구조 위의 구체적 판단. 도구별 중재를 전체 OS 권한 집행으로 해석하지 않는다. |
 | 질문·정보 응답 | 질문/답변 타입, 현재 요청, 일회 응답·철회, 같은 작업 계속 | 공개 Question/Answer 타입은 선언됐다. 현재 세 production adapter 구성은 요구를 거절한다. 독립 Koog 실험은 실제 질문 도구를 Question/Answer로 연결하며 production 구성으로의 통합은 별도다. |
 | 구조화 산출물 | 요구한 schema, 검증 책임, `SchemaValidation`의 VALID/INVALID/NOT_VALIDATED 구별. 산출물의 완결 여부(`TaskOutput.complete`)는 별개 축이다 | 텍스트 전달과 schema 보증은 다르다. JSON 문자열 실험은 native schema 집행 검증이 아니다. |
+| Reasoning option 선택 | 현재 provider/model이 공개한 opaque option, Task 시작 시 선택값 고정, 실제 수락과 silent fallback 금지 | Provider별 이름과 효과를 공용 등급으로 합치지 않는다. Discovery는 요청 준비용이며 실제 Task 경계에서 다시 검증한다. |
 | 작업 공간·자료·지침 제공 | 제공 범위·참조의 해석 위치·적용 수명. skill 제공과 활성화의 구별 | 로컬 workingDirectory와 skill path를 모든 하네스의 기본 어휘로 만들지 않는다. 범용 Resource 모델은 아직 근거가 없다. |
 | Filesystem/network 집행 | 제한의 범위와 실제 집행 또는 사전 거절. provider default의 정확한 의미 | 로컬 도구 환경의 제약을 공통 실행 그 자체와 분리한다. 승인 기능과도 구별한다. |
 | Provider 진단 | 선언한 원본 관찰 범위와 전달·유실 정책 | `ProviderDiagnostic`으로 분리. 모든 내부 객체·wire 알림 보존을 core 조건으로 삼지 않는다. |
@@ -60,7 +61,9 @@ Ephemeral retention과 영속 persistence를 동시에 요구하면 모순으로
 
 기능 목록을 전부 추가하는 계획은 아니다. 구체적인 소비 요구와 실행 근거가 없는 추상은 공개 계약으로 확정하지 않는다. 특정 SDK에서 아직 구현할 수 없다는 사실은 미지원·미검증으로 기록하며 목적 자체가 불필요하다는 증거로 사용하지 않는다.
 
-정확한 provider-native reasoning effort 값은 현재 공통 업무 요구로 채택하지 않는다. 같은 이름이 provider마다 비용, 지연, 품질 또는 내부 반복량 중 무엇을 보장하는지 공통 의미가 없기 때문이다. 특정 Codex 구성을 선택한 애플리케이션은 Codex adapter 구성에서 provider 값을 지정할 수 있지만, 이를 공통 `TaskRequest`로 전달하거나 다른 adapter가 같은 효과를 보장한다고 해석하지 않는다.
+정확한 provider-native reasoning effort 값을 공용 성능 등급으로 채택하지 않는다. 같은 이름이 provider마다 비용, 지연, 품질 또는 내부 반복량 중 무엇을 보장하는지 공통 의미가 없기 때문이다. 대신 사용자가 현재 adapter/model이 공개한 opaque option을 선택하고 다음 Task에 정확히 적용하도록 요구하는 목적을 분리한다. 선택 requirement는 catalog의 model과 option ID를 함께 보존해 같은 문자열을 쓰는 다른 model과 섞지 않는다. `ReasoningOptionDiscovery`의 목록은 표시·요청 준비를 위한 관찰이며 과거 조회 성공을 실제 수락 근거로 대체하지 않는다. `AgentSession.validate`와 `startTask`가 현재 model 범위에서 다시 검증한다.
+
+`startTask`가 handle을 반환하면 harness가 선택 option의 적용 책임을 수락한 것으로 본다. 별도 accepted-value echo는 두지 않는다. Provider가 effective option을 독립적으로 보고하는 공통 사례는 아직 없으므로 요청값을 effective 값으로 복사하지 않으며, 실제 관측 계약의 공개 위치는 추가 실증 뒤 결정한다.
 
 이 처리는 일반 규칙을 따른 것이다. 공통 의미를 정의할 수 없는 provider 고유 설정은 공통 요청 타입이 아니라 adapter가 소유하는 provider-specific 구성·확장에 두고 실제 적용 scope를 명시한다. `CodexSdkOptions.reasoningEffort`는 이를 harness 생성 옵션으로 구현한 현재 사례다. 공통 요청 타입에 불투명한 통과 경로를 만들지 않는 근거와 이전 `metadata`를 제거한 이유는 [Semantic contract](semantic-contract.md#provider-고유-기능의-출입-경계)에 있다.
 

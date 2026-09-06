@@ -13,7 +13,7 @@ open class CodexHarness protected constructor(
     scope: CoroutineScope,
     namespace: StorageNamespace?,
     private val reasoningEffort: String?,
-) : ProcessTaskHarness(bridge, scope, storageNamespace = namespace) {
+) : ProcessTaskHarness(bridge, scope, storageNamespace = namespace), ReasoningOptionDiscovery {
     init {
         require(reasoningEffort == null || reasoningEffort.isNotBlank()) {
             "reasoningEffort must be null or non-blank"
@@ -21,6 +21,7 @@ open class CodexHarness protected constructor(
     }
 
     override val provider = ProviderId("codex")
+    private val reasoningCatalogs = ConcurrentHashMap<String, ReasoningOptionCatalog>()
     override val support = SupportReport(mapOf(
         Capability.CALLER_APPROVAL to Support.Supported,
         Capability.QUESTIONS to Support.Unsupported("The configured client exposes approval handlers, not a typed question channel"),
@@ -31,6 +32,10 @@ open class CodexHarness protected constructor(
         Capability.EXECUTION_CONSTRAINT to Support.Conditional(SupportScope.SESSION, "Network policy requires workspace-write; restrictive constraints require DenyAll approval"),
         Capability.STRUCTURED_OUTPUT to Support.Unsupported("Schema enforcement is not configured"),
         Capability.DIAGNOSTICS to Support.Supported,
+        Capability.REASONING_OPTION_SELECTION to Support.Conditional(
+            SupportScope.SESSION,
+            "Available options depend on the selected Codex model and are revalidated at task start",
+        ),
     ))
     override fun validate(spec: SessionSpec) = CompatibilityReport(buildList {
         addAll(persistenceIssues(spec))
@@ -83,6 +88,74 @@ open class CodexHarness protected constructor(
     }
     override fun ingest(task: ManagedTask, spec: SessionSpec, request: TaskRequest): (JsonObject) -> Unit =
         CodexTaskMapper(task, spec)::accept
+
+    override suspend fun reasoningOptions(model: String?): ReasoningOptionCatalog {
+        require(model == null || model.isNotBlank()) { "model must be null or non-blank" }
+        val result = call("list_reasoning_options", buildJsonObject { model?.let { put("model", it) } })
+        val catalog = ReasoningOptionCatalog(
+            model = result.getValue("model").jsonPrimitive.content,
+            options = result["options"]?.jsonArray.orEmpty().map { element ->
+                val option = element.jsonObject
+                ReasoningOptionDescriptor(
+                    id = ReasoningOptionId(option.getValue("id").jsonPrimitive.content),
+                    displayName = option.getValue("displayName").jsonPrimitive.content,
+                    description = option["description"]?.jsonPrimitive?.contentOrNull,
+                )
+            },
+            defaultOptionId = result["defaultOptionId"]?.jsonPrimitive?.contentOrNull?.let(::ReasoningOptionId),
+        )
+        reasoningCatalogs[catalogKey(model)] = catalog
+        reasoningCatalogs[catalogKey(catalog.model)] = catalog
+        return catalog
+    }
+
+    override fun taskIssues(spec: SessionSpec, request: TaskRequest): List<CompatibilityIssue> = buildList {
+        addAll(super.taskIssues(spec, request))
+        val selected = request.requirements.reasoning as? ReasoningOptionRequirement.Selected ?: return@buildList
+        if (spec.model != selected.model) {
+            add(CompatibilityIssue(
+                "requirements.reasoning.model",
+                "The selected reasoning option belongs to a different model than the session",
+            ))
+            return@buildList
+        }
+        val catalog = reasoningCatalogs[catalogKey(selected.model)]
+        when {
+            catalog == null -> add(CompatibilityIssue(
+                "requirements.reasoning.optionId",
+                "The current model reasoning option catalog has not been observed",
+                CompatibilityIssueKind.UNCONFIRMED,
+            ))
+            catalog.options.none { it.id == selected.optionId } -> add(CompatibilityIssue(
+                "requirements.reasoning.optionId",
+                "The selected reasoning option is not available for the current model",
+            ))
+        }
+    }
+
+    override suspend fun taskAdmission(spec: SessionSpec, request: TaskRequest): CompatibilityReport {
+        val base = super.taskIssues(spec, request)
+        if (base.any { it.kind == CompatibilityIssueKind.UNSUPPORTED }) return CompatibilityReport(base)
+        val selected = request.requirements.reasoning as? ReasoningOptionRequirement.Selected
+            ?: return CompatibilityReport(base)
+        if (spec.model != selected.model) return CompatibilityReport(base + CompatibilityIssue(
+            "requirements.reasoning.model",
+            "The selected reasoning option belongs to a different model than the session",
+        ))
+        val catalog = reasoningOptions(selected.model)
+        return CompatibilityReport(base + if (catalog.options.any { it.id == selected.optionId }) emptyList() else listOf(
+            CompatibilityIssue(
+                "requirements.reasoning.optionId",
+                "The selected reasoning option is not available for the current model",
+            ),
+        ))
+    }
+
+    override fun taskPayload(spec: SessionSpec, request: TaskRequest): JsonObject = buildJsonObject {
+        (request.requirements.reasoning as? ReasoningOptionRequirement.Selected)?.let {
+            put("reasoningOption", it.optionId.value)
+        }
+    }
     override fun sessionOpened(id: SessionId, spec: SessionSpec, resumed: Boolean) {
         storageNamespace?.let { namespace -> persistentSpecs.putIfAbsent(namespace to id, spec) }
     }
@@ -102,7 +175,9 @@ open class CodexHarness protected constructor(
         override suspend fun reopenSession(ref: PersistentSessionRef, spec: SessionSpec) = reopen(ref, spec)
     }
     companion object {
+        private const val DEFAULT_MODEL_CATALOG = "<provider-default>"
         private val persistentSpecs = ConcurrentHashMap<Pair<StorageNamespace, SessionId>, SessionSpec>()
+        private fun catalogKey(model: String?) = model ?: DEFAULT_MODEL_CATALOG
         fun launch(options: CodexSdkOptions = CodexSdkOptions(), storageNamespace: StorageNamespace? = null): CodexHarness {
             val script = options.bridgeScript ?: EmbeddedBridgeResource.extract(CodexHarness::class.java,
                 "/dev/harnessprotocol/codex/codex_sdk_bridge.py", ".py")

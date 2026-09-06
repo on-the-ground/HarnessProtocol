@@ -60,6 +60,11 @@ private class NativeRequirementsFixture(
             Capability.EXECUTION_CONSTRAINT to if (codex) Support.Conditional(SupportScope.SESSION, "Restrictive constraints require DenyAll; network policy requires workspace-write") else Support.Unsupported("No sandbox enforcement configured"),
             Capability.STRUCTURED_OUTPUT to Support.Unsupported("No schema enforcement configured"),
             Capability.DIAGNOSTICS to Support.Supported,
+            Capability.REASONING_OPTION_SELECTION to if (codex) {
+                Support.Conditional(SupportScope.SESSION, "Available options depend on the selected Codex model")
+            } else {
+                Support.Unsupported("No reasoning option selection configured")
+            },
         ))
         val base = factory.spec()
         fun sessionCase(
@@ -101,6 +106,21 @@ private class NativeRequirementsFixture(
                         TaskRequest(TaskInput.Text("requirement-$id-structured"), TaskRequirements(OutputRequirement.Structured("{\"type\":\"object\"}", validate))),
                         CompatibilityStatus.COMPATIBLE, CompatibilityStatus.INCOMPATIBLE, capability = Capability.STRUCTURED_OUTPUT))
                 }
+                add(RequirementCase(
+                    "unknown-reasoning-option",
+                    base,
+                    TaskRequest(
+                        TaskInput.Text("requirement-$id-reasoning"),
+                        TaskRequirements(reasoning = ReasoningOptionRequirement.Selected(
+                            base.model ?: "provider-default",
+                            ReasoningOptionId("ahp-known-unsupported-option"),
+                        )),
+                    ),
+                    CompatibilityStatus.COMPATIBLE,
+                    CompatibilityStatus.INCOMPATIBLE,
+                    startDecision = CompatibilityStatus.INCOMPATIBLE,
+                    capability = Capability.REASONING_OPTION_SELECTION,
+                ))
             }
         }
         return FixtureProfile(id, "Pinned ${provider.value} native runtime; explicit storage namespace=$persistent; controlled text model responses", support, cases)

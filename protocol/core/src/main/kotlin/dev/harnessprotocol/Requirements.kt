@@ -178,7 +178,58 @@ data class TaskRequest(
 
 data class TaskRequirements(
     val output: OutputRequirement = OutputRequirement.Text,
+    val reasoning: ReasoningOptionRequirement = ReasoningOptionRequirement.ProviderDefault,
 )
+
+/** 사용자가 현재 provider/model 범위에서 선택한 추론 자원 설정 요구. */
+sealed interface ReasoningOptionRequirement {
+    /** 현재 session/provider 구성을 변경하도록 요구하지 않는다. */
+    data object ProviderDefault : ReasoningOptionRequirement
+
+    /**
+     * [ReasoningOptionDiscovery]가 제공한 opaque option을 이 Task에 적용해야 한다.
+     * 다른 option이나 provider default로 조용히 대체할 수 없다.
+     */
+    data class Selected(
+        val model: String,
+        val optionId: ReasoningOptionId,
+    ) : ReasoningOptionRequirement {
+        init { require(model.isNotBlank()) { "reasoning option model must not be blank" } }
+    }
+}
+
+/** Provider/model 범위 안에서만 해석되는 opaque reasoning option 식별자. */
+@JvmInline
+value class ReasoningOptionId(val value: String) {
+    init { require(value.isNotBlank()) { "reasoning option id must not be blank" } }
+}
+
+/** 사용자에게 제시할 수 있는 provider/model 범위의 reasoning option. */
+data class ReasoningOptionDescriptor(
+    val id: ReasoningOptionId,
+    val displayName: String,
+    val description: String? = null,
+) {
+    init {
+        require(displayName.isNotBlank()) { "reasoning option display name must not be blank" }
+        require(description == null || description.isNotBlank()) { "reasoning option description must be null or non-blank" }
+    }
+}
+
+/** 한 provider model에 대해 현재 관찰한 reasoning option 목록. */
+data class ReasoningOptionCatalog(
+    val model: String,
+    val options: List<ReasoningOptionDescriptor>,
+    val defaultOptionId: ReasoningOptionId? = null,
+) {
+    init {
+        require(model.isNotBlank()) { "reasoning option catalog model must not be blank" }
+        require(options.map { it.id }.distinct().size == options.size) { "reasoning option ids must be unique" }
+        require(defaultOptionId == null || options.any { it.id == defaultOptionId }) {
+            "default reasoning option must belong to the catalog"
+        }
+    }
+}
 
 /** 산출물의 형태 요구. */
 sealed interface OutputRequirement {

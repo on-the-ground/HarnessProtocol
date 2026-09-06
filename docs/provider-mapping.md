@@ -19,6 +19,7 @@
 | 산출물 | final-answer 메시지, 부족하면 관찰한 delta | 누적 content | String 결과. TaskOutput과 schema 보장 분리 필요 |
 | Tool/effect | tool·command·file·search item lifecycle | tool request/response | 실제 registry 호출 hooks. 내부 node는 자동으로 tool이 되지 않음 |
 | Usage/context | input/cache-hit/cache-write/output/reasoning token usage, compaction 알림 | usageMetadata, chat-compressed | 메타데이터가 없으면 unknown. 전체 측정·compaction 미검증 |
+| Reasoning option | model/list의 model별 supportedReasoningEfforts를 discovery로 제공하고 선택값을 turn/start.effort로 전달 | 현재 구성은 선택 계약을 거절 | 현재 구성은 선택 계약을 거절 |
 | 진단 | 원본 method/payload | 원본 type/value | hooks/internal 객체. ProviderDiagnostic 선택 경로로 분리 |
 
 같은 purpose를 서로 다른 수단으로 이행할 수 있다. provider thread를 그대로 노출하거나 Koog graph에 맞춰 Port를 바꾸지 않는다. TaskId·SessionId·WorkId의 외부 의미는 native ID 형식과 분리한다.
@@ -30,6 +31,7 @@ Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`�
 - thread/start·resume의 developerInstructions, model, cwd와 정책 wire 필드를 구성한다.
 - `CodexSdkOptions.codexExecutable`을 지정하면 Python SDK의 `CodexConfig.codex_bin`으로 전달하고, 생략하면 SDK에 포함된 runtime을 유지한다.
 - `CodexSdkOptions.reasoningEffort`은 이 harness가 시작하는 모든 Task의 `turn/start.effort`로 전달한다. 이는 Codex가 소유하는 운용 설정이며 공통 `TaskRequest` 요구가 아니다. 전달 성공은 provider 간 품질·비용·지연의 공통 의미나 실제 사용된 effort의 독립 관측을 뜻하지 않는다.
+- `ReasoningOptionDiscovery`는 model/list의 현재 model과 supportedReasoningEfforts를 opaque option catalog로 변환한다. 명시적 Task 선택은 catalog를 실제 시작 경계에서 새로 확인하고 `turn/start.effort`로 전달하며, harness 기본값보다 우선한다. 목록에 없는 값은 native 작업 전에 거절한다.
 - ephemeral retention 요구는 `thread/start.ephemeral=true`로 전달하고 반환된 `thread.ephemeral`을 `AgentSession.disposition.retention`으로 보고한다. false·누락을 요청값으로 덮어쓰지 않는다.
 - pinned SDK의 ephemeral 설명은 in-memory/no disk materialization까지다. account-wide remote retention이나 Codex Desktop Recents 비노출의 독립 응답은 없으므로 user-history visibility는 UNKNOWN이며 Hidden 요구는 UNCONFIRMED로 사전 거절한다.
 - PROVIDER_DEFAULT는 approval 필드를 생략한다. SDK convenience default로 의미를 바꾸지 않는다.

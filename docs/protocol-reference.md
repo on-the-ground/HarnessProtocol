@@ -29,6 +29,10 @@
 - 설정 호환성이 인증·네트워크·실행 성공까지 보장하지는 않는다.
 - default, 값 생략, 명시적인 빈 값이 서로 다른 의미라면 그 차이를 보존한다.
 
+`ReasoningOptionDiscovery`는 현재 provider/model 범위의 opaque reasoning option 목록을 제공하는 선택 interface다. 목록은 요청 준비를 돕지만 이후 수락 보장이 아니며, 조회 없이도 `ReasoningOptionRequirement.Selected`를 선언할 수 있다. `AgentSession.validate`는 관찰한 현재 목록이 없으면 UNCONFIRMED, 목록에서 선택값이 제외되면 INCOMPATIBLE로 진단할 수 있다. `startTask`는 실제 경계에서 다시 확인하고 지원되는 선택을 native 실행에 적용하거나 작업 시작 전에 거절한다.
+
+`TaskRequirements.reasoning`의 명시적 선택은 catalog가 반환한 model과 option ID를 함께 보존하며 해당 Task가 시작할 때 고정된다. Session model과 다르거나 다른 option으로 바꾸어 실행하지 않는다. `startTask`가 handle을 반환하면 harness가 이 적용 책임을 수락한 것이며 별도 accepted option을 echo하지 않는다. Option ID는 provider/model 범위의 값으로 provider 간 품질·비용·지연의 공통 등급이 아니다.
+
 `createSession`은 새 문맥 공유 범위의 handle을 만든다. 영속 conversation 생성이나 OS process 시작을 기본 의미에 포함하지 않는다. `close`는 소유한 handle과 자원을 정리한다. 실제 작업 종료 확인은 별도의 outcome 판정이다.
 
 `ContextRetentionRequirement.Ephemeral`은 native session 밖에서 재개 가능한 provider conversation을 materialize하지 말라는 요구다. `UserHistoryVisibilityRequirement.Hidden`은 일반 사용자 conversation history·Recents 비노출이라는 별도 요구다. 둘은 서로를 암시하지 않으며 provider telemetry, abuse monitoring, 법적 보존 같은 service-side 정책도 자동으로 포함하지 않는다. 지원하지 않거나 확인할 수 없는 요구는 provider default로 완화하지 않고 각각 INCOMPATIBLE 또는 UNCONFIRMED로 거절한다.

@@ -65,6 +65,8 @@ Interaction은 외부 판단·정보를 받아 작업을 계속하는 계약이�
 
 지시·모델 선택·문맥 설정·작업별 요구·실행 환경 제약은 적용 범위를 구별한다. 기존 AgentSpec/ExecutionPolicy를 이름만 바꾸어 유지하지 않으며 [공개 모델](public-model.md)의 SessionSpec·TaskRequest와 독립된 filesystem/network 요구를 따른다.
 
+사용자가 비용과 실행 특성을 고려해 현재 provider/model이 공개한 reasoning option을 선택하는 것은 선택 계약이 될 수 있다. 공통 목적은 `high` 같은 provider 어휘의 의미를 통일하는 것이 아니라, adapter가 제시한 option을 다음 Task에 필수 요구로 적용하고 조용한 fallback을 막는 것이다. 선택값은 Task 시작 시 고정되며 이미 진행 중인 Task를 바꾸지 않는다. Provider가 실제 effective option을 독립적으로 보고하지 않으면 요청값을 관측값으로 복사하지 않는다.
+
 ## 관찰과 결과
 
 상태와 종결 판정은 event collector의 유무나 속도에 의존하지 않는다. pending snapshot은 응답해야 할 요청을 복구하는 기준이며 진행 이벤트는 영속 업무 기록이 아니다.

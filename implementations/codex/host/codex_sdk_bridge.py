@@ -167,6 +167,11 @@ class Bridge:
             self.sessions.pop(session_id, None)
             return {}
 
+        if method == "list_reasoning_options":
+            await self.ensure_started()
+            catalog = await asyncio.to_thread(self.client.model_list)
+            return reasoning_option_catalog(catalog, params.get("model"))
+
         if method == "start_execution":
             session_id = required_string(params, "sessionId")
             spec = self.sessions.get(session_id)
@@ -177,7 +182,7 @@ class Bridge:
                 self.client.turn_start,
                 session_id,
                 inputs,
-                turn_start_params(spec) or None,
+                turn_start_params(spec, params) or None,
             )
             turn_id = started.turn.id
             execution = Execution(execution_id=turn_id, session_id=session_id)
@@ -418,11 +423,46 @@ def thread_resume_params(spec: dict[str, Any]) -> dict[str, Any]:
     return common_thread_params(spec)
 
 
-def turn_start_params(spec: dict[str, Any]) -> dict[str, Any]:
-    """Codex-only task tuning configured for this harness instance."""
+def turn_start_params(spec: dict[str, Any], task: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Task selection overrides the configured Codex harness default."""
     result: dict[str, Any] = {}
-    copy_if_present(spec, result, "reasoningEffort", "effort")
+    task = task or {}
+    if task.get("reasoningOption") is not None:
+        copy_if_present(task, result, "reasoningOption", "effort")
+    else:
+        copy_if_present(spec, result, "reasoningEffort", "effort")
     return result
+
+
+def reasoning_option_catalog(response: Any, requested_model: Any = None) -> dict[str, Any]:
+    models = list(getattr(response, "data", []) or [])
+    selected = next(
+        (
+            model
+            for model in models
+            if requested_model is not None
+            and requested_model in {getattr(model, "model", None), getattr(model, "id", None)}
+        ),
+        None,
+    )
+    if selected is None and requested_model is None:
+        selected = next((model for model in models if getattr(model, "is_default", False)), None)
+    if selected is None:
+        return {"model": str(requested_model or "provider-default"), "options": []}
+    options = [
+        {
+            "id": str(option.reasoning_effort.value),
+            "displayName": str(option.reasoning_effort.value),
+            "description": str(option.description),
+        }
+        for option in selected.supported_reasoning_efforts
+    ]
+    default_effort = getattr(selected, "default_reasoning_effort", None)
+    return {
+        "model": str(selected.model),
+        "options": options,
+        "defaultOptionId": str(default_effort.value) if default_effort is not None else None,
+    }
 
 
 def make_inputs(input_value: dict[str, Any], spec: dict[str, Any]) -> list[dict[str, Any]]:

@@ -29,6 +29,13 @@ abstract class ProcessTaskHarness(
     protected abstract fun ingest(task: ManagedTask, spec: SessionSpec, request: TaskRequest): (JsonObject) -> Unit
     protected open fun validateReopen(ref: PersistentSessionRef, spec: SessionSpec): CompatibilityReport = CompatibilityReport.Compatible
     protected open fun sessionOpened(id: SessionId, spec: SessionSpec, resumed: Boolean) = Unit
+    protected open fun taskIssues(spec: SessionSpec, request: TaskRequest): List<CompatibilityIssue> = buildList {
+        if (request.requirements.output is OutputRequirement.Structured)
+            add(CompatibilityIssue("requirements.output", "This native connection does not yet enforce an output schema"))
+    }
+    protected open suspend fun taskAdmission(spec: SessionSpec, request: TaskRequest): CompatibilityReport =
+        CompatibilityReport(taskIssues(spec, request))
+    protected open fun taskPayload(spec: SessionSpec, request: TaskRequest): JsonObject = JsonObject(emptyMap())
 
     /** Validate and materialize local workspace resources before a native session is allocated. */
     protected fun workspaceIssues(spec: SessionSpec): List<CompatibilityIssue> {
@@ -188,15 +195,14 @@ abstract class ProcessTaskHarness(
     ) : AgentSession {
         override val id get() = context.id
         private val released = AtomicBoolean(false)
-        override fun validate(request: TaskRequest): CompatibilityReport = CompatibilityReport(buildList {
-            if (request.requirements.output is OutputRequirement.Structured)
-                add(CompatibilityIssue("requirements.output", "This native connection does not yet enforce an output schema"))
-        })
+        override fun validate(request: TaskRequest): CompatibilityReport = CompatibilityReport(taskIssues(spec, request))
 
         override suspend fun startTask(request: TaskRequest): AgentTask = context.mutex.withLock {
             if (closed.get() || released.get() || isBlocked(context)) throw SessionBlockedException(id, "Session is closed or its context is unresolved")
             check(context.active?.isTerminal != false) { "A task is already active on this session" }
-            validate(request).requireCompatible()
+            val preflight = validate(request)
+            if (preflight.status == CompatibilityStatus.INCOMPATIBLE) preflight.requireCompatible()
+            taskAdmission(spec, request).requireCompatible()
             val requestId = UUID.randomUUID().toString()
             val result = try {
                 withTimeout(30.seconds) {
@@ -204,6 +210,7 @@ abstract class ProcessTaskHarness(
                         put("sessionId", id.value)
                         put("requestId", requestId)
                         put("input", buildJsonObject { put("type", "text"); put("text", (request.input as TaskInput.Text).text) })
+                        taskPayload(spec, request).forEach { (key, value) -> put(key, value) }
                     })
                 }
             } catch (failure: Throwable) {

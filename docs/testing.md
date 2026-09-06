@@ -64,6 +64,7 @@
 | User history visibility | 독립 visibility 관측과 일반 사용자 history 비노출 | 관측할 수 없으면 UNKNOWN으로 보고하고 Hidden 요구를 UNCONFIRMED/미지원으로 거절 |
 | 권한·작업 자원 | 요청 scope의 실제 집행·자료 해석·활성화 | 요청을 default로 낮추지 않고 거절 |
 | 구조화 산출물 | schema 요구·검증 성공·실패·부분 산출물의 구별 | JSON 문자열 전달만으로 지원 선언하지 않음 |
+| Reasoning option 선택 | provider/model 범위의 discovery, Task 시작 시 재검증, native 적용, 목록 변경과 silent fallback 부재 | 명시적 선택을 모델 실행 전에 거절 |
 | 진단 | 선언한 범위·유실·상관관계 | 원본 이벤트 부재가 기본 Task 적합성을 막지 않음 |
 
 한 선택 기능의 지원이 다른 보장을 의미하지 않는다. checkpoint 복원이 이력 조회나 외부 효과의 exactly-once를 자동 보장하는지 검사하지 말고, 그런 별도 계약을 제공할 때 별도 시나리오로 검증한다.
@@ -75,6 +76,8 @@ ResponseControl로 실제 수락·미수락 각각에서 acknowledgement를 잃�
 TaskDiagnostics가 지원되면 진단 observer만 느리게 하거나 진단을 넘치게 한 상태에서 의미 이벤트와 outcome을 검사한다. 진단 유실은 DiagnosticGap이며 TaskEvent.ObservationGap과 구별한다. 기본 의미 이벤트 stream에는 ProviderDiagnostic이 나타나지 않는다.
 
 지원 탐색·validate·실제 수락의 관계도 검사한다. 같은 adapter라도 구성·session 조건이 달라 지원 여부가 바뀌는 사례, 미확인 조건, 조회 없이 직접 요구한 사례, 조회 뒤 환경이 변한 사례를 포함한다. 사전 검증을 건너뛰어도 필수 요구가 집행되거나 실제 작업 전에 거절되어야 한다. 수락 뒤 요구를 이행할 수 없게 되는 fixture에서는 조용한 완화 대신 실패·미확정 판정을 확인한다.
+
+Reasoning option의 discovery는 현재 model의 option ID와 표시 정보를 보존하되 공용 성능 순위를 만들지 않는다. Codex binding은 model/list 관찰과 turn/start.effort 전달을 각각 검사하고, Task 선택이 구성된 harness 기본값보다 우선하는지 확인한다. Gemini CLI와 Koog의 현재 구성은 같은 명시적 요구를 provider/model 실행 전에 거절한다. Provider가 effective option을 독립적으로 보고하지 않는 현재 구성에서는 요청값을 관측값으로 복사하지 않는다.
 
 영속성 검사는 선언한 재개·조정 범위별로 나눈다. 동일 ID 문자열의 다른 저장 namespace를 거절하고 정규화한 참조를 보존한다. harness 재생성·process 재시작을 지원하면 미확정 문맥의 차단도 그 경계 너머에서 보존하거나 검증된 복구로 해소해야 한다. 다중 접근 미지원 구성의 사전 거절과 지원 구성의 조정을 별도로 검사한다. 복구를 제공한다면 차단 해소 조건·문맥 일관성·이전 outcome 불변을 검사하며 단순 reopen 성공을 복구 성공으로 세지 않는다.
 

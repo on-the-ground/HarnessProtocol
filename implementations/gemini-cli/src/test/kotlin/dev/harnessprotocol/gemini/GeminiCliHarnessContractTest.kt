@@ -16,6 +16,8 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 
 class GeminiCliHarnessContractTest : SdkAdapterContractTest() {
     override fun harness(bridge: RecordingBridge, scope: CoroutineScope): AgentHarness =
@@ -65,5 +67,21 @@ class GeminiCliPolicyTest {
         )
         kotlin.test.assertFalse(report.isCompatible)
         assertEquals("requirements.approval", report.issues.single().path)
+    }
+
+    @Test
+    fun `reasoning option is rejected before a Gemini task starts`() = kotlinx.coroutines.runBlocking {
+        val bridge = RecordingBridge()
+        GeminiCliHarness.usingBridge(bridge).use { harness ->
+            assertIs<Support.Unsupported>(harness.support[Capability.REASONING_OPTION_SELECTION])
+            val session = harness.createSession(SessionSpec())
+            val request = TaskRequest(
+                TaskInput.Text("reason"),
+                TaskRequirements(reasoning = ReasoningOptionRequirement.Selected("model-a", ReasoningOptionId("high"))),
+            )
+            assertEquals(CompatibilityStatus.INCOMPATIBLE, session.validate(request).status)
+            assertFailsWith<IncompatibleRequirementException> { session.startTask(request) }
+            kotlin.test.assertTrue(bridge.paramsOf("start_execution").isEmpty())
+        }
     }
 }

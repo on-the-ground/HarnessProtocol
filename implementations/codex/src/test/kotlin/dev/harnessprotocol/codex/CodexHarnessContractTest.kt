@@ -19,6 +19,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.yield
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.nio.file.Path
@@ -124,6 +125,110 @@ class CodexHarnessContractTest : SdkAdapterContractTest() {
         try {
             assertFailsWith<IllegalArgumentException> {
                 CodexHarness.usingBridge(RecordingBridge(), scope, reasoningEffort = " ")
+            }
+        } finally { scope.cancel() }
+    }
+
+    @Test
+    fun `reasoning option discovery is model scoped and enables compatible preflight`() = kotlinx.coroutines.runBlocking {
+        val bridge = RecordingBridge().apply {
+            respondTo("list_reasoning_options") { reasoningCatalog("model-a") }
+        }
+        val scope = CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Default)
+        try {
+            CodexHarness.usingBridge(bridge, scope).use { harness ->
+                assertIs<Support.Conditional>(harness.support[Capability.REASONING_OPTION_SELECTION])
+                val discovery = assertIs<ReasoningOptionDiscovery>(harness)
+                val catalog = discovery.reasoningOptions("model-a")
+                assertEquals("model-a", catalog.model)
+                assertEquals(listOf("low", "high"), catalog.options.map { it.id.value })
+                assertEquals(ReasoningOptionId("low"), catalog.defaultOptionId)
+
+                val session = harness.createSession(SessionSpec(model = "model-a"))
+                val accepted = TaskRequest(
+                    TaskInput.Text("reason"),
+                    TaskRequirements(reasoning = ReasoningOptionRequirement.Selected("model-a", ReasoningOptionId("high"))),
+                )
+                assertEquals(CompatibilityStatus.COMPATIBLE, session.validate(accepted).status)
+                val rejected = accepted.copy(requirements = TaskRequirements(
+                    reasoning = ReasoningOptionRequirement.Selected("model-a", ReasoningOptionId("missing")),
+                ))
+                assertEquals(CompatibilityStatus.INCOMPATIBLE, session.validate(rejected).status)
+                assertFailsWith<IncompatibleRequirementException> { session.startTask(rejected) }
+                assertTrue(bridge.paramsOf("start_execution").isEmpty())
+                session.release()
+            }
+        } finally { scope.cancel() }
+    }
+
+    @Test
+    fun `direct task admission refreshes reasoning options and preserves the selected option`() = kotlinx.coroutines.runBlocking {
+        val bridge = RecordingBridge().apply {
+            respondTo("list_reasoning_options") { reasoningCatalog("model-a") }
+        }
+        val scope = CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Default)
+        try {
+            CodexHarness.usingBridge(bridge, scope).use { harness ->
+                val session = harness.createSession(SessionSpec(model = "model-a"))
+                val request = TaskRequest(
+                    TaskInput.Text("reason"),
+                    TaskRequirements(reasoning = ReasoningOptionRequirement.Selected("model-a", ReasoningOptionId("high"))),
+                )
+                assertEquals(CompatibilityStatus.UNCONFIRMED, session.validate(request).status)
+                val task = session.startTask(request)
+                assertEquals(listOf("create_session", "list_reasoning_options", "start_execution"), bridge.methods)
+                assertEquals("high", bridge.paramsOf("start_execution").single().string("reasoningOption"))
+                fixture().completed("done").forEach { bridge.emit(it) }
+                assertIs<TaskOutcome.Completed>(task.awaitOutcome())
+
+                val nextRequest = request.copy(requirements = TaskRequirements(
+                    reasoning = ReasoningOptionRequirement.Selected("model-a", ReasoningOptionId("low")),
+                ))
+                val nextTask = session.startTask(nextRequest)
+                assertEquals(
+                    listOf("high", "low"),
+                    bridge.paramsOf("start_execution").map { it.string("reasoningOption") },
+                )
+                fixture().completed("next").forEach { bridge.emit(it) }
+                assertIs<TaskOutcome.Completed>(nextTask.awaitOutcome())
+                session.release()
+            }
+        } finally { scope.cancel() }
+    }
+
+    @Test
+    fun `stale reasoning discovery cannot authorize a removed option`() = kotlinx.coroutines.runBlocking {
+        var observations = 0
+        val bridge = RecordingBridge().apply {
+            respondTo("list_reasoning_options") {
+                observations++
+                if (observations == 1) reasoningCatalog("model-a") else buildJsonObject {
+                    put("model", "model-a")
+                    put("defaultOptionId", "low")
+                    put("options", buildJsonArray {
+                        add(buildJsonObject {
+                            put("id", "low")
+                            put("displayName", "Low")
+                        })
+                    })
+                }
+            }
+        }
+        val scope = CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Default)
+        try {
+            CodexHarness.usingBridge(bridge, scope).use { harness ->
+                val discovery = assertIs<ReasoningOptionDiscovery>(harness)
+                discovery.reasoningOptions("model-a")
+                val session = harness.createSession(SessionSpec(model = "model-a"))
+                val request = TaskRequest(
+                    TaskInput.Text("reason"),
+                    TaskRequirements(reasoning = ReasoningOptionRequirement.Selected("model-a", ReasoningOptionId("high"))),
+                )
+                assertEquals(CompatibilityStatus.COMPATIBLE, session.validate(request).status)
+                assertFailsWith<IncompatibleRequirementException> { session.startTask(request) }
+                assertEquals(2, observations)
+                assertTrue(bridge.paramsOf("start_execution").isEmpty())
+                session.release()
             }
         } finally { scope.cancel() }
     }
@@ -323,6 +428,23 @@ class CodexHarnessContractTest : SdkAdapterContractTest() {
             }
         } finally { scope.cancel() }
     }
+}
+
+private fun reasoningCatalog(model: String) = buildJsonObject {
+    put("model", model)
+    put("defaultOptionId", "low")
+    put("options", buildJsonArray {
+        add(buildJsonObject {
+            put("id", "low")
+            put("displayName", "Low")
+            put("description", "Fast")
+        })
+        add(buildJsonObject {
+            put("id", "high")
+            put("displayName", "High")
+            put("description", "Deep")
+        })
+    })
 }
 
 class CodexSdkOptionsTest {

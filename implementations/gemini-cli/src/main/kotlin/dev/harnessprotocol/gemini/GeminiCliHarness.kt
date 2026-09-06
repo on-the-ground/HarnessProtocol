@@ -20,6 +20,9 @@ open class GeminiCliHarness protected constructor(bridge: SdkBridge, scope: Coro
         Capability.EXECUTION_CONSTRAINT to Support.Unsupported("The SDK does not expose policy enforcement"),
         Capability.STRUCTURED_OUTPUT to Support.Unsupported("Schema enforcement is not configured"),
         Capability.DIAGNOSTICS to Support.Supported,
+        Capability.REASONING_OPTION_SELECTION to Support.Unsupported(
+            "The configured Gemini CLI SDK connection exposes no model-scoped reasoning option catalog",
+        ),
     ))
     override fun validate(spec: SessionSpec) = CompatibilityReport(buildList {
         addAll(persistenceIssues(spec))
@@ -47,6 +50,13 @@ open class GeminiCliHarness protected constructor(bridge: SdkBridge, scope: Coro
     }
     override fun ingest(task: ManagedTask, spec: SessionSpec, request: TaskRequest): (JsonObject) -> Unit =
         GeminiTaskMapper(task, spec)::accept
+    override fun taskIssues(spec: SessionSpec, request: TaskRequest): List<CompatibilityIssue> = buildList {
+        addAll(super.taskIssues(spec, request))
+        if (request.requirements.reasoning is ReasoningOptionRequirement.Selected) add(CompatibilityIssue(
+            "requirements.reasoning",
+            "The configured Gemini CLI SDK connection exposes no reasoning option selection",
+        ))
+    }
     private class Persistent(bridge: SdkBridge, scope: CoroutineScope, namespace: StorageNamespace) :
         GeminiCliHarness(bridge, scope, namespace), PersistentSessions {
         override suspend fun reopenSession(ref: PersistentSessionRef, spec: SessionSpec) = reopen(ref, spec)

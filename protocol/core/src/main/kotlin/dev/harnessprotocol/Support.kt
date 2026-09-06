@@ -26,6 +26,7 @@ enum class Capability {
     DIAGNOSTICS,
     CONTEXT_RETENTION,
     USER_HISTORY_VISIBILITY,
+    REASONING_OPTION_SELECTION,
 }
 
 /** 한 계약의 지원 상태. [Unknown]을 이행 가능으로 단정하지 않는다. */

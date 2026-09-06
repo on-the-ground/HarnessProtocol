@@ -24,7 +24,14 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 import codex_sdk_bridge as bridge_module  # noqa: E402
-from codex_sdk_bridge import Bridge, codex_config, make_inputs, thread_start_params, turn_start_params  # noqa: E402
+from codex_sdk_bridge import (  # noqa: E402
+    Bridge,
+    codex_config,
+    make_inputs,
+    reasoning_option_catalog,
+    thread_start_params,
+    turn_start_params,
+)
 
 pytest.importorskip("openai_codex")
 from openai_codex.client import CodexClient, CodexConfig  # noqa: E402
@@ -73,7 +80,35 @@ def test_ephemeral_retention_is_explicit_and_provider_default_is_omitted():
 
 def test_codex_reasoning_effort_is_a_turn_option_and_omission_preserves_default():
     assert turn_start_params({"reasoningEffort": "high"}) == {"effort": "high"}
+    assert turn_start_params({"reasoningEffort": "medium"}, {"reasoningOption": "high"}) == {"effort": "high"}
     assert turn_start_params({}) == {}
+
+
+def test_reasoning_option_catalog_is_model_scoped_and_preserves_provider_options():
+    from types import SimpleNamespace
+
+    option = lambda value, description: SimpleNamespace(
+        reasoning_effort=SimpleNamespace(value=value),
+        description=description,
+    )
+    response = SimpleNamespace(data=[
+        SimpleNamespace(
+            id="model-a-id",
+            model="model-a",
+            is_default=True,
+            default_reasoning_effort=SimpleNamespace(value="medium"),
+            supported_reasoning_efforts=[option("low", "Fast"), option("medium", "Balanced")],
+        ),
+    ])
+    assert reasoning_option_catalog(response) == {
+        "model": "model-a",
+        "options": [
+            {"id": "low", "displayName": "low", "description": "Fast"},
+            {"id": "medium", "displayName": "medium", "description": "Balanced"},
+        ],
+        "defaultOptionId": "medium",
+    }
+    assert reasoning_option_catalog(response, "missing") == {"model": "missing", "options": []}
 
 
 def test_network_intent_rides_on_workspace_write_config_only():
@@ -222,6 +257,39 @@ def test_end_to_end_codex_reasoning_effort_reaches_turn_start(stub_log):
         _run(scenario())
     finally:
         client.close()
+    turn_start = next(e for e in _read_log(stub_log) if e["received"] == "turn/start")
+    assert turn_start["params"]["effort"] == "high"
+
+
+def test_end_to_end_reasoning_option_discovery_and_task_override(stub_log):
+    holder = {}
+    client = _stub_client("complete", stub_log, lambda m, p: holder["bridge"].on_server_request(m, p))
+    bridge = _CapturingBridge(client)
+    holder["bridge"] = bridge
+
+    async def scenario():
+        catalog = await bridge.dispatch("list_reasoning_options", {"model": "model-a"})
+        session = await bridge.dispatch(
+            "create_session",
+            {"approval": "provider_default", "model": "model-a", "reasoningEffort": "medium"},
+        )
+        await bridge.dispatch(
+            "start_execution",
+            {
+                "sessionId": session["sessionId"],
+                "input": {"type": "text", "text": "hi"},
+                "reasoningOption": "high",
+            },
+        )
+        await asyncio.to_thread(bridge.wait_for, "turn/completed")
+        return catalog
+
+    try:
+        catalog = _run(scenario())
+    finally:
+        client.close()
+    assert catalog["model"] == "model-a"
+    assert [option["id"] for option in catalog["options"]] == ["low", "medium", "high"]
     turn_start = next(e for e in _read_log(stub_log) if e["received"] == "turn/start")
     assert turn_start["params"]["effort"] == "high"
 
