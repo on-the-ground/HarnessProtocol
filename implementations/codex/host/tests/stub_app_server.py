@@ -93,6 +93,41 @@ def main() -> None:
                                                "platformOs": "linux", "serverVersion": "stub"}})
         elif method == "initialized":
             continue
+        elif method == "model/list":
+            send({
+                "id": msg["id"],
+                "result": {
+                    "data": [
+                        {
+                            "id": "model-a-alias",
+                            "model": "model-a-canonical",
+                            "displayName": "Model A",
+                            "description": "Stub model",
+                            "hidden": False,
+                            "isDefault": True,
+                            "defaultReasoningEffort": "medium",
+                            "supportedReasoningEfforts": [
+                                {"reasoningEffort": "low", "description": "Fast"},
+                                {"reasoningEffort": "medium", "description": "Balanced"},
+                                {"reasoningEffort": "high", "description": "Deep"},
+                            ],
+                        },
+                        {
+                            "id": "model-b-alias",
+                            "model": "model-b-canonical",
+                            "displayName": "Model B",
+                            "description": "Other stub model",
+                            "hidden": False,
+                            "isDefault": False,
+                            "defaultReasoningEffort": "low",
+                            "supportedReasoningEfforts": [
+                                {"reasoningEffort": "low", "description": "Fast"}
+                            ],
+                        },
+                    ],
+                    "nextCursor": None,
+                },
+            })
         elif method in ("thread/start", "thread/resume"):
             params = msg.get("params") or {}
             thread_id = params.get("threadId", "thread-1")

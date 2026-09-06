@@ -37,6 +37,8 @@ dependencies {
 
 현재 JAR은 bridge script와 requirements를 포함하고 factory가 script를 추출한다. Python/Node 실행 파일과 provider 인증은 운영 환경이 제공한다. host 실행 파일 override는 HARNESS_CODEX_PYTHON, HARNESS_GEMINI_NODE이고 Gemini SDK 경로는 GEMINI_CLI_SDK_MODULE로 지정할 수 있다. `CodexSdkOptions.codexExecutable`은 Python host와 별도로 SDK가 실행할 Codex binary를 지정하며, 생략하면 SDK에 포함된 runtime을 사용한다.
 
+`harness-codex`는 공용 Port를 바꾸지 않고 Codex model catalog와 Task별 native reasoning option을 사용하는 typed extension을 제공한다. 이 타입은 Codex를 명시적으로 선택한 구성 경계에서만 사용하며 다른 adapter나 portable business code의 필수 의존성이 아니다. Native client, App Server RPC 또는 임의 JSON payload는 공개하지 않는다.
+
 모델 인증 정보를 artifact에 포함하지 않는다. 운영 환경을 self-contained하게 제공하려면 별도의 runner image·sidecar·runtime packaging 등 배포 구성이 필요하다. 이것은 각 adapter의 제공 방식이다.
 
 ## 현재 발행 명령

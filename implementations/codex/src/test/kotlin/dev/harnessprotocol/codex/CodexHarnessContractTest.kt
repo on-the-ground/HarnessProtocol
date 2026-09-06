@@ -349,6 +349,7 @@ class CodexSdkOptionsTest {
             ).hostEnvironment(),
         )
     }
+
 }
 
 internal fun notification(method: String, payload: JsonObject = JsonObject(emptyMap())) =

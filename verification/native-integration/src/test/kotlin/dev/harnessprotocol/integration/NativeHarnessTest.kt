@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 /** Native construction only. Reusable assertions live in harness-conformance. */
 abstract class NativeHarnessTest : dev.harnessprotocol.conformance.HarnessRuntimeProfileConformanceTest<ModelBoundary>() {
@@ -67,6 +68,35 @@ class CodexNativeHarnessTest : NativePersistentHarnessTest() {
                 kotlin.test.assertFalse(paths.anyMatch {
                     Files.isRegularFile(it) && it.fileName.toString().startsWith("rollout-")
                 })
+            }
+        }
+    }
+
+    @Test
+    fun `Codex Task extension discovers and applies a native reasoning option`() = runBlocking<Unit> {
+        ModelBoundary().use { model ->
+            val isolated = Files.createDirectories(directory.resolve("reasoning-option"))
+            CodexHarness.launch(CodexNativeFactory.options(model, isolated)).use { harness ->
+                val catalog = assertIs<CodexReasoningOptionLookup.Available>(
+                    harness.reasoningOptions(),
+                ).catalog
+                val option = catalog.defaultOptionId ?: catalog.options.first().id
+                val session = harness.createCodexSession(SessionSpec(
+                    instructions = "AHP_NATIVE_INSTRUCTION",
+                    model = catalog.model.canonicalModel.value,
+                ))
+                val outcome = withTimeout(60_000) {
+                    session.startTask(
+                        TaskRequest(TaskInput.Text("native reasoning option marker")),
+                        CodexTaskOptions(CodexReasoningOptionSelection(
+                            catalog.model.canonicalModel,
+                            option,
+                        )),
+                    ).awaitOutcome()
+                }
+                assertIs<TaskOutcome.Completed>(outcome)
+                session.release()
+                assertTrue(model.observedTextValues.contains("native reasoning option marker"))
             }
         }
     }
