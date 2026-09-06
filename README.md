@@ -43,7 +43,7 @@ Codex·Gemini CLI·Koog adapter와 `Harnesses` factory는 `dev.harnessprotocol` 
 | 구현 | [Provider mapping](docs/provider-mapping.md), [Bridge protocol](docs/bridge-protocol.md), [Distribution](docs/distribution.md), [Codex ephemeral retention 검증](docs/codex-ephemeral-validation.md) |
 | 검증 | [Testing](docs/testing.md), [G01–G12 결과](docs/contract-boundary-validation.md), [시나리오 대응표](docs/conformance-scenarios.md) |
 
-최종 통합 회귀에서 JVM 292개(세 native runtime 검사 210개 포함)와 host 21개가 실패·오류·건너뜀 없이 통과했다. [최종 집계](verification/native-integration/evidence/final-regression-summary.json)와 [native 실행 기록](verification/native-integration/evidence/final-g01-g12.json)을 보존한다. 외부 실모델 호출, 현재 구성이 거절하는 선택 기능의 성공 경로와 artifact 발행은 이 검증 범위에 포함하지 않는다.
+최종 통합 회귀에서 JVM 320개(세 native runtime 검사 223개 포함)와 host 25개가 실패·오류·건너뜀 없이 통과했다. [최종 집계](verification/native-integration/evidence/final-regression-summary.json)와 [native 실행 기록](verification/native-integration/evidence/final-g01-g12.json)을 보존한다. 외부 실모델 호출, 현재 구성이 거절하는 선택 기능의 성공 경로와 artifact 발행은 이 검증 범위에 포함하지 않는다.
 
 ## 구현 구성
 

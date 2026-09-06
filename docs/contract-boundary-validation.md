@@ -107,7 +107,7 @@ Koog의 실제 두 도구 호출을 포함한 세 모델 호출에서는 일부 
 
 ## 최종 통합 회귀 checkpoint
 
-`./gradlew.bat --offline test :harness-conformance:testFixturesClasses hostTests -PnativeHarnessTests -PstrictHostTests --continue --console=plain`을 실행했다. [최종 JVM·host 집계](../verification/native-integration/evidence/final-regression-summary.json)는 JVM 292개와 host 21개가 실패 없이 통과했음을 기록한다. 오류와 건너뜀도 0개다. JVM 집계에는 Codex·Gemini CLI·Koog의 실제 SDK/runtime에 통제된 모델 경계를 연결한 [native 검사 210개](../verification/native-integration/evidence/final-g01-g12.json)가 포함된다. Python Codex host 16개와 Node Gemini host 5개도 strict 조건으로 통과했다.
+`./gradlew.bat --offline test :harness-conformance:testFixturesClasses hostTests -PnativeHarnessTests -PstrictHostTests --continue --console=plain`을 실행했다. [최종 JVM·host 집계](../verification/native-integration/evidence/final-regression-summary.json)는 JVM 320개와 host 25개가 실패 없이 통과했음을 기록한다. 오류와 건너뜀도 0개다. JVM 집계에는 Codex·Gemini CLI·Koog의 실제 SDK/runtime에 통제된 모델 경계를 연결한 [native 검사 223개](../verification/native-integration/evidence/final-g01-g12.json)가 포함된다. Python Codex host 20개와 Node Gemini host 5개도 strict 조건으로 통과했다.
 
 이전 실패 checkpoint의 JVM 4개 실패는 G09의 active skill 본문 부재와 복합 명령 유도 오류를 드러냈다. 계약·구현·검사를 수정한 뒤 G09 집중 실행 110개와 최종 통합 회귀가 모두 통과했다. G04·G12의 production 문맥 수정, G03·G11의 identity 보강, 원래 44개 미연결 본문의 [목적별 종결](conformance-scenarios.md)도 최종 소스 상태에 포함된다. Kotlin 소스·sample·독립 실험에는 legacy Port 및 제거한 참조 하네스/`AgentHarnessContractTest` 참조가 없다.
 

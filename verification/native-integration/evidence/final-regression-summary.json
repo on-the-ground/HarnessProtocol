@@ -1,10 +1,10 @@
 {
   "stage": "final-g01-g12-full-regression",
-  "recordedAt": "2026-09-06T01:02:22.6308491Z",
-  "sourceRevision": "4ea9124a215b0f3e9db3f31e6038eae8963cb629",
+  "recordedAt": "2026-09-06T07:49:42.2486613Z",
+  "sourceRevision": "52e3bfd24d238cc300a4bfff87fc3f5ad353d983",
   "command": "./gradlew.bat --offline test :harness-conformance:testFixturesClasses hostTests -PnativeHarnessTests -PstrictHostTests --continue --console=plain",
   "jvm": {
-    "tests": 292,
+    "tests": 320,
     "failures": 0,
     "errors": 0,
     "skipped": 0,
@@ -15,7 +15,7 @@
       },
       {
         "name": "harness-codex",
-        "tests": 37
+        "tests": 49
       },
       {
         "name": "harness-gemini-cli",
@@ -23,22 +23,22 @@
       },
       {
         "name": "harness-native-integration",
-        "tests": 210
+        "tests": 223
       },
       {
         "name": "harness-process-bridge",
-        "tests": 1
+        "tests": 3
       },
       {
         "name": "harness-protocol",
-        "tests": 9
+        "tests": 10
       }
     ]
   },
   "host": {
-    "tests": 21,
+    "tests": 25,
     "failures": 0,
-    "python": 16,
+    "python": 20,
     "node": 5
   },
   "nativeEvidence": "final-g01-g12.json",
