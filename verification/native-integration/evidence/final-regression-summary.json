@@ -1,7 +1,7 @@
 {
   "stage": "final-g01-g12-full-regression",
-  "recordedAt": "2026-09-06T00:01:36.7039239Z",
-  "sourceRevision": "ac3f532f27b6de7b6e91c050ce50c48b3f605839",
+  "recordedAt": "2026-09-06T01:02:22.6308491Z",
+  "sourceRevision": "4ea9124a215b0f3e9db3f31e6038eae8963cb629",
   "command": "./gradlew.bat --offline test :harness-conformance:testFixturesClasses hostTests -PnativeHarnessTests -PstrictHostTests --continue --console=plain",
   "jvm": {
     "tests": 292,
