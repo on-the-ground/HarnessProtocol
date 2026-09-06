@@ -64,7 +64,7 @@ Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요
 
 ## Context, usage, 경고
 
-기존 `ContextManaged`가 표현한 내부 문맥 정리 관찰은 기본 이벤트에서 제거했다. 현재 근거로는 별도 업무 판단에 사용할 공통 보장을 식별하지 못했기 때문이다. 그 원본 관찰이 필요하면 선택 계약인 `ProviderDiagnostic`으로 얻는다. 문맥 상한 집행·영속 저장 등의 결과가 필요하면 해당 선택 계약에서 의미를 정의하고 검증해야 한다. 내부 compaction 알림을 그 보장의 증거로 사용하지 않는다.
+기존 `ContextManaged`가 표현한 내부 문맥 정리 관찰은 기본 이벤트에서 제거했다. 현재 근거로는 별도 업무 판단에 사용할 공통 보장을 식별하지 못했기 때문이다. provider가 그 원본을 제공하고 adapter가 선언한 진단 범위에 포함한 경우에만 선택 계약인 `ProviderDiagnostic`으로 얻을 수 있다. 문맥 상한 집행·영속 저장 등의 결과가 필요하면 해당 선택 계약에서 의미를 정의하고 검증해야 한다. 내부 compaction 알림을 그 보장의 증거로 사용하지 않는다.
 
 `UsageChanged`는 **그 시점까지의 Task 누적 snapshot**이다. 소비자는 이전 snapshot에 더하지 않고 새 값으로 갱신한다. provider의 증분은 adapter에서 누적하고, 이미 누적인 값은 반복 합산하지 않는다. Session 누적은 실제 관찰할 수 있을 때 별도 범위로 전달한다. 이전 Task의 사용량을 현재 Task에 섞지 않는다.
 
@@ -99,7 +99,7 @@ Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요
 | TaskCompleted / TaskFailed / TaskCancelled / TaskUnresolved | 위임 작업의 종결을 관찰. `awaitOutcome`이 회수하는 판정과 같은 의미 |
 | Warning | 요구가 그대로 유지되는 상태에서 호출자·운영자가 구성이나 사용 방식을 고칠 수 있는 사실을 전달. 예로 해당 정책에서는 오지 않아야 할 승인 요청이 도착해 거절한 경우가 있다. 실패·미지원의 대체 경로가 아님 |
 
-위 표는 현재 존재하는 이벤트만 담는다. 이전 계약의 `ContextManaged`와 `ReasoningDelta`는 타입 자체가 없다. 내부 문맥 관리 관찰은 선택 계약인 `ProviderDiagnostic`으로만 얻고, 공개 설명은 `MessageRole`을 보존한 Message 이벤트에 포함한다.
+위 표는 현재 존재하는 이벤트만 담는다. 이전 계약의 `ContextManaged`와 `ReasoningDelta`는 타입 자체가 없다. 내부 문맥 관리 원본은 provider가 제공하고 adapter의 선언된 진단 범위에 포함된 경우에만 `ProviderDiagnostic`으로 얻을 수 있고, 공개 설명은 `MessageRole`을 보존한 Message 이벤트에 포함한다.
 
 ## 전환·검증
 

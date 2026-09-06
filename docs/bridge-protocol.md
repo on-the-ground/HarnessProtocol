@@ -18,9 +18,11 @@ Host는 stdin 요청과 stdout 응답·이벤트를 한 줄에 하나의 JSON �
 | discard_session | 생성 요구 위반으로 반환된 sessionId | provider-native thread 삭제 확인 또는 error |
 | start_execution | sessionId, requestId, input(type=text, text) | executionId |
 | cancel_execution | executionId | 빈 객체 |
-| respond_interaction | executionId, interactionId, response(decision 또는 text) | 빈 객체 또는 error |
+| respond_interaction | executionId, interactionId, response(decision) | 빈 객체 또는 error |
 
 현재 envelope는 instructions/model/workingDirectory, skills(name/path/activate), filesystem/additionalWritableRoots/network/approval과 선택적 retention을 사용한다. Codex의 `retention=ephemeral`은 `thread/start.ephemeral=true`로 전달하고 응답의 `thread.ephemeral`을 `ephemeral` 또는 `materialized`로 반환한다. user-history visibility는 SDK 응답에 독립 관측이 없어 `unknown`이다. 관측 필드를 제공하지 않는 host는 adapter에서 UNKNOWN으로 보존한다. 생략과 빈 문자열의 차이를 보존하며 Gemini 경로는 앞선 validation에서 지원하지 않는 policy를 거절한다. 이전 host decision에는 approve_for_session이 남아 있지만 새 Port mapper는 명시적인 승인 범위를 받지 못한 요청에 그 선택지를 제공하지 않는다.
+
+공유 Kotlin encoder에는 `InteractionResponse.Answer`의 text 형태가 있지만 현재 Codex host는 approval decision만 해석하고 Gemini host는 interaction 응답 경로를 제공하지 않는다. 두 adapter가 질문 요구를 사전 거절하므로 text 형태는 현재 end-to-end bridge 지원으로 기록하지 않는다.
 
 새 process adapter는 요청 전 미전달과 전달 후 수락 미확정을 구별하는 `ConfirmedSdkBridge` 경로를 사용한다. start 수락 확인 유실은 공개 `TaskStartUnconfirmedException`과 문맥 차단으로 연결한다. 작업 중 EOF는 기본적으로 관찰 유실이며 이미 확보한 종결 근거 없이 실패·취소를 합성하지 않는다. close는 stdin EOF로 host의 정상 정리를 유도한 뒤 소유한 자식 process까지 정리한다. 실제 연동 범위는 [계약 검증](contract-boundary-validation.md)에 있다.
 

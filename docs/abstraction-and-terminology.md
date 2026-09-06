@@ -49,7 +49,7 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 | `ExecutionStarted/Completed/Failed/Cancelled` | `TaskStarted/Completed/Failed/Cancelled`, 종료 미확정은 `TaskUnresolved` | 이벤트·식별자·상태의 주어를 일치시키고 종료 미확정을 구별한다. |
 | 기본 Port의 `resumeSession` | 영속성 선택 계약의 `reopenSession` | 보관된 업무 문맥에 대한 새 handle 획득임을 나타낸다. 중단된 작업의 재실행·복구와 구별한다. |
 | `ProviderEventObserved` | 별도 진단 계약의 `ProviderDiagnostic` | 원본 보존을 모든 Task의 필수 의미 이벤트에서 분리한다. 공급자 payload는 진단 정보임을 이름에 남긴다. |
-| `ContextManaged` | 타입을 제거. 원본 관찰이 필요하면 선택 계약인 `ProviderDiagnostic` | 내부 문맥 정리 관찰만으로 소비자가 의존할 별도 보장이 성립하지 않는다. |
+| `ContextManaged` | 타입을 제거. provider가 제공하고 adapter의 진단 범위에 포함한 원본만 `ProviderDiagnostic`으로 관찰 가능 | 내부 문맥 정리 관찰만으로 소비자가 의존할 별도 보장이 성립하지 않는다. |
 | `ReasoningDelta` | 공개 설명은 Message 이벤트의 관찰 가능한 역할(`MessageRole`)로 통합 | 설명 표시 목적을 유지하면서 독립적인 추론 이벤트 종류를 제거한다. 비공개 내부 진단은 ProviderDiagnostic에 속한다. |
 
 `TaskOutcome`으로 결과를 통합할 때 현재 실행 실패·취소 예외를 이름만 바꾸어 중복 계약으로 남기지 않는다. handle 생성 전 호출 실패와 handle을 받은 작업의 outcome을 구분한다. 코루틴 waiter 자체의 취소는 여전히 작업 취소와 별개다.
