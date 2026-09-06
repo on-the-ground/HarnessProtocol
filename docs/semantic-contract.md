@@ -77,7 +77,9 @@ Interaction은 외부 판단·정보를 받아 작업을 계속하는 계약이�
 
 나가는 방향은 열려 있다. provider 원본은 선택 계약인 `ProviderDiagnostic`으로 전달하며, 요구한 소비자만 받고 업무 결과·오류 해석의 필수 경로가 아니다.
 
-들어오는 방향은 닫혀 있다. 공통 요청 타입에 불투명한 통과 경로를 두지 않는다. 임의의 옵션 map, 원본 JSON, 의미를 정하지 않은 문자열 blob은 `SessionSpec`·`SessionRequirements`·`TaskRequest`·`TaskRequirements`와 그로부터 도달하는 타입에 포함하지 않으며 이 금지는 검사로 고정한다. provider 고유 제어가 필요하면 그 adapter의 생성 옵션에 둔다. 이는 해당 adapter를 선택한 애플리케이션의 운용 설정이고 공통 요구가 아니다.
+들어오는 방향은 닫혀 있다. 공통 요청 타입에 불투명한 통과 경로를 두지 않는다. 임의의 옵션 map, 원본 JSON, 의미를 정하지 않은 문자열 blob은 `SessionSpec`·`SessionRequirements`·`TaskRequest`·`TaskRequirements`와 그로부터 도달하는 타입에 포함하지 않는다. 기준은 값의 형태가 아니라 목적과 보장의 유무다. 목적과 관찰 가능한 보장을 갖춘 타입은 공통 요청에 들어올 수 있고, 그것이 없는 값은 이름이나 타입을 바꾸어도 들어올 수 없다.
+
+provider 고유 제어가 필요하면 adapter가 소유하는 provider-specific 구성·확장에 두고 실제 적용 scope를 명시한다. 구성 수단과 scope는 adapter마다 다르다. 생성 옵션일 수도 있고 생성자가 없는 원격 구성일 수도 있으며, 적용 범위가 harness 전체인지 session이나 작업 단위인지도 그 adapter가 밝힌다. `CodexSdkOptions.reasoningEffort`는 이 규칙을 생성 옵션으로 구현하고 harness 전체에 적용한 하나의 사례다.
 
 비대칭의 근거는 모르는 관찰과 모르는 지시의 위험이 다르다는 데 있다. 해석하지 못한 진단은 무시해도 공통 판정이 달라지지 않는다. 반면 Port가 의미를 정하지 않은 값을 provider까지 전달하면, adapter는 이행 가능 여부를 판단하지 못한 채 요청을 수락하고 소비자는 그 값이 적용됐는지 확인할 수단이 없다. 이는 요구를 이행하거나 실행 전에 명시적으로 거절한다는 기본 책임과, 확인된 거절과 미확인을 구별하는 세 판정을 함께 무력화한다. 판정할 수 없는 요구는 통과시키는 것이 아니라 타입으로 표현하지 않는다.
 
