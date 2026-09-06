@@ -29,6 +29,7 @@ Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`�
 
 - thread/start·resume의 developerInstructions, model, cwd와 정책 wire 필드를 구성한다.
 - `CodexSdkOptions.codexExecutable`을 지정하면 Python SDK의 `CodexConfig.codex_bin`으로 전달하고, 생략하면 SDK에 포함된 runtime을 유지한다.
+- `CodexSdkOptions.reasoningEffort`은 이 harness가 시작하는 모든 Task의 `turn/start.effort`로 전달한다. 이는 Codex가 소유하는 운용 설정이며 공통 `TaskRequest` 요구가 아니다. 전달 성공은 provider 간 품질·비용·지연의 공통 의미나 실제 사용된 effort의 독립 관측을 뜻하지 않는다.
 - ephemeral retention 요구는 `thread/start.ephemeral=true`로 전달하고 반환된 `thread.ephemeral`을 `AgentSession.disposition.retention`으로 보고한다. false·누락을 요청값으로 덮어쓰지 않는다.
 - pinned SDK의 ephemeral 설명은 in-memory/no disk materialization까지다. account-wide remote retention이나 Codex Desktop Recents 비노출의 독립 응답은 없으므로 user-history visibility는 UNKNOWN이며 Hidden 요구는 UNCONFIRMED로 사전 거절한다.
 - PROVIDER_DEFAULT는 approval 필드를 생략한다. SDK convenience default로 의미를 바꾸지 않는다.

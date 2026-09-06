@@ -173,7 +173,12 @@ class Bridge:
             if spec is None:
                 raise ValueError(f"session {session_id!r} has not been created or resumed")
             inputs = make_inputs(required_object(params, "input"), spec)
-            started = await asyncio.to_thread(self.client.turn_start, session_id, inputs)
+            started = await asyncio.to_thread(
+                self.client.turn_start,
+                session_id,
+                inputs,
+                turn_start_params(spec) or None,
+            )
             turn_id = started.turn.id
             execution = Execution(execution_id=turn_id, session_id=session_id)
             self.executions[turn_id] = execution
@@ -411,6 +416,13 @@ def thread_start_params(spec: dict[str, Any]) -> dict[str, Any]:
 
 def thread_resume_params(spec: dict[str, Any]) -> dict[str, Any]:
     return common_thread_params(spec)
+
+
+def turn_start_params(spec: dict[str, Any]) -> dict[str, Any]:
+    """Codex-only task tuning configured for this harness instance."""
+    result: dict[str, Any] = {}
+    copy_if_present(spec, result, "reasoningEffort", "effort")
+    return result
 
 
 def make_inputs(input_value: dict[str, Any], spec: dict[str, Any]) -> list[dict[str, Any]]:

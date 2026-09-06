@@ -24,7 +24,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 import codex_sdk_bridge as bridge_module  # noqa: E402
-from codex_sdk_bridge import Bridge, codex_config, make_inputs, thread_start_params  # noqa: E402
+from codex_sdk_bridge import Bridge, codex_config, make_inputs, thread_start_params, turn_start_params  # noqa: E402
 
 pytest.importorskip("openai_codex")
 from openai_codex.client import CodexClient, CodexConfig  # noqa: E402
@@ -69,6 +69,11 @@ def test_ephemeral_retention_is_explicit_and_provider_default_is_omitted():
     assert "ephemeral" not in thread_start_params({"retention": "provider_default"})
     with pytest.raises(ValueError, match="unsupported retention"):
         thread_start_params({"retention": "unknown-mode"})
+
+
+def test_codex_reasoning_effort_is_a_turn_option_and_omission_preserves_default():
+    assert turn_start_params({"reasoningEffort": "high"}) == {"effort": "high"}
+    assert turn_start_params({}) == {}
 
 
 def test_network_intent_rides_on_workspace_write_config_only():
@@ -187,11 +192,38 @@ def test_end_to_end_completion_with_provider_default(stub_log):
     finally:
         client.close()
     thread_start = next(e for e in _read_log(stub_log) if e["received"] == "thread/start")
+    turn_start = next(e for e in _read_log(stub_log) if e["received"] == "turn/start")
     assert "approvalPolicy" not in thread_start["params"] and "approvalsReviewer" not in thread_start["params"]
+    assert "effort" not in turn_start["params"]
     assert session == {"sessionId": "thread-1", "retention": "materialized", "historyVisibility": "unknown"}
     assert started["executionId"].startswith("turn-")
     methods = [e[1] for e in bridge.captured]
     assert methods[-1] == "turn/completed"
+
+
+def test_end_to_end_codex_reasoning_effort_reaches_turn_start(stub_log):
+    holder = {}
+    client = _stub_client("complete", stub_log, lambda m, p: holder["bridge"].on_server_request(m, p))
+    bridge = _CapturingBridge(client)
+    holder["bridge"] = bridge
+
+    async def scenario():
+        session = await bridge.dispatch(
+            "create_session",
+            {"approval": "provider_default", "reasoningEffort": "high"},
+        )
+        await bridge.dispatch(
+            "start_execution",
+            {"sessionId": session["sessionId"], "input": {"type": "text", "text": "hi"}},
+        )
+        await asyncio.to_thread(bridge.wait_for, "turn/completed")
+
+    try:
+        _run(scenario())
+    finally:
+        client.close()
+    turn_start = next(e for e in _read_log(stub_log) if e["received"] == "turn/start")
+    assert turn_start["params"]["effort"] == "high"
 
 
 def test_ephemeral_retention_reaches_thread_start_and_is_observed(stub_log):
