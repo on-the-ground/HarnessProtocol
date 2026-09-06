@@ -12,7 +12,14 @@ open class CodexHarness protected constructor(
     bridge: SdkBridge,
     scope: CoroutineScope,
     namespace: StorageNamespace?,
+    private val reasoningEffort: String?,
 ) : ProcessTaskHarness(bridge, scope, storageNamespace = namespace) {
+    init {
+        require(reasoningEffort == null || reasoningEffort.isNotBlank()) {
+            "reasoningEffort must be null or non-blank"
+        }
+    }
+
     override val provider = ProviderId("codex")
     override val support = SupportReport(mapOf(
         Capability.CALLER_APPROVAL to Support.Supported,
@@ -51,6 +58,7 @@ open class CodexHarness protected constructor(
     override fun sessionPayload(spec: SessionSpec) = buildJsonObject {
         effectiveInstructions(spec)?.let { put("instructions", it) }
         spec.model?.let { put("model", it) }
+        reasoningEffort?.let { put("reasoningEffort", it) }
         if (spec.requirements.retention == ContextRetentionRequirement.Ephemeral) put("retention", "ephemeral")
         (spec.requirements.workspace as? WorkspaceRequirement.Required)?.let { workspace ->
             workspace.workingDirectory?.let { put("workingDirectory", it) }
@@ -85,8 +93,12 @@ open class CodexHarness protected constructor(
             CompatibilityIssue("spec", "This Codex App Server version does not apply changed session configuration on thread resume")))
     }
 
-    private class Persistent(bridge: SdkBridge, scope: CoroutineScope, namespace: StorageNamespace) :
-        CodexHarness(bridge, scope, namespace), PersistentSessions {
+    private class Persistent(
+        bridge: SdkBridge,
+        scope: CoroutineScope,
+        namespace: StorageNamespace,
+        reasoningEffort: String?,
+    ) : CodexHarness(bridge, scope, namespace, reasoningEffort), PersistentSessions {
         override suspend fun reopenSession(ref: PersistentSessionRef, spec: SessionSpec) = reopen(ref, spec)
     }
     companion object {
@@ -102,9 +114,17 @@ open class CodexHarness protected constructor(
                     CodexSdkOptions.EnvironmentMode.INHERIT -> dev.harnessprotocol.bridge.ProcessEnvironmentMode.INHERIT
                     CodexSdkOptions.EnvironmentMode.REPLACE -> dev.harnessprotocol.bridge.ProcessEnvironmentMode.REPLACE
                 },
-            ), storageNamespace = storageNamespace)
+            ), storageNamespace = storageNamespace, reasoningEffort = options.reasoningEffort)
         }
-        fun usingBridge(bridge: SdkBridge, scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default), storageNamespace: StorageNamespace? = null): CodexHarness =
-            if (storageNamespace == null) CodexHarness(bridge, scope, null) else Persistent(bridge, scope, storageNamespace)
+        fun usingBridge(
+            bridge: SdkBridge,
+            scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+            storageNamespace: StorageNamespace? = null,
+            reasoningEffort: String? = null,
+        ): CodexHarness = if (storageNamespace == null) {
+            CodexHarness(bridge, scope, null, reasoningEffort)
+        } else {
+            Persistent(bridge, scope, storageNamespace, reasoningEffort)
+        }
     }
 }

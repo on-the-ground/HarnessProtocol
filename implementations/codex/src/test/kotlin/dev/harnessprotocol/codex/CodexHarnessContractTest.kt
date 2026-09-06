@@ -102,6 +102,32 @@ class CodexHarnessContractTest : SdkAdapterContractTest() {
 
     override fun compatibleSpec() = SessionSpec()
 
+    @Test
+    fun `Codex reasoning effort stays in adapter configuration and reaches the native session envelope`() = kotlinx.coroutines.runBlocking {
+        val bridge = RecordingBridge()
+        val scope = CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Default)
+        try {
+            CodexHarness.usingBridge(bridge, scope, reasoningEffort = "high").use { harness ->
+                val session = harness.createSession(SessionSpec())
+                assertEquals("high", bridge.paramsOf("create_session").single().string("reasoningEffort"))
+                session.release()
+            }
+        } finally { scope.cancel() }
+    }
+
+    @Test
+    fun `blank Codex reasoning effort is rejected at construction`() {
+        assertFailsWith<IllegalArgumentException> {
+            CodexSdkOptions(reasoningEffort = " ")
+        }
+        val scope = CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Default)
+        try {
+            assertFailsWith<IllegalArgumentException> {
+                CodexHarness.usingBridge(RecordingBridge(), scope, reasoningEffort = " ")
+            }
+        } finally { scope.cancel() }
+    }
+
     @kotlin.test.Test
     fun `ephemeral retention is sent and observed rather than inferred from the request`() = kotlinx.coroutines.runBlocking {
         val bridge = RecordingBridge().apply {
