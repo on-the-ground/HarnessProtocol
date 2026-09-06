@@ -46,11 +46,12 @@ class PublicModelTest {
 
     @Test
     fun `unmeasured segment prevents a fabricated known total`() {
-        val first = AgentUsage(inputTokens = 10, outputTokens = 3)
-        val second = AgentUsage(inputTokens = null, outputTokens = 2)
+        val first = AgentUsage(inputTokens = 10, outputTokens = 3, cacheWriteInputTokens = 4)
+        val second = AgentUsage(inputTokens = null, outputTokens = 2, cacheWriteInputTokens = 2)
         val total = first + second
         assertNull(total.inputTokens)
         assertEquals(5L, total.outputTokens)
+        assertEquals(6L, total.cacheWriteInputTokens)
         assertNull(total.totalTokens)
         assertEquals(first, AgentUsage.Zero + first)
         assertEquals(AgentUsage.Unknown, AgentUsage.Unknown + first)
@@ -58,10 +59,11 @@ class PublicModelTest {
 
     @Test
     fun `counter reset does not yield negative task usage`() {
-        val current = AgentUsage(inputTokens = 4, outputTokens = 20)
-        val baseline = AgentUsage(inputTokens = 10, outputTokens = 12)
+        val current = AgentUsage(inputTokens = 4, outputTokens = 20, cacheWriteInputTokens = 7)
+        val baseline = AgentUsage(inputTokens = 10, outputTokens = 12, cacheWriteInputTokens = 3)
         assertNull((current - baseline).inputTokens)
         assertEquals(8L, (current - baseline).outputTokens)
+        assertEquals(4L, (current - baseline).cacheWriteInputTokens)
         assertEquals(AgentUsage.Unknown, current - AgentUsage.Unknown)
     }
 
