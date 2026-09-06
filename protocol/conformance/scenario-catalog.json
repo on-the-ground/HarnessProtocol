@@ -1350,13 +1350,13 @@
   "requirementAdmission": {
     "source": "verification/native-integration/src/test/kotlin/dev/harnessprotocol/integration/NativeRequirementsTest.kt",
     "profiles": 5,
-    "cases": 49,
+    "cases": 55,
     "modes": [
       "preflight",
       "direct"
     ],
     "supportChecks": 5,
-    "expectedExecutions": 103,
+    "expectedExecutions": 115,
     "unconfirmedNativeCaseAvailable": false,
     "evidence": "../../verification/native-integration/evidence/final-g01-g12.json"
   },

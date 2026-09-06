@@ -8,7 +8,7 @@ G01–G12의 현재 구성 검증은 모두 닫혔다. 각 단계의 통과는 �
 
 `ProfileFixture`의 고정된 provider 구성과 요구 사례를 `HarnessRequirementsConformanceTest`가 판정한다. 기대값은 adapter의 `support`·`validate` 결과에서 만들지 않는다. 각 사례는 사전 검증을 거치는 경로와 곧바로 호출하는 경로에서 실행하며, 수락된 작업은 실제 모델 경계까지 도달하고 거절된 요구는 모델 호출 전에 끝나야 한다.
 
-현재 행렬은 Codex 두 구성, Gemini CLI 두 구성, Koog 한 구성의 요구 49개를 다룬다. preflight/direct 실행 98개와 profile 지원표 5개, 총 103개가 최종 native 집계에 포함된다. 영속성·승인·질문·진단·workspace·실행 제약·구조화 산출물의 지원과 사전 거절을 구별한다. 현재 구성에 정직한 `UNCONFIRMED` 요구 사례가 없으므로 해당 분기를 통과로 세지 않는다.
+현재 행렬은 Codex 두 구성, Gemini CLI 두 구성, Koog 한 구성의 요구 55개를 다룬다. preflight/direct 실행 110개와 profile 지원표 5개, 총 115개가 최종 native 집계에 포함된다. 영속성·승인·질문·진단·workspace·실행 제약·구조화 산출물의 지원과 사전 거절을 구별한다. 현재 구성에 정직한 `UNCONFIRMED` 요구 사례가 없으므로 해당 분기를 통과로 세지 않는다.
 
 ## G02 — 시작·응답 수락 확인 유실
 
@@ -79,13 +79,13 @@ Codex·Gemini process adapter는 작업 폴더와 각 skill directory/`SKILL.md`
 
 Codex의 제한 실행은 `DenyAll`과 결합한 세 실제 효과 검사로 확인했다. ReadOnly는 쓰기를 노출하지 않고, WorkspaceWrite는 허용 root 밖 쓰기와 network를 허용하지 않으며, network 허용이 filesystem 상한을 넓히지 않는다. `DenyAll`이 상한 안 효과도 거절할 수 있음은 승인과 실행 제약이 독립임을 보여 준다. Codex의 `CallerDecides`·`AgentReviewed`와 제한 실행 제약 조합, Gemini·Koog의 명시적 실행 제약은 집행할 수 없어 요구 판정에서 사전 거절한다.
 
-G09 workspace/실행 7개와 갱신된 요구 판정 103개를 함께 실행한 110개 결과는 모두 통과했다. 복합 명령의 “아무 효과도 없음”을 개별 상한의 증거로 재사용하지 않았다.
+G09 workspace/실행 7개와 갱신된 요구 판정 115개를 함께 실행한 122개 결과는 모두 통과했다. 복합 명령의 “아무 효과도 없음”을 개별 상한의 증거로 재사용하지 않았다.
 
 ## G10 — 구조화 산출물 요구의 적용 범위
 
 현재 세 production 구성은 schema를 집행하는 실행 경로를 제공하지 않는다. 따라서 이 단계의 적합성 조건은 JSON처럼 보이는 텍스트를 Structured로 포장하는 것이 아니라, 구조화 산출물 요구를 작업 시작 전에 거절하는 것이다. `validatedByHarness=false`도 산출물 형태 요구를 제거하지 않는다.
 
-갱신된 요구 판정 증거의 세 native 구성 × 검증 책임 두 종류 × preflight/direct = 12개 요구 검사가 이 조건을 검증한다. 다섯 profile의 지원 표 검사도 미지원을 확인한다. 103개 요구 판정 실행에 포함된 검사이며 신규 12개로 더하지 않는다. 선택 기능을 새로 구현하거나, 미지원 선택 보장을 기본 계약으로 강제하지 않았다. 향후 schema 실행 경로를 추가하면 VALID/INVALID/NOT_VALIDATED와 부분 산출물의 실제 의미를 별도 실증해야 한다.
+갱신된 요구 판정 증거의 세 native 구성 × 검증 책임 두 종류 × preflight/direct = 12개 요구 검사가 이 조건을 검증한다. 다섯 profile의 지원 표 검사도 미지원을 확인한다. 115개 요구 판정 실행에 포함된 검사이며 신규 12개로 더하지 않는다. 선택 기능을 새로 구현하거나, 미지원 선택 보장을 기본 계약으로 강제하지 않았다. 향후 schema 실행 경로를 추가하면 VALID/INVALID/NOT_VALIDATED와 부분 산출물의 실제 의미를 별도 실증해야 한다.
 
 ## G11 — 사용량의 측정 범위와 보존
 

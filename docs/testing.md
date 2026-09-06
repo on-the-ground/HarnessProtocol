@@ -47,7 +47,7 @@
 
 사용량을 관찰하는 경로에서는 provider 증분과 누적 입력을 각각 사용해 공통 누적 snapshot이 같은 의미가 되는지 검사한다. 반복 snapshot, 누락·reset, Task/Session 분리와 최종 관찰을 확인한다. 실패 분류는 구조화 정보·확인된 native 예외와 자연어 문구만 있는 경우를 구별한다.
 
-reportUsageSnapshot은 누적값 전체, reportUsageDelta는 겹치지 않는 구간의 증분이다. 의미를 fixture마다 바꾸지 않는다. 미측정 구간과 알려진 구간의 합이 알려진 전체로 바뀌지 않는지 검사한다. 문맥·입력·지시는 실제 runtime 관찰로 확인하며, 예상 답변을 reportCompletion에 직접 주입한 결과만으로 문맥 연속성을 판정하지 않는다.
+사용량은 fixture가 통제된 모델의 측정값을 `AccountingFixture.measurements`·`sessionMeasurements`로 독립 선언하고, 공통 검사가 실제 실행의 `TaskOutcome.usage`·`sessionUsage`와 마지막 `UsageChanged`를 그 선언과 대조한다. 측정값을 공개 판정에서 역산하지 않는다. 미측정 구간과 알려진 구간의 합이 알려진 전체로 바뀌지 않는지 검사한다. 문맥·입력·지시는 실제 runtime 관찰(`RuntimeObservation`)로 확인하며, 예상 답변을 `TaskLifecycleControl.reportCompletion`에 직접 주입한 결과만으로 문맥 연속성을 판정하지 않는다.
 
 이벤트 전환에서는 공개 설명이 메시지로 보존되고 최종 산출물을 덮어쓰지 않는지 검사한다. 내부 context 관리 알림은 기본 효과·의미 이벤트를 만들지 않고 지원한 진단 경로에서 다룬다. 같은 이름·인자라도 native call identity가 다르면 별도 WorkId이고, 입증된 동일 호출의 tool/effect는 같은 WorkId여야 한다. 상관관계를 알 수 없는 경우를 같은 작업으로 합치지 않는다.
 

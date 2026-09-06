@@ -10,9 +10,9 @@
 
 | 경계 | 공통 판정 | 실제 적용 |
 |---|---|---|
-| 요구 수락 | `HarnessRequirementsConformanceTest` | Codex·Gemini·Koog의 5개 고정 profile, 49개 case, preflight/direct 98회와 support 5회 |
+| 요구 수락 | `HarnessRequirementsConformanceTest` | Codex·Gemini·Koog의 5개 고정 profile, 55개 case, preflight/direct 110회와 support 5회 |
 | 작업 수명 | `HarnessLifecycleConformanceTest`, `HarnessRuntimeConformanceTest` | process SDK 경계와 세 native runtime |
-| 시작·응답 수락 | `HarnessAcceptanceConformanceTest` | Codex·Gemini 시작 경계, Codex 승인 응답, Koog의 동기 handoff |
+| 시작·응답 수락 | `HarnessAcceptedStartConformanceTest`·`HarnessStartAcceptanceConformanceTest`·`HarnessResponseAcceptanceConformanceTest` | Codex·Gemini 시작 경계, Codex 승인 응답, Koog의 동기 handoff |
 | 상호작용 | `HarnessInteractionConformanceTest`와 Codex interaction 회귀 | 실제 승인·효과·응답 경쟁, 완료/실패/취소 시 pending 정리 |
 | 문맥·영속성 | Context·Persistence suite | Codex·Gemini의 별칭·차단·저장 실패·재개 설정 |
 | 산출물·회계 | Outcome·Accounting suite | 세 runtime의 네 outcome, 부분 산출물, unknown/zero, message/work identity |

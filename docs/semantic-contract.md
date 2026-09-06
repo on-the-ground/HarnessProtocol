@@ -53,13 +53,15 @@ Session은 문맥을 공유하는 범위다. 실제 보관 수단이 provider th
 
 문맥 연속성을 기본 책임으로 선택한 이유는 소비자가 provider별 이력 조립·재전달 없이 앞선 작업의 문맥을 이어 다음 작업을 위임할 수 있어야 하기 때문이다. 영속성은 그 문맥을 handle·harness 수명 너머에 보관하고 다시 얻는 독립된 목적이므로 선택 계약이다. 메모리로 구현 가능하다거나 adapter에 저장소를 붙일 수 있다는 사실은 필수·선택을 가르는 기준이 아니다. 연속성은 모든 token과 내부 이력의 무손실 보존을 뜻하지 않으며, 보관 수명·복구·다중 접근 보장은 영속성 계약에서 명시한다.
 
+문맥의 수명에는 영속성 외에 두 개의 독립된 요구가 더 있다. provider 문맥 retention은 live session 밖에 재개 가능한 conversation을 만들지 않을 것을 요구하고, 사용자 history visibility는 일반 사용자 history 노출 여부를 요구한다. `createSession`을 호출했다는 사실이나 영속성을 요구하지 않았다는 사실만으로 어느 쪽도 추정하지 않으며, 각각의 관측값은 `AgentSession.disposition`으로 회수한다.
+
 기본 session의 존재와 ID만으로 영속성을 보장하지 않는다. 영속 보관을 요구했다면 지원하는 제공 경계가 보관 범위와 재개 조건을 지켜야 한다. `reopenSession`은 그 문맥에 대한 새 handle을 얻는 연산이다. 중단된 Task의 실행 위치 복구, 원격 작업에 다시 연결하기, 외부 효과의 rollback·중복 방지는 서로 별개의 목적이다.
 
 ## 개입과 제약
 
 Interaction은 외부 판단·정보를 받아 작업을 계속하는 계약이다. 요청 ID, pending snapshot, 응답 검증, 일회 처리와 정리 규칙은 공통이며 승인과 질문의 답변 의미는 각각 유지한다.
 
-승인·질문 지원, 영속성, 작업 자원, filesystem/network 집행, 구조화 산출물은 명시적으로 요구하고 지원을 확인한다. 선택 계약은 약한 보장이 아니다. 지원을 선언한 구현은 전체 의미를 충족해야 한다. 도구 하나의 승인 gate가 전체 실행 환경의 권한 집행을 뜻하지 않는다.
+승인·질문 지원, 영속성, provider 문맥 retention, 사용자 history visibility, 작업 자원, filesystem/network 집행, 구조화 산출물, provider 진단은 명시적으로 요구하고 지원을 확인한다. 선택 계약은 약한 보장이 아니다. 지원을 선언한 구현은 전체 의미를 충족해야 한다. 도구 하나의 승인 gate가 전체 실행 환경의 권한 집행을 뜻하지 않는다.
 
 지시·모델 선택·문맥 설정·작업별 요구·실행 환경 제약은 적용 범위를 구별한다. 기존 AgentSpec/ExecutionPolicy를 이름만 바꾸어 유지하지 않으며 [공개 모델](public-model.md)의 SessionSpec·TaskRequest와 독립된 filesystem/network 요구를 따른다.
 

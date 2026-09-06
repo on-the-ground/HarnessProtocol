@@ -13,7 +13,7 @@
 | 사용자 history visibility | 일반 사용자 conversation history·Recents 노출 여부의 명시 요구와 실제 관측 | ephemeral materialization과 관련될 수 있지만 같은 계약은 아니다. 독립 근거가 없으면 UNKNOWN/UNCONFIRMED다. |
 | Caller 승인 | 대상 행위·허용 범위·decision, 승인 전 효과 없음, 거절·취소·중복 응답 처리 | Interaction 공통 구조 위의 구체적 판단. 도구별 중재를 전체 OS 권한 집행으로 해석하지 않는다. |
 | 질문·정보 응답 | 질문/답변 타입, 현재 요청, 일회 응답·철회, 같은 작업 계속 | 공개 Question/Answer 타입은 선언됐다. 현재 세 production adapter 구성은 요구를 거절한다. 독립 Koog 실험은 실제 질문 도구를 Question/Answer로 연결하며 production 구성으로의 통합은 별도다. |
-| 구조화 산출물 | 요구한 schema, 검증 책임, 유효/불완전/검증 실패의 구별 | 텍스트 전달과 schema 보증은 다르다. JSON 문자열 실험은 native schema 집행 검증이 아니다. |
+| 구조화 산출물 | 요구한 schema, 검증 책임, `SchemaValidation`의 VALID/INVALID/NOT_VALIDATED 구별. 산출물의 완결 여부(`TaskOutput.complete`)는 별개 축이다 | 텍스트 전달과 schema 보증은 다르다. JSON 문자열 실험은 native schema 집행 검증이 아니다. |
 | 작업 공간·자료·지침 제공 | 제공 범위·참조의 해석 위치·적용 수명. skill 제공과 활성화의 구별 | 로컬 workingDirectory와 skill path를 모든 하네스의 기본 어휘로 만들지 않는다. 범용 Resource 모델은 아직 근거가 없다. |
 | Filesystem/network 집행 | 제한의 범위와 실제 집행 또는 사전 거절. provider default의 정확한 의미 | 로컬 도구 환경의 제약을 공통 실행 그 자체와 분리한다. 승인 기능과도 구별한다. |
 | Provider 진단 | 선언한 원본 관찰 범위와 전달·유실 정책 | `ProviderDiagnostic`으로 분리. 모든 내부 객체·wire 알림 보존을 core 조건으로 삼지 않는다. |

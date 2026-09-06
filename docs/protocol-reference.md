@@ -49,7 +49,7 @@
 
 `SessionId`의 유효 범위는 위 식별 계약을 따른다. 기본 ID만으로 재시작 이후의 보관·재개 가능성을 추론하지 않는다.
 
-`startTask(input)`은 작업을 받아들이고 `AgentTask` handle을 반환한다. 작업 완료까지 기다리는 연산이 아니다. 같은 session의 문맥을 공유하는 작업은 순차적으로 시작하며 진행 중 작업이 있으면 새 요청을 provider에 보내기 전에 거절한다.
+`startTask(request)`는 `TaskRequest`의 입력과 작업 범위 요구를 받아 `AgentTask` handle을 반환한다. 작업 완료까지 기다리는 연산이 아니다. 같은 session의 문맥을 공유하는 작업은 순차적으로 시작하며 진행 중 작업이 있으면 새 요청을 provider에 보내기 전에 거절한다.
 
 이전 작업의 outcome이 `Unresolved`이면 handle은 종결됐어도 실제 작업이 남아 있을 수 있다. 같은 문맥의 시작 거절, 조정 범위와 독립된 새 session·기존 문맥 복구의 차이는 [문맥 차단과 복구](lifecycle-and-concurrency.md#문맥-차단과-복구-범위)를 따른다. 서로 다른 session은 논리적으로 격리되며 실제 병렬 처리량은 보장하지 않는다.
 
@@ -101,7 +101,7 @@ Handle 생성 전의 검증·시작 실패는 호출 실패다. handle을 받은
 
 필요한 interaction 지원은 작업 전에 요구·검증한다. 미지원 질문을 승인으로 위장하지 않는다. 중복·만료·잘못된 응답은 거절하며 provider가 그 사이 요청을 닫은 경쟁도 처리한다. 요청 취소·대체·작업 종결은 응답 없는 정리 사유로 구별한다.
 
-`respond`의 성공 반환은 응답 전달·수락이 확인됐음을 뜻하며, 모든 요청의 해결이나 작업 재개 완료까지 뜻하지 않는다. 잘못된 종류·허용되지 않은 결정·다른 Task의 ID는 전달 전에 거절한다. 응답 후 acknowledgement를 잃었다면 확정적인 미전달로 보고 재전송하지 않는다. 요청 상태 확인이나 명시적인 중복 제거 없이 이중 응답·효과를 만들지 않는다.
+`respond`의 성공 반환은 응답 전달·수락이 확인됐음을 뜻하며, 모든 요청의 해결이나 작업 재개 완료까지 뜻하지 않는다. 잘못된 종류·허용되지 않은 결정·다른 Task의 ID는 전달 전에 거절한다. 응답 후 acknowledgement를 잃으면 수락·미수락 어느 쪽도 확정하지 않으며 재전송하지 않는다. 확정된 미전달은 `HarnessTransportException`이고 이 미확정과 구별한다. 요청 상태 확인이나 명시적인 중복 제거 없이 이중 응답·효과를 만들지 않는다.
 
 수락 확인 유실은 `InteractionResponseUnconfirmedException(UnconfirmedResponse(taskId, interactionId))`로 전달한다. 해당 요청을 pending에서 제외하고 `RESPONSE_UNCONFIRMED` 사유로 정리한 뒤 재응답을 거절한다. 이미 닫힌 요청을 중복 정리하지 않는다. 이 사유는 provider의 거절이나 Task 종결을 뜻하지 않는다. caller의 응답 coroutine을 취소해도 미전달이 증명되지는 않으므로 같은 불확실성·재전송 차단을 유지한다.
 
