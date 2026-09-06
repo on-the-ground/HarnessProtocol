@@ -33,7 +33,7 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 
 다음은 공개 Port의 개정 이름이다. 동작이 달라지는 행은 호환 alias나 기계적인 치환으로 구현하지 않는다.
 
-| 0.1.0 | 새 이름 / 배치 | 변경 이유 |
+| 0.1.0 | 0.2.0 이름 / 배치 | 변경 이유 |
 |---|---|---|
 | `AgentExecution` | `AgentTask` | 관점의 중심을 내부 실행 루프에서 위임받은 작업으로 옮긴다. |
 | `ExecutionId` / `executionId` | `TaskId` / `taskId` | 식별 대상은 한 번의 업무 위임이다. |
@@ -94,7 +94,7 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 
 실제 세 adapter와 소비 예제는 위 공개 모델을 사용한다. 구현별 native 상태·이벤트를 같은 업무 의미로 연결했으며 검증 범위는 [계약 검증](contract-boundary-validation.md)에 기록했다. 내부 SDK의 thread/turn, Koog graph 등의 이름은 각 adapter에서 필요에 따라 유지한다.
 
-0.1.0의 강한 보장과 새 계약이 다를 때 typealias로 호환되는 척하지 않는다. 특히 영속성, `awaitOutcome`의 결과 전달, 종료 미확정 처리는 소비자 migration이 필요한 의미 변경이다. 이전 사용 사례가 요구한 보장을 새 계약에서 어떻게 명시할지 함께 제공한다.
+0.1.0의 강한 보장과 0.2.0 계약이 다를 때 typealias로 호환되는 척하지 않는다. 특히 영속성, `awaitOutcome`의 결과 전달, 종료 미확정 처리는 소비자 migration이 필요한 의미 변경이다. 이전 사용 사례가 요구한 보장을 새 계약에서 어떻게 명시할지 함께 제공한다.
 
 Koog 구현은 `implementations/koog`, 세 runtime의 검증은 `verification/native-integration`에 있다. 공통 행동 검사는 `AgentHarness`/`AgentTask` 등 공개 계약을 기준으로 하고 provider별 준비 방식은 fixture로 분리한다.
 

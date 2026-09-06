@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation("io.github.joohyung-park:harness-bundle:0.1.0")
+    implementation("io.github.joohyung-park:harness-bundle:0.2.0")
 }
 
 kotlin {

@@ -19,7 +19,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "harness-protocol-basic-sample"
 
-// Verify the current source without replacing an already published 0.1.0 artifact.
+// Verify the current source without requiring a published 0.2.0 artifact.
 if (providers.gradleProperty("useProjectSource").isPresent) {
     includeBuild("../..") {
         dependencySubstitution {
