@@ -18,7 +18,7 @@ val artifactDescriptions = mapOf(
 )
 
 val publicationGroup = providers.gradleProperty("publicationGroup").orElse("io.github.joohyung-park")
-val publicationVersion = providers.gradleProperty("publicationVersion").orElse("0.2.0")
+val publicationVersion = providers.gradleProperty("publicationVersion").orElse("0.2.1")
 
 allprojects {
     group = publicationGroup.get()

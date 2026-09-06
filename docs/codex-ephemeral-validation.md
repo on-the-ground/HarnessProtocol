@@ -4,7 +4,7 @@
 
 ## 배포·소스 기준
 
-- 소스의 기본 publication version은 `0.2.0`이지만 이 작업에서 artifact를 발행하지 않았다. Maven Central의 최신 공개 버전은 `0.1.0`이다.
+- 검증 당시 소스의 기본 publication version은 `0.2.0`이었지만 이 작업에서 artifact를 발행하지 않았다. Maven Central의 당시 최신 공개 버전은 `0.1.0`이었다.
 - 검토 기준은 공개 `0.1.0`과 release bump `37015e50600b32552f1f28dc49d40cb6ddf0edaf`다. 둘 다 provider retention 요구, user-history visibility 요구, 생성 결과 disposition을 제공하지 않았다.
 - Codex bridge는 `openai-codex==0.147.0`을 고정한다. 해당 SDK의 `ThreadStartParams`에는 `ephemeral`이 있고 `Thread.ephemeral` 설명은 “disk에 materialize하지 않음”이다. 공식 App Server 문서도 in-memory temporary thread와 `thread.path == null`을 설명한다.
 
