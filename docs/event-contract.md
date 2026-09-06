@@ -23,7 +23,7 @@
 
 `MessageDelta`와 `MessageCompleted`는 소비자가 진행 중 메시지를 표시하고 같은 메시지의 완료 snapshot으로 표시를 확정하는 계약이다. 작업의 `TaskOutput`과 같은 개념으로 취급하지 않는다. 여러 설명과 중간 메시지를 보낸 작업도 하나의 종결 판정과 산출물을 갖는다.
 
-- 메시지 identity와 관찰 가능한 역할·phase를 보존한다. 역할이 불명확하면 최종 답변으로 꾸미지 않는다.
+- 메시지 identity와 관찰 가능한 역할(`MessageRole`)을 보존한다. 역할이 불명확하면 `UNKNOWN`으로 두고 최종 답변으로 꾸미지 않는다.
 - delta와 완료 snapshot이 같은 내용을 담으면 두 번 이어 붙이지 않는다.
 - 완료된 최종 메시지 이후 commentary가 왔다고 산출물을 commentary로 덮어쓰지 않는다.
 - 이벤트 유실로 소비자가 조립한 텍스트가 불완전해도 adapter가 전달할 canonical 산출물은 별도로 관리한다.
@@ -64,7 +64,7 @@ Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요
 
 ## Context, usage, 경고
 
-기존 `ContextManaged`가 표현한 내부 문맥 정리 관찰은 ProviderDiagnostic으로 이동한다. 현재 근거로는 별도 업무 판단에 사용할 공통 보장을 식별하지 못했으므로 기본 이벤트에서 제거한다. 문맥 상한 집행·영속 저장 등의 결과가 필요하면 해당 선택 계약에서 의미를 정의하고 검증해야 한다. 내부 compaction 알림을 그 보장의 증거로 사용하지 않는다.
+기존 `ContextManaged`가 표현한 내부 문맥 정리 관찰은 기본 이벤트에서 제거했다. 현재 근거로는 별도 업무 판단에 사용할 공통 보장을 식별하지 못했기 때문이다. 그 원본 관찰이 필요하면 선택 계약인 `ProviderDiagnostic`으로 얻는다. 문맥 상한 집행·영속 저장 등의 결과가 필요하면 해당 선택 계약에서 의미를 정의하고 검증해야 한다. 내부 compaction 알림을 그 보장의 증거로 사용하지 않는다.
 
 `UsageChanged`는 **그 시점까지의 Task 누적 snapshot**이다. 소비자는 이전 snapshot에 더하지 않고 새 값으로 갱신한다. provider의 증분은 adapter에서 누적하고, 이미 누적인 값은 반복 합산하지 않는다. Session 누적은 실제 관찰할 수 있을 때 별도 범위로 전달한다. 이전 Task의 사용량을 현재 Task에 섞지 않는다.
 
@@ -74,7 +74,7 @@ Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요
 
 ## Terminal과 진단
 
-`TaskCompleted`, `TaskFailed`, `TaskCancelled` 또는 종료 미확정에 대응하는 terminal 이벤트는 `awaitOutcome`과 같은 판정을 나타낸다. 종료 미확정 이벤트의 목표 명칭은 `TaskUnresolved`다. `COMPLETED`도 자연 종료·한도 중단 등의 사유를 보존한다.
+`TaskCompleted`, `TaskFailed`, `TaskCancelled`, `TaskUnresolved`는 `awaitOutcome`과 같은 판정을 나타낸다. `COMPLETED`도 자연 종료·한도 중단 등의 사유를 보존한다.
 
 `ProviderDiagnostic`은 별도의 선택 관찰 경로다. 원본 SDK 객체 전체를 JSON으로 바꾸거나 모든 vendor 알림을 보존하는 것은 기본 적합성 조건이 아니다. 지원한 진단의 범위·buffering·민감정보 처리·업무 이벤트와의 상관관계는 해당 진단 계약에서 명시한다.
 
@@ -90,7 +90,7 @@ Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요
 
 | 이벤트 | 소비 목적 / 배치 |
 |---|---|
-| MessageDelta / MessageCompleted | 진행 표시와 메시지 확정. 관찰 가능한 공개 설명도 역할·phase를 보존해 포함 |
+| MessageDelta / MessageCompleted | 진행 표시와 메시지 확정. 관찰 가능한 공개 설명도 역할(`MessageRole`)을 보존해 포함 |
 | ToolCallChanged / EffectChanged | 수행 중인 기능과 관찰된 변경·시도를 구별하고 개입 대상과 연결 |
 | InteractionRequested / InteractionResolved | 외부 판단·정보 요청의 표시와 정리. 현재 응답 대상은 snapshot으로 회수 |
 | UsageChanged | 관찰한 소비량을 같은 Task 누적 기준으로 표시·판단. 측정 지원·예산 집행까지 암묵적으로 보장하지 않음 |
@@ -98,8 +98,8 @@ Provider가 완료 snapshot만 제공하면 시작 이벤트를 합성할 필요
 | TaskStarted | 위임 작업의 진행 시작을 관찰. 대응하는 outcome은 없으며 종결 판정과 혼동하지 않음 |
 | TaskCompleted / TaskFailed / TaskCancelled / TaskUnresolved | 위임 작업의 종결을 관찰. `awaitOutcome`이 회수하는 판정과 같은 의미 |
 | Warning | 요구가 그대로 유지되는 상태에서 호출자·운영자가 구성이나 사용 방식을 고칠 수 있는 사실을 전달. 예로 해당 정책에서는 오지 않아야 할 승인 요청이 도착해 거절한 경우가 있다. 실패·미지원의 대체 경로가 아님 |
-| 기존 ContextManaged | 내부 관리 관찰이므로 선택 진단으로 이동 |
-| 기존 ReasoningDelta | 공개 설명의 메시지 목적에 통합. 독립적인 기본 이벤트 종류 제거 |
+
+위 표는 현재 존재하는 이벤트만 담는다. 이전 계약의 `ContextManaged`와 `ReasoningDelta`는 타입 자체가 없다. 내부 문맥 관리 관찰은 선택 계약인 `ProviderDiagnostic`으로만 얻고, 공개 설명은 `MessageRole`을 보존한 Message 이벤트에 포함한다.
 
 ## 전환·검증
 

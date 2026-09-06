@@ -49,8 +49,8 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 | `ExecutionStarted/Completed/Failed/Cancelled` | `TaskStarted/Completed/Failed/Cancelled`, 종료 미확정은 `TaskUnresolved` | 이벤트·식별자·상태의 주어를 일치시키고 종료 미확정을 구별한다. |
 | 기본 Port의 `resumeSession` | 영속성 선택 계약의 `reopenSession` | 보관된 업무 문맥에 대한 새 handle 획득임을 나타낸다. 중단된 작업의 재실행·복구와 구별한다. |
 | `ProviderEventObserved` | 별도 진단 계약의 `ProviderDiagnostic` | 원본 보존을 모든 Task의 필수 의미 이벤트에서 분리한다. 공급자 payload는 진단 정보임을 이름에 남긴다. |
-| `ContextManaged` | 선택 진단으로 이동, 기본 이벤트에서 제거 | 내부 문맥 정리 관찰만으로 소비자가 의존할 별도 보장이 성립하지 않는다. |
-| `ReasoningDelta` | 공개 설명은 Message 이벤트의 관찰 가능한 역할·phase로 통합 | 설명 표시 목적을 유지하면서 독립적인 추론 이벤트 종류를 제거한다. 비공개 내부 진단은 ProviderDiagnostic에 속한다. |
+| `ContextManaged` | 타입을 제거. 원본 관찰이 필요하면 선택 계약인 `ProviderDiagnostic` | 내부 문맥 정리 관찰만으로 소비자가 의존할 별도 보장이 성립하지 않는다. |
+| `ReasoningDelta` | 공개 설명은 Message 이벤트의 관찰 가능한 역할(`MessageRole`)로 통합 | 설명 표시 목적을 유지하면서 독립적인 추론 이벤트 종류를 제거한다. 비공개 내부 진단은 ProviderDiagnostic에 속한다. |
 
 `TaskOutcome`으로 결과를 통합할 때 현재 실행 실패·취소 예외를 이름만 바꾸어 중복 계약으로 남기지 않는다. handle 생성 전 호출 실패와 handle을 받은 작업의 outcome을 구분한다. 코루틴 waiter 자체의 취소는 여전히 작업 취소와 별개다.
 
@@ -71,7 +71,7 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 | `workingDirectory`, 로컬 skill 경로, FS/network 집행 | 명시적인 실행 환경·자원 관련 선택 계약으로 옮긴다. 실제 계약 없이 범용 `Resource`나 임의 options map으로 바꾸지 않는다. |
 | `SdkBridge`, `RecordingBridge` | process adapter 구현·테스트에서 유지. 공통 Port와 공통 적합성 검사의 필수 전제에서 제거한다. |
 
-선택 계약은 보장을 약하게 만드는 장치가 아니다. 요구한 영속성, 권한 제한, 질문 대응, 출력 형태를 지원한다고 선언했다면 정확히 이행해야 한다. 지원 탐색·요구 검증·진단 분리의 공개 형태는 [공개 모델](public-model.md)을 따른다.
+선택 계약은 보장을 약하게 만드는 장치가 아니다. 요구한 영속성, 권한 제한, 질문 대응, 출력 형태를 지원한다고 선언했다면 정확히 이행해야 한다. 지원 탐색·요구 검증의 관계는 [지원 탐색과 요구 수락](capability-candidates.md#지원-탐색과-요구-수락)을 따르고, 공개 타입의 형태는 [공개 모델](public-model.md)에 정리한다.
 
 명명은 개념의 주어를 따른다. Task 자체의 입력·상태·outcome·종결 이벤트는 `Task*`, 도구·메시지·interaction은 각 대상의 이름을 사용한다. `TaskEvent`에 속한다는 이유로 모든 하위 이벤트에 Task를 덧붙이지 않는다. 타입 충돌은 AHP package·타입 qualification으로 구별하고, Kotlin nesting은 [공개 모델](public-model.md)과 실제 선언을 따른다. 이름을 유지하는 이벤트도 위 목적 심사를 거친 것이며 기존 존재 자체가 존치 근거는 아니다.
 
@@ -88,7 +88,7 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 
 `close`와 `release`는 자원·handle 정리라는 익숙한 이름을 유지한다. 명시적 취소 요청과 bounded cleanup을 수행하더라도, 유예 시간 경과만으로 `Cancelled`를 합성하지 않는다. 차단·복구와 독립된 문맥으로의 이동은 [Lifecycle의 범위](lifecycle-and-concurrency.md#문맥-차단과-복구-범위)를 따른다.
 
-구조화 산출물은 요청한 schema와 검증 책임을 명시하는 선택 계약으로 다룬다. [모든 outcome의 산출물·사용량 회수](protocol-reference.md#산출물과-부가-관찰)는 공통 nullable output·usage로 표현한다. 산출물 없는 완료도 null로 보존하며 빈 텍스트를 합성하지 않는다.
+구조화 산출물은 요청한 schema와 검증 책임을 명시하는 선택 계약으로 다룬다. [모든 outcome의 산출물·사용량 회수](protocol-reference.md#산출물과-부가-관찰)는 공통 nullable `output`과 항상 존재하는 `usage`로 표현한다. 산출물 없는 완료도 null로 보존하며 빈 텍스트를 합성하지 않는다.
 
 ## 6. 전환 범위
 
