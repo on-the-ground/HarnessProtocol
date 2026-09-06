@@ -60,7 +60,7 @@ Ephemeral retention과 영속 persistence를 동시에 요구하면 모순으로
 
 정확한 provider-native reasoning effort 값은 현재 공통 업무 요구로 채택하지 않는다. 같은 이름이 provider마다 비용, 지연, 품질 또는 내부 반복량 중 무엇을 보장하는지 공통 의미가 없기 때문이다. 특정 Codex 구성을 선택한 애플리케이션은 Codex adapter 구성에서 provider 값을 지정할 수 있지만, 이를 공통 `TaskRequest`로 전달하거나 다른 adapter가 같은 효과를 보장한다고 해석하지 않는다.
 
-이 처리는 일반 규칙을 따른 것이다. 공통 의미를 정의할 수 없는 provider 고유 설정은 공통 요청 타입이 아니라 해당 adapter의 생성 옵션에 둔다. 공통 요청 타입에 불투명한 통과 경로를 만들지 않는 근거와 이전 `metadata`를 제거한 이유는 [Semantic contract](semantic-contract.md#provider-고유-기능의-출입-경계)에 있다.
+이 처리는 일반 규칙을 따른 것이다. 공통 의미를 정의할 수 없는 provider 고유 설정은 공통 요청 타입이 아니라 adapter가 소유하는 provider-specific 구성·확장에 두고 실제 적용 scope를 명시한다. `CodexSdkOptions.reasoningEffort`는 이를 harness 생성 옵션으로 구현한 현재 사례다. 공통 요청 타입에 불투명한 통과 경로를 만들지 않는 근거와 이전 `metadata`를 제거한 이유는 [Semantic contract](semantic-contract.md#provider-고유-기능의-출입-경계)에 있다.
 
 ## 구현 전환 규칙
 
