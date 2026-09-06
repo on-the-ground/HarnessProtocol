@@ -1,6 +1,6 @@
 # Protocol reference
 
-이 문서는 **개정된 AHP의 의미와 공개 명칭**을 정의한다. Kotlin 선언·KDoc과 세 adapter의 새 Port 경로는 dev.harnessprotocol 계약을 사용한다. 실제 검증 범위는 [G03–G12 기록](contract-boundary-validation.md)을 따른다. [공개 모델](public-model.md)이 선언을, [전환 계획](port-revision-plan.md)이 구현·검증·발행 범위를 관리한다. 최상위 기준은 [설계 선언](../AHP_CHARTER.md)과 [Semantic contract](semantic-contract.md)다.
+이 문서는 AHP의 의미와 공개 명칭을 정의한다. Kotlin 선언·KDoc과 세 adapter는 `dev.harnessprotocol` 계약을 사용한다. 실제 검증 범위는 [G01–G12 기록](contract-boundary-validation.md)을 따른다. [공개 모델](public-model.md)이 선언을 설명하고 [Distribution](distribution.md)이 artifact 구성을 설명한다. 최상위 기준은 [설계 선언](../AHP_CHARTER.md)과 [Semantic contract](semantic-contract.md)다.
 
 ## 기본 모델
 
@@ -137,4 +137,4 @@ Handle 생성 전의 검증·시작 실패는 호출 실패다. handle을 받은
 
 ## 구현 전환
 
-세 adapter와 factory·소비 예제는 새 Port를 사용한다. `AgentExecution`, `AgentResult`, 기본 `resumeSession`, `ExecutionPolicy` 등의 이전 타입과 그 실행 경로는 제거했다. [이름 전환표](abstraction-and-terminology.md)는 의미 변경을, [전환 현황](port-revision-plan.md)은 검증 범위와 발행 상태를 기록한다. 소비 예제의 source 컴파일은 통과했지만 새 artifact는 발행하지 않았다.
+세 adapter와 factory·소비 예제는 이 Port를 사용한다. [이름과 의미](abstraction-and-terminology.md), [검증 범위](contract-boundary-validation.md), [발행 상태](distribution.md)를 각각의 문서에서 관리한다.

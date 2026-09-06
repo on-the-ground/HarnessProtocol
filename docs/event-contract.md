@@ -1,6 +1,6 @@
 # Event contract
 
-이 문서는 공개 `TaskEvent`와 상태·산출물·진단의 관계를 정의한다. 세 adapter는 이 이벤트·진단 타입을 사용하며 실행 검증 범위는 [native 검증 기록](native-port-validation.md)을 따른다. [Protocol reference](protocol-reference.md)와 [Lifecycle](lifecycle-and-concurrency.md)이 종결·개입의 의미를 정한다.
+이 문서는 공개 `TaskEvent`와 상태·산출물·진단의 관계를 정의한다. 세 adapter는 이 이벤트·진단 타입을 사용하며 실행 검증 범위는 [계약 검증](contract-boundary-validation.md)을 따른다. [Protocol reference](protocol-reference.md)와 [Lifecycle](lifecycle-and-concurrency.md)이 종결·개입의 의미를 정한다.
 
 ## 관찰과 실행의 독립성
 

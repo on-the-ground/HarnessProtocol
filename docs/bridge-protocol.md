@@ -19,7 +19,7 @@ Host는 stdin 요청과 stdout 응답·이벤트를 한 줄에 하나의 JSON �
 
 현재 envelope는 instructions/model/workingDirectory, skills(name/path/activate), filesystem/additionalWritableRoots/network/approval을 사용한다. 생략과 빈 문자열의 차이를 보존하며 Gemini 경로는 앞선 validation에서 지원하지 않는 policy를 거절한다. 이전 host decision에는 approve_for_session이 남아 있지만 새 Port mapper는 명시적인 승인 범위를 받지 못한 요청에 그 선택지를 제공하지 않는다.
 
-새 process adapter는 요청 전 미전달과 전달 후 수락 미확정을 구별하는 `ConfirmedSdkBridge` 경로를 사용한다. start 수락 확인 유실은 공개 `TaskStartUnconfirmedException`과 문맥 차단으로 연결한다. 작업 중 EOF는 기본적으로 관찰 유실이며 이미 확보한 종결 근거 없이 실패·취소를 합성하지 않는다. close는 stdin EOF로 host의 정상 정리를 유도한 뒤 소유한 자식 process까지 정리한다. 실제 연동에서 확인한 변경 근거는 [검증 기록](native-port-validation.md)에 있다.
+새 process adapter는 요청 전 미전달과 전달 후 수락 미확정을 구별하는 `ConfirmedSdkBridge` 경로를 사용한다. start 수락 확인 유실은 공개 `TaskStartUnconfirmedException`과 문맥 차단으로 연결한다. 작업 중 EOF는 기본적으로 관찰 유실이며 이미 확보한 종결 근거 없이 실패·취소를 합성하지 않는다. close는 stdin EOF로 host의 정상 정리를 유도한 뒤 소유한 자식 process까지 정리한다. 실제 연동 범위는 [계약 검증](contract-boundary-validation.md)에 있다.
 
 ```json
 {"kind":"request","id":1,"method":"release_session","params":{"sessionId":"session-1"}}
@@ -38,11 +38,11 @@ Payload는 Codex method/payload, Gemini type/value 등의 원본과 host 합성 
 4. Codex reader thread를 막는 승인 handler는 결정을 전달해 대기를 푼 뒤 interrupt/close해야 한다. 이 순서는 해당 SDK의 구현 책임이다.
 5. provider 기본 handler의 자동 accept로 caller 승인 요구를 우회하지 않는다.
 
-시작·응답 요청을 host가 받았지만 Kotlin이 acknowledgement를 잃을 수 있다. 이때 호출 실패를 확정적인 미수행·미응답으로 바꾸거나 새 요청으로 자동 재전송하지 않는다. 새 경로는 전달 상태와 요청 identity를 미확정 예외로 보존하며, 실제 native 경계의 확인 유실과 중복 방지는 [G02 검증](acceptance-loss-validation.md)에서 확인했다.
+시작·응답 요청을 host가 받았지만 Kotlin이 acknowledgement를 잃을 수 있다. 이때 호출 실패를 확정적인 미수행·미응답으로 바꾸거나 새 요청으로 자동 재전송하지 않는다. 새 경로는 전달 상태와 요청 identity를 미확정 예외로 보존하며, 실제 native 경계의 확인 유실과 중복 방지는 [G02 검증](contract-boundary-validation.md#g02--시작응답-수락-확인-유실)에서 확인했다.
 
 ## 현재 의미 경계
 
-새 Port 경로는 host death와 정리 유예 만료를 그 자체로 Failed·Cancelled로 바꾸지 않고, 종결 근거가 없으면 `Unresolved`로 처리한다. 강제 실패·취소를 만들던 구 실행 경로는 제거했다. 실제 native 완료·취소·정리의 검증 범위는 [현재 결과](native-port-validation.md)를 따른다.
+새 Port 경로는 host death와 정리 유예 만료를 그 자체로 Failed·Cancelled로 바꾸지 않고, 종결 근거가 없으면 `Unresolved`로 처리한다. 실제 native 완료·취소·정리의 검증 범위는 [현재 결과](contract-boundary-validation.md)를 따른다.
 
 판정은 [종결 증거 규칙](lifecycle-and-concurrency.md#종결-확인의-근거)과 [adapter별 근거 검증](provider-mapping.md#상태결과-매핑-원칙)을 따른다. host의 합성 종결 알림은 실제 Task 범위의 종료를 입증할 때에만 충분하다. 충분한 근거를 이미 받았다면 transport 정리 오류 때문에 그 결과를 Unresolved로 낮추지 않는다.
 

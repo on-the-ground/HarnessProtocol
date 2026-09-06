@@ -1,8 +1,8 @@
 # 공개 모델과 리뷰 반영
 
-기준일: 2026-09-04. [설계 선언](../AHP_CHARTER.md) → [Semantic contract](semantic-contract.md) → 상세 계약을 따른다. 선언은 harness-protocol의 dev.harnessprotocol에, 적합성 fixture는 harness-conformance에 있다.
+기준일: 2026-09-04. [설계 선언](../AHP_CHARTER.md) → [Semantic contract](semantic-contract.md) → 상세 계약을 따른다. 선언은 protocol/core의 dev.harnessprotocol에, 적합성 fixture는 protocol/conformance에 있다.
 
-공개 선언에 이어 세 adapter와 factory를 새 Port에 연결했다. 기존 회귀 검사도 현재 Port·adapter로 이전했고 legacy 타입·구현을 제거했다. G01–G12의 현재 동작 증거와 적용 범위는 [계약 경계 검증](contract-boundary-validation.md)에 기록하며 artifact 발행은 [전환 계획](port-revision-plan.md)을 따른다.
+공개 선언에 이어 세 adapter와 factory를 Port에 연결했다. G01–G12의 현재 동작 증거와 적용 범위는 [계약 검증](contract-boundary-validation.md), artifact 구성과 발행 상태는 [Distribution](distribution.md)을 따른다.
 
 ## 공개 형태
 
@@ -72,27 +72,8 @@ ContextManaged와 ReasoningDelta를 독립적인 기본 이벤트로 되살리�
 
 검증자는 공개 Port·fixture·계약 문서를 사용한다. 구현자는 같은 명령을 자신의 native 경계에 연결한다. 의미가 모호하면 검사를 구현에 맞춰 낮추지 않고 계약을 함께 고친다.
 
-## 기존 실험과 현재 실행 검증
+## 검증 경계
 
-Koog 독립 실험도 현재 Port와 production ManagedTask를 참조하도록 이전했다. 과거 revision 소스 추출은 제거했으며 승인·질문·보관·비협조적 정리를 현행 계약으로 검사한다. 과거 evidence는 덮어쓰지 않고 [실험 안내](../experiments/koog-validation/README.md)에 현재 실행과 구별했다.
+공개 값 타입은 `protocol/core/src/test`에서 검사한다. 세 runtime의 실행은 `verification/native-integration`, process SDK 변환은 각 adapter와 `verification/adapter-testkit`, host 동작은 각 구현체의 `host/tests`에서 검사한다. 원래 C/K 48개 identity는 [처리 근거](conformance-scenarios.md)를 보존하되 실행 코드나 현재 통과 수로 사용하지 않는다.
 
-공개 값 타입의 회귀 검사는 harness-protocol의 PublicModelTest다. 실제 세 runtime의 실행 검사는 harness-native-integration에 있고, process SDK·host 검사는 별도 경계를 확인한다. 임시 ReferenceFixture와 만능 HarnessFixture는 제거했다. 원래 C/K 48개 identity는 [처리 근거](conformance-scenarios.md)를 보존하되 실행 코드로 남기지 않는다. 전체 적합성을 과거 통과 수나 역사적 정의 수로 대체하지 않는다.
-
-## 공개 Port 선언 당시 검증 기록
-
-아래는 legacy 제거 이전 단계의 기록이다. 최신 검증은 [native 검증](native-port-validation.md)과 [이전 회귀 검토](legacy-port-migration.md)를 따른다.
-
-당시 Corretto 25.0.3에서 캐시된 의존성을 사용하되 test 결과는 재사용하지 않고 실행했다.
-
-```powershell
-./gradlew.bat :harness-conformance:compileKotlin test --offline --rerun-tasks --console=plain
-./gradlew.bat -p experiments/koog-validation test --offline --rerun-tasks --console=plain
-```
-
-| 검사 | 실행 수 | 실패 / 오류 / skip |
-|---|---:|---|
-| 기존 Kotlin adapter·bridge·bundle suite | 71 | 0 / 0 / 0 |
-| PublicModelTest | 9 | 0 / 0 / 0 |
-| 고정한 과거 Port의 Koog 실험 | 18 | 0 / 0 / 0 |
-
-새 fixture 선언도 컴파일됐다. JUnit XML에서 실제 실행 수와 시각을 확인했다. Python/Node host suite와 실모델 호출은 이번 수정에서 재실행하지 않았다. 당시에는 기존 adapter·host·legacy 동작 코드를 변경하지 않았다. 현재는 모든 회귀가 최신 Port로 이전됐다.
+최종 결과와 제외 범위는 [G01–G12 검증](contract-boundary-validation.md)을 따른다. 외부 실모델이나 현재 구성이 제공하지 않는 선택 기능을 임시 구현으로 대신하지 않는다.

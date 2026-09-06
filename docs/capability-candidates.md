@@ -16,7 +16,7 @@
 | Filesystem/network 집행 | 제한의 범위와 실제 집행 또는 사전 거절. provider default의 정확한 의미 | 로컬 도구 환경의 제약을 공통 실행 그 자체와 분리한다. 승인 기능과도 구별한다. |
 | Provider 진단 | 선언한 원본 관찰 범위와 전달·유실 정책 | `ProviderDiagnostic`으로 분리. 모든 내부 객체·wire 알림 보존을 core 조건으로 삼지 않는다. |
 
-위 목적의 분리와 아래 요구 수락 의미는 설계 기준이다. 공개 형태는 [공개 모델](public-model.md)에 선언돼 있으며 실제 adapter의 이행은 [전환 계획](port-revision-plan.md)에서 검증한다. 외부 판단을 위한 공통 interaction lifecycle은 Port에 남는다.
+위 목적의 분리와 아래 요구 수락 의미는 설계 기준이다. 공개 형태는 [공개 모델](public-model.md)에 선언돼 있으며 실제 adapter의 이행은 [계약 검증](contract-boundary-validation.md)에서 확인한다. 외부 판단을 위한 공통 interaction lifecycle은 Port에 남는다.
 
 ## 지원 탐색과 요구 수락
 

@@ -25,7 +25,7 @@
 
 ## 현재 Codex 경로의 구현 정보
 
-Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`를 사용하며 requirements는 0.147.0을 고정한다. 근거는 [client 조사](spikes/2026-09-03-codex-low-level-client.md)다.
+Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`를 사용하며 requirements는 0.147.0을 고정한다. 구현과 고정 의존성은 `implementations/codex/host`에 함께 둔다.
 
 - thread/start·resume의 developerInstructions, model, cwd와 정책 wire 필드를 구성한다.
 - PROVIDER_DEFAULT는 approval 필드를 생략한다. SDK convenience default로 의미를 바꾸지 않는다.
@@ -33,11 +33,11 @@ Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`�
 - 현재 handler는 DENY_ALL에서 decline하며, PROVIDER_DEFAULT/AGENT_REVIEWED 경로에 예상 밖 요청이 오면 decline과 경고를 사용한다.
 - APPROVE_FOR_SESSION 같은 선택의 지원 여부는 실제 요청이 제시한 결정과 scope로 검증한다. 일반적인 세션 권한 확대를 추론하지 않는다.
 
-실제 App Server 승인 payload와 결정 문자열 fixture는 기존 검증에서 미확보였다. stub server 통과를 실제 provider 검증으로 바꾸어 서술하지 않는다. 제3자 Kotlin 기반 교체는 [별도 검토](codex-agent-adoption-review.md)의 대상이다.
+일회 승인의 실제 요청·응답과 파일 효과는 G02·G03에서 검증했다. 범위를 설명할 수 없는 세션 승인은 노출하지 않는다.
 
 ## 현재 정책·자원 제약
 
-아래는 구성된 process adapter의 지원 범위다. native 투영과 실제 집행의 검증 범위는 구별하며 새 core의 보편적 필드 목록이 아니다. Koog를 포함한 전체 구성표는 [실제 adapter 검증](native-port-validation.md#지원-범위와-남은-gate)을 따른다.
+아래는 구성된 process adapter의 지원 범위다. native 투영과 실제 집행의 검증 범위는 구별하며 새 core의 보편적 필드 목록이 아니다. Koog를 포함한 결과는 [계약 검증](contract-boundary-validation.md)을 따른다.
 
 | 요구 | Codex 현재 경로 | Gemini 현재 경로 |
 |---|---|---|
@@ -51,7 +51,7 @@ Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`�
 
 ## 상태·결과 매핑 원칙
 
-규범은 [종결 확인의 근거](lifecycle-and-concurrency.md#종결-확인의-근거)다. 다음 표는 현재 adapter의 근거와 실제 확인 범위를 구별한다. SDK/runtime revision과 상세 실행 목록은 [native 검증 기록](native-port-validation.md)을 따른다.
+규범은 [종결 확인의 근거](lifecycle-and-concurrency.md#종결-확인의-근거)다. 다음 표는 현재 adapter의 근거와 실제 확인 범위를 구별한다. 상세 실행 목록은 [계약 검증](contract-boundary-validation.md)을 따른다.
 
 | 대상 | 현재 판정 근거 | 실제 확인한 범위 | 남은 검증 |
 |---|---|---|---|
@@ -80,6 +80,4 @@ Tool/effect의 이름·인자 key 매핑은 버전별 fixture로 검증한다. i
 
 ## 검증 상태
 
-[Koog 결과](koog-abstraction-validation-results.md)의 18개는 이전 계약의 실험 기록이다. 현재 세 adapter는 G01–G12의 구성별 실제 경계 검사에 연결돼 있고, 구체적인 최신 실행 수는 [계약 경계 검증](contract-boundary-validation.md)의 최종 checkpoint를 따른다. 현재 Port의 SDK·bridge·host 회귀와 공개 값 타입 검사는 별도 경계를 확인한다. 외부 실모델 검증은 완료 범위가 아니다.
-
-Gemini SDK build entrypoint·지시 전달, Codex 재개 설정 변경의 제한, 세 runtime의 기본 동작, Codex 실제 승인 효과, Koog 비협조적 정리는 [실제 adapter 검증](native-port-validation.md)과 [계약 경계 검증](contract-boundary-validation.md)에 기록했다. Koog production 저장소와 현재 구성에서 거절하는 선택 기능의 성공 경로는 제공 범위가 아니다. 독립 Koog 실험의 승인·질문·보관 구성은 production 기본 지원과 구별한다. [Testing](testing.md)의 공통 행동과 구현별 검사를 구분한다.
+세 adapter는 G01–G12의 구성별 실제 경계 검사에 연결돼 있다. Gemini SDK entrypoint와 지시 전달, Codex 재개 설정 제한과 일회 승인 효과, Koog 비협조적 정리는 [계약 검증](contract-boundary-validation.md)에 기록한다. 외부 실모델과 현재 구성이 거절하는 선택 기능의 성공 경로는 완료 범위가 아니다. [Testing](testing.md)은 공통 행동과 구현별 검사를 구분한다.

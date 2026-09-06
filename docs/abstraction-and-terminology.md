@@ -1,9 +1,8 @@
 # AHP 추상 개정과 용어
 
 작성일: 2026-09-04  
-상태: 공개 Port·KDoc과 세 adapter·factory 연결 완료. G01–G12의 현재 구성 검증과 원래 시나리오 종결은 [전환 현황](port-revision-plan.md)을 따른다.
-최상위 기준: [AHP 설계 선언](../AHP_CHARTER.md)  
-실험 근거: [Koog 검증 결과](koog-abstraction-validation-results.md)
+상태: 공개 Port·KDoc과 세 adapter·factory 연결 완료. G01–G12의 현재 구성 검증은 [계약 검증](contract-boundary-validation.md)을 따른다.
+최상위 기준: [AHP 설계 선언](../AHP_CHARTER.md)
 
 ## 1. 설계 기준
 
@@ -93,10 +92,10 @@ Session은 업무 문맥 공유를 표현한다. LLM prompt의 토큰·message �
 
 ## 6. 전환 범위
 
-실제 세 adapter와 소비 예제는 위 공개 모델을 사용한다. 구현별 native 상태·이벤트를 같은 업무 의미로 연결했으며 검증 범위는 [실제 adapter 검증](native-port-validation.md)에 기록했다. 내부 SDK의 thread/turn, Koog graph 등의 이름은 각 adapter에서 필요에 따라 유지한다.
+실제 세 adapter와 소비 예제는 위 공개 모델을 사용한다. 구현별 native 상태·이벤트를 같은 업무 의미로 연결했으며 검증 범위는 [계약 검증](contract-boundary-validation.md)에 기록했다. 내부 SDK의 thread/turn, Koog graph 등의 이름은 각 adapter에서 필요에 따라 유지한다.
 
 0.1.0의 강한 보장과 새 계약이 다를 때 typealias로 호환되는 척하지 않는다. 특히 영속성, `awaitOutcome`의 결과 전달, 종료 미확정 처리는 소비자 migration이 필요한 의미 변경이다. 이전 사용 사례가 요구한 보장을 새 계약에서 어떻게 명시할지 함께 제공한다.
 
-실험 코드·실행 기록은 검증 당시 0.1.0의 재현 자료이므로 소급 rename하지 않는다. 새 Koog 구현은 harness-koog, 세 runtime의 검증은 harness-native-integration에 있다. 공통 행동 검사는 `AgentHarness`/`AgentTask` 등 공개 계약을 기준으로 하고 provider별 준비 방식은 fixture로 분리한다.
+Koog 구현은 `implementations/koog`, 세 runtime의 검증은 `verification/native-integration`에 있다. 공통 행동 검사는 `AgentHarness`/`AgentTask` 등 공개 계약을 기준으로 하고 provider별 준비 방식은 fixture로 분리한다.
 
 본 문서는 개정의 근거와 용어다. 선언의 존재만으로 세 adapter 통합 완료나 새 계약의 실행 검증을 주장하지 않는다.

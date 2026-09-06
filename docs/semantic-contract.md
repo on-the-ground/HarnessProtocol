@@ -73,6 +73,6 @@ Interaction은 외부 판단·정보를 받아 작업을 계속하는 계약이�
 
 ## 증거와 수정
 
-[Koog 실험](koog-abstraction-validation-results.md)은 그래프 실행을 기존 Port에 연결하고 승인·문맥 보관·취소의 차이를 재현했다. 실험이 지지하는 목적은 남기고, 기본 영속성·강제 취소·bridge 필수화 등 잘못 묶인 책임은 분리한다.
+Koog graph 구현을 process adapter와 같은 계약으로 검증해 기본 영속성·강제 취소·bridge 같은 구현 선택이 공통 Port의 필수 책임이 아님을 확인했다. 현재 근거는 [G01–G12 검증](contract-boundary-validation.md)에 기록한다.
 
 기존 구현의 회귀 검사는 버리지 않지만, 기존 추상을 옳다고 전제하는 기대값은 새 계약에 맞춘다. 이름·문서·테스트만 바꾸어 실제 의미 차이를 숨기지 않는다.

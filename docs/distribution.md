@@ -23,7 +23,7 @@ dependencies {
 }
 ```
 
-현재 `dev.harnessprotocol.Harnesses.create(provider)`는 Codex/Gemini adapter를 제공한다. Koog는 구성에 필요한 executor·model을 `Harnesses.koog(executorFactory, model, tools)`로 받는다. bundle에 `harness-koog`와 `harness-runtime`을 포함했다. process-bridge는 두 process adapter의 구현 의존성이며 Koog의 필수 기반이 아니다. adapter-testkit·native-integration은 test-only다.
+현재 `dev.harnessprotocol.Harnesses.create(provider)`는 Codex/Gemini adapter를 제공한다. Koog는 구성에 필요한 executor·model을 `Harnesses.koog(executorFactory, model, tools)`로 받는다. `harness-bundle`은 `harness-koog`를 포함한 세 adapter를 모은다. `harness-process-bridge`는 두 process adapter의 구현 의존성이며 Koog의 필수 기반이 아니다. testkit과 native integration 모듈은 발행하지 않는다.
 
 현재 소스의 소비 예제는 `./gradlew.bat -p samples/basic -PuseProjectSource compileKotlin`로 발행 없이 검증할 수 있다. 이 옵션은 명시적 composite-build dependency substitution을 사용한다. 새 factory를 소비하는 컴파일이 통과했으며, 발행된 POM/JAR 검증과는 구별한다.
 
@@ -32,7 +32,7 @@ dependencies {
 | 경로 | 현재 필요한 환경 |
 |---|---|
 | Codex | Python 3.10+, requirements에 고정된 openai-codex 0.147.0 및 포함된 runtime. client 세부는 [Provider mapping](provider-mapping.md) |
-| Gemini CLI | Node와 공식 SDK build entrypoint. 고정 source revision과 내부 호환 코드·빌드 제한은 [실제 adapter 검증](native-port-validation.md) 참조 |
+| Gemini CLI | Node와 공식 SDK build entrypoint. 고정 source revision과 내부 호환 코드·빌드 제한은 [계약 검증](contract-boundary-validation.md) 참조 |
 | Koog | `ai.koog:agents-core:1.2.0`, caller가 구성한 PromptExecutor·LLModel·ToolRegistry. root Kotlin 2.3.10, JVM target 21/JDK 25 |
 
 현재 JAR은 bridge script와 requirements를 포함하고 factory가 script를 추출한다. Python/Node 실행 파일과 provider 인증은 운영 환경이 제공한다. 현재 실행 파일 override는 HARNESS_CODEX_PYTHON, HARNESS_GEMINI_NODE이고 Gemini SDK 경로는 GEMINI_CLI_SDK_MODULE로 지정할 수 있다.
@@ -62,4 +62,4 @@ publicationGroup/publicationVersion을 지정할 수 있다. 공개 발행에는
 5. [samples/basic](../samples/basic)을 새 artifact만으로 빌드하여 transitive dependency와 공개 API를 검증한다.
 6. README·문서의 구현 상태를 실연동 결과와 일치시킨다.
 
-새 문서의 존재나 기존 테스트 통과만으로 새 계약을 발행하지 않는다. 전체 완료 조건은 [전환 계획](port-revision-plan.md)을 따른다.
+새 문서의 존재나 일부 테스트 통과만으로 새 계약을 발행하지 않는다. 현재 검증 범위와 제외 항목은 [계약 검증](contract-boundary-validation.md)을 따른다.

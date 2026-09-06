@@ -6,7 +6,6 @@ __pycache__/
 build/
 **/build/
 node_modules/
-bridges/node_modules/
 *.iml
 *.log
 .kotlin/

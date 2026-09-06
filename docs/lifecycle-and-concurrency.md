@@ -1,6 +1,6 @@
 # Lifecycle and concurrency
 
-공개 `AgentHarness`, `AgentSession`, `AgentTask`의 수명·상태·동시성 계약이다. 세 adapter의 native 완료·취소·정리와 문맥 검증 범위는 [현재 결과](native-port-validation.md)에 기록했다. 아래 규범에는 추가 검증이 필요한 조건도 포함한다. [Protocol reference](protocol-reference.md), [Event contract](event-contract.md), [설계 기준](semantic-contract.md)을 함께 따른다.
+공개 `AgentHarness`, `AgentSession`, `AgentTask`의 수명·상태·동시성 계약이다. 세 adapter의 native 완료·취소·정리와 문맥 검증 범위는 [현재 결과](contract-boundary-validation.md)에 기록했다. [Protocol reference](protocol-reference.md), [Event contract](event-contract.md), [설계 기준](semantic-contract.md)을 함께 따른다.
 
 ## 소유와 문맥
 
@@ -46,7 +46,7 @@ Session은 문맥 연속성을 제공하며, 영속성은 선택 계약이다. �
 | 같은 문맥 복구 | 이전 실행이 종료했거나 해당 문맥을 더 이상 변경할 수 없고, 문맥 일관성이 확인됐을 때 재사용한다. 지원하는 확인·격리·복구 방법과 결과를 명시해야 한다. |
 | 위험을 감수한 같은 문맥 재사용 | 기본 계약으로 제공하지 않는다. 위험 승인만으로 직렬화 보장을 충족할 수 없으며 별도의 소비 목적·약화되는 보장·실증이 필요하다. |
 
-기본 adapter에 모든 미확정 session의 복구 성공을 요구하지 않는다. 해당 문맥의 불확실성만으로 release나 유효한 harness에서 독립된 새 session으로 시작하는 것까지 차단하지 않는다. 인증·환경 장애 등에 따른 별도 호출 실패는 구별한다. 후속 복구가 성공해도 이미 확정한 Task의 `Unresolved`를 덮어쓰지 않는다. 구체적 복구 API와 영속 조정 수단은 [전환 계획](port-revision-plan.md)에서 구현 전에 검증한다.
+기본 adapter에 모든 미확정 session의 복구 성공을 요구하지 않는다. 해당 문맥의 불확실성만으로 release나 유효한 harness에서 독립된 새 session으로 시작하는 것까지 차단하지 않는다. 인증·환경 장애 등에 따른 별도 호출 실패는 구별한다. 후속 복구가 성공해도 이미 확정한 Task의 `Unresolved`를 덮어쓰지 않는다. 복구 API와 영속 조정 수단을 추가하면 같은 경계를 별도 검증한다.
 
 ## 상태와 outcome
 

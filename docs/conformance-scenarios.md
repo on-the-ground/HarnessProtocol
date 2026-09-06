@@ -1,10 +1,10 @@
 # 공통 시나리오와 역사적 목록의 종결
 
-현재 검사는 기능별로 가장 작은 실제 경계에 연결한다. 요구 판정은 [G01](requirement-admission-validation.md), 수락 확인 유실은 [G02](acceptance-loss-validation.md), 나머지 계약 경계는 [G03–G12](contract-boundary-validation.md)를 따른다. 실행 수는 concrete consumer의 JUnit 결과만 센다.
+현재 검사는 기능별로 가장 작은 실제 경계에 연결한다. G01 요구 판정부터 G12 저장 장애까지의 적용 범위는 [계약 검증](contract-boundary-validation.md)을 따른다. 실행 수는 concrete consumer의 JUnit 결과만 센다.
 
 초기에 작성한 `HarnessConformanceCoreTest` 29개와 `HarnessConformanceCleanupTest` 19개는 구현자가 모든 native 사실을 임의로 일으킬 수 있다는 하나의 거대한 `HarnessFixture`를 전제로 했다. C20/C21과 K13/K14는 앞 단계에서 먼저 실제 요구·수락 검사로 대체했다. 남아 있던 44개 본문도 실제 검사로 옮기거나, 현재 구성의 정직한 기능 거절로 닫거나, Port가 아닌 fixture 가정을 폐기한 뒤 제거했다. 삭제한 본문을 통과 수로 환산하지 않는다.
 
-[기계 판독 목록](../harness-conformance/scenario-catalog.json)은 원래 C01–C29·K01–K19의 48개 identity와 각 `status`, `replacementEvidence`, `disposition`을 보존한다. 과거 source는 `historicalSource`이며 현재 실행 파일이 아니다.
+[기계 판독 목록](../protocol/conformance/scenario-catalog.json)은 원래 C01–C29·K01–K19의 48개 identity와 각 `status`, `replacementEvidence`, `disposition`을 보존한다. 과거 source는 `historicalSource`이며 현재 실행 파일이 아니다.
 
 ## 현재 검사 배치
 

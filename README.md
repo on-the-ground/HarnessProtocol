@@ -32,42 +32,32 @@ AgentHarness                   하네스 제공 경계
 
 ## 문서와 구현 상태
 
-**Codex·Gemini CLI·Koog adapter와 `Harnesses` factory는 새 `dev.harnessprotocol` Port를 사용한다.** 임시 참조 하네스와 legacy 실행 경로는 제거했다. 기본 연결 뒤 요구 수락·확인 유실·상호작용 경쟁·문맥 공유·부분 산출물·정리·관찰 부하·사용량·저장 장애를 실제 runtime에서 검증했다. 문맥을 다시 연 핸들의 자원 수명과 설정 보존 결함도 수정했다.
+Codex·Gemini CLI·Koog adapter와 `Harnesses` factory는 `dev.harnessprotocol` Port를 사용한다. skill 활성화는 실제 본문 적용 보장이고 `ExecutionConstraint.Required`는 승인이 넓힐 수 없는 상한이다. 각 adapter는 이행할 수 없는 요구를 작업 전에 거절한다.
 
-현재 진행과 적용 한계는 [G03–G12 계약 경계 검증](docs/contract-boundary-validation.md)을 따른다. skill 활성화는 실제 본문 적용 보장으로, `ExecutionConstraint.Required`는 승인이 넓힐 수 없는 상한으로 확정했다. Codex·Gemini는 active skill을 적용하고, Codex는 집행 가능한 제한 조합만 수락하며, 나머지 구성은 이행할 수 없는 요구를 작업 전에 거절한다. [기본 adapter 검증](docs/native-port-validation.md), [요구 사례 검증](docs/requirement-admission-validation.md), [수락 확인 유실](docs/acceptance-loss-validation.md)은 각 단계의 실행 기록이다. 공개 의미는 [공개 모델](docs/public-model.md)을 따른다. 통제된 모델을 사용한 실제 runtime 검증과 외부 실모델 검증은 구별한다.
+| 목적 | 문서 |
+|---|---|
+| 시작 | [FAQ](docs/FAQ.md) |
+| 판단 기준 | [설계 선언](AHP_CHARTER.md), [Semantic contract](docs/semantic-contract.md), [추상과 용어](docs/abstraction-and-terminology.md) |
+| 공개 계약 | [Protocol reference](docs/protocol-reference.md), [Lifecycle](docs/lifecycle-and-concurrency.md), [Event contract](docs/event-contract.md) |
+| 공개 모델 | [공개 모델](docs/public-model.md), [선택 계약](docs/capability-candidates.md) |
+| 구현 | [Provider mapping](docs/provider-mapping.md), [Bridge protocol](docs/bridge-protocol.md), [Distribution](docs/distribution.md) |
+| 검증 | [Testing](docs/testing.md), [G01–G12 결과](docs/contract-boundary-validation.md), [시나리오 대응표](docs/conformance-scenarios.md) |
 
-| 읽는 순서       | 문서                                                                                                                                                        |
-|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Quickstart  | [FAQ for newcommers](docs/FAQ.md)                                                                                                                         |
-| 목적과 판단 기준   | [설계 선언](AHP_CHARTER.md), [Semantic contract](docs/semantic-contract.md)                                                                                   |
-| 개념과 이름      | [추상 개정과 용어](docs/abstraction-and-terminology.md)                                                                                                          |
-| 동작 계약       | [Protocol reference](docs/protocol-reference.md), [Lifecycle](docs/lifecycle-and-concurrency.md), [Event contract](docs/event-contract.md)                |
-| 추가로 요구할 보장  | [선택 계약과 검토 항목](docs/capability-candidates.md)                                                                                                             |
-| 구현 전환       | [공개 모델](docs/public-model.md), [Port revision plan](docs/port-revision-plan.md), [Provider mapping](docs/provider-mapping.md), [Testing](docs/testing.md) |
-| 배포와 구현 세부   | [Distribution](docs/distribution.md), [Bridge protocol](docs/bridge-protocol.md)                                                                          |
-| 실증 근거       | [Koog 검증 계획](docs/koog-abstraction-validation-plan.md), [검증 결과](docs/koog-abstraction-validation-results.md)                                              |
-| 회귀 검토       | [문서 개편 후 회귀 검토](docs/regression-review.md): 복원한 보장, 새 설계의 경계 조건, 기존 suite 재실행 결과                                                                          |
-| 총평 반영       | [채택·수정·보류 판단](docs/review-disposition.md): 종결 증거, 문맥 조정, 지원 탐색, 이벤트 존치와 남은 검증                                                                             |
-| Codex 기반 선택 | [codex-agent 검토](docs/codex-agent-adoption-review.md), [저수준 client 조사](docs/spikes/2026-09-03-codex-low-level-client.md)                                  |
-
-공개 Port와 현재 세 adapter의 구성별 계약 검증은 G12까지 연결돼 있다. 최종 통합 회귀에서 JVM 292개(세 native runtime 검사 210개 포함)와 host 21개가 실패·오류·건너뜀 없이 통과했다. [최종 집계](harness-native-integration/evidence/final-regression-summary.json)와 [native 실행 기록](harness-native-integration/evidence/final-g01-g12.json)을 보존한다. 현재 구성에서 제공하지 않는 선택 기능의 성공 경로와 외부 실모델·artifact 발행은 별도 범위이며, 기존 설계 이력은 Git에서 확인한다.
+최종 통합 회귀에서 JVM 292개(세 native runtime 검사 210개 포함)와 host 21개가 실패·오류·건너뜀 없이 통과했다. [최종 집계](verification/native-integration/evidence/final-regression-summary.json)와 [native 실행 기록](verification/native-integration/evidence/final-g01-g12.json)을 보존한다. 외부 실모델 호출, 현재 구성이 거절하는 선택 기능의 성공 경로와 artifact 발행은 이 검증 범위에 포함하지 않는다.
 
 ## 구현 구성
 
-| 위치 | 역할과 전환 상태 |
+| 위치 | 역할 |
 |---|---|
-| `harness-protocol` | `dev.harnessprotocol`에 확정된 공개 Port. 모든 adapter·회귀 검사·독립 실험이 이 Port를 사용하며 이전 패키지는 제거했다. |
-| `harness-codex`, `harness-gemini-cli` | 새 Port를 실제 native SDK에 연결한다. 기존 회귀도 현재 구현을 검증하며 별도 구 구현은 없다. |
-| `harness-koog` | 실제 Koog graph·ToolRegistry를 직접 연결하는 새 Port adapter. 모델 executor는 구성 경계에서 제공한다. |
-| `harness-runtime` | adapter가 선택하여 사용하는 Task 수명·관찰 구현. 공개 Port의 필수 기반이 아니다. |
-| `harness-process-bridge`, `bridges` | 두 process adapter의 내부 transport와 host. 모든 하네스의 필수 기반이 아니다. |
-| `harness-adapter-testkit` | 현재 process adapter의 공통 회귀, 독립적인 설정 투영, SDK 이벤트 매핑 검사. |
-| `harness-conformance` | 목적별 공통 계약 판정과 작은 fixture seam. 원래 48개 C/K 목록은 실행 코드가 아니라 처리 근거를 보존한 역사적 inventory다. [시나리오 대응표](docs/conformance-scenarios.md)를 따른다. |
-| `harness-bundle` | Codex·Gemini·Koog adapter 구성 편의. Koog의 executor·model을 명시적으로 받는다. |
-| `harness-native-integration` | 세 실제 runtime과 통제된 모델 경계로 공개 동작을 검증한다. `-PnativeHarnessTests`로 실행한다. |
-| `experiments/koog-validation` | 현재 Port를 사용하는 별도 Koog 승인·질문·파일 보관 구성의 격리 실험. production 기본 구성과 구별한다. |
-
-Koog 실험 18개와 기존 회귀 71개가 통과한 [기록](experiments/koog-validation/evidence/verification.json)은 기존 계약을 대상으로 한 증거다. 현재 실행 결과는 [native 검증](docs/native-port-validation.md)과 [legacy 이전 검토](docs/legacy-port-migration.md)에 별도로 기록한다. 실모델 검증을 뜻하지 않는다.
+| `protocol/core` | provider와 구현 방식에 독립적인 공개 Port |
+| `protocol/conformance` | 목적별 공통 계약 판정과 fixture seam |
+| `implementations/codex` | Codex adapter와 Python host |
+| `implementations/gemini-cli` | Gemini CLI adapter와 Node host |
+| `implementations/koog` | Koog graph adapter |
+| `implementations/shared` | adapter가 선택해 쓰는 Task runtime과 process transport |
+| `implementations/bundle` | Codex·Gemini·Koog adapter 구성 편의. Koog의 executor·model을 명시적으로 받는다. |
+| `verification` | adapter SDK 회귀와 세 실제 runtime의 공통 계약 검증 |
+| `samples` | 공개 artifact 소비 예제 |
 
 ## 현재 구현을 빌드·검증하기
 
@@ -80,4 +70,4 @@ Koog 실험 18개와 기존 회귀 71개가 통과한 [기록](experiments/koog-
 ./gradlew.bat test hostTests -PnativeHarnessTests -PstrictHostTests
 ```
 
-Host 준비와 검증 범위는 [Testing](docs/testing.md), native runtime 준비·결과는 [실제 adapter 검증](docs/native-port-validation.md), artifact 구성은 [Distribution](docs/distribution.md)에 있다. [samples/basic](samples/basic)은 새 factory의 소비 예제다. 이번 작업에서는 artifact를 발행하지 않았다.
+Host 준비와 검증 범위는 [Testing](docs/testing.md), 결과는 [G01–G12 검증](docs/contract-boundary-validation.md), artifact 구성은 [Distribution](docs/distribution.md)에 있다. [samples/basic](samples/basic)은 factory 소비 예제다.

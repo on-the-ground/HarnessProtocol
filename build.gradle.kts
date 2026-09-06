@@ -133,11 +133,17 @@ fun interpreter(envVar: String, vararg candidates: String): String? {
     }
 }
 
-fun registerHostTest(name: String, envVar: String, candidates: List<String>, args: (String) -> List<String>) {
+fun registerHostTest(
+    name: String,
+    workingDirectory: String,
+    envVar: String,
+    candidates: List<String>,
+    args: (String) -> List<String>,
+) {
     tasks.register<Exec>(name) {
         group = "verification"
         description = "Runs the $name SDK host tests"
-        workingDir = rootProject.file("bridges")
+        workingDir = rootProject.file(workingDirectory)
         val found = interpreter(envVar, *candidates.toTypedArray())
         if (found == null) {
             if (strictHostTests) throw GradleException("$name: no interpreter found (tried ${candidates.joinToString()}); set $envVar")
@@ -149,10 +155,10 @@ fun registerHostTest(name: String, envVar: String, candidates: List<String>, arg
     }
 }
 
-registerHostTest("codexHostTests", "HARNESS_CODEX_PYTHON", listOf("python3", "python")) { py ->
+registerHostTest("codexHostTests", "implementations/codex/host", "HARNESS_CODEX_PYTHON", listOf("python3", "python")) { py ->
     listOf(py, "-m", "pytest", "-q", "tests/test_codex_bridge.py")
 }
-registerHostTest("geminiHostTests", "HARNESS_GEMINI_NODE", listOf("node")) { node ->
+registerHostTest("geminiHostTests", "implementations/gemini-cli/host", "HARNESS_GEMINI_NODE", listOf("node")) { node ->
     listOf(node, "--test", "tests/gemini_bridge.test.mjs")
 }
 

@@ -2,9 +2,9 @@
 
 ## 실제 adapter 전환 현황
 
-세 adapter의 새 Port 실행 검증은 `harness-native-integration`에서 수행한다. 실제 Codex App Server·Gemini SDK/core·Koog graph에 통제된 모델 경계를 연결하며, 실제 입력·지시·이력과 도구 효과를 확인한다. 준비·실행 결과·기존 시나리오에서 보완할 판정은 [실제 adapter 검증](native-port-validation.md)에 기록했다. factory·adapter·기존 회귀 suite·독립 Koog 실험 모두 현재 Port를 사용하며 구 실행 경로는 제거했다.
+세 adapter의 Port 실행 검증은 `verification/native-integration`에서 수행한다. 실제 Codex App Server·Gemini SDK/core·Koog graph에 통제된 모델 경계를 연결하며 입력·지시·이력과 도구 효과를 확인한다. 결과와 한계는 [G01–G12 검증](contract-boundary-validation.md)에 기록한다.
 
-임시 `ReferenceFixture`·참조 하네스·실행 subclass는 제거했다. `harness-conformance/src/testFixtures`의 공통 판정은 실제 runtime binding과 SDK 경계 binding에서 실행한다. 요구 수락·확인 유실에 이어 상호작용·문맥·네 outcome·다중 정리·관찰 부하·승인 범위·사용량·저장 장애·작업 환경 검사를 G12까지 연결했다. [현재 단계별 증거와 한계](contract-boundary-validation.md), [전체 대응표](conformance-scenarios.md)를 따른다.
+임시 `ReferenceFixture`·참조 하네스·실행 subclass는 제거했다. `protocol/conformance/src/testFixtures`의 공통 판정은 실제 runtime binding과 SDK 경계 binding에서 실행한다. 요구 수락·확인 유실에 이어 상호작용·문맥·네 outcome·다중 정리·관찰 부하·승인 범위·사용량·저장 장애·작업 환경 검사를 G12까지 연결했다. [현재 단계별 증거와 한계](contract-boundary-validation.md), [전체 대응표](conformance-scenarios.md)를 따른다.
 
 기존 Core/Cleanup의 마지막 미연결 본문 44개는 목적별 대체·현재 구성의 기능 거절·잘못된 fixture 가정을 각각 기록한 뒤 제거했다. 원래 48개 identity는 역사적 inventory로만 남기며 통과 수로 세지 않는다. 미지원 선택 기능의 정확한 사전 거절과 지원 기능의 의미 이행을 구별하고, 실행 수는 JUnit에서 집계한다.
 
@@ -76,40 +76,32 @@ TaskDiagnostics가 지원되면 진단 observer만 느리게 하거나 진단을
 
 영속성 검사는 선언한 재개·조정 범위별로 나눈다. 동일 ID 문자열의 다른 저장 namespace를 거절하고 정규화한 참조를 보존한다. harness 재생성·process 재시작을 지원하면 미확정 문맥의 차단도 그 경계 너머에서 보존하거나 검증된 복구로 해소해야 한다. 다중 접근 미지원 구성의 사전 거절과 지원 구성의 조정을 별도로 검사한다. 복구를 제공한다면 차단 해소 조건·문맥 일관성·이전 outcome 불변을 검사하며 단순 reopen 성공을 복구 성공으로 세지 않는다.
 
-## 현재 검증 위치와 실행 명령
+## 검증 위치와 실행 명령
 
-현재 검증 자산은 다음과 같다. native·값 타입·SDK 경계 회귀와 역사적 scenario inventory를 구별한다.
-
-| 위치 | 현재 내용 / 전환 |
+| 위치 | 내용 |
 |---|---|
-| harness-adapter-testkit | RecordingBridge, SdkAdapterContractTest, SpecSpace/IntentProjection. SDK 경계 검사 11개와 공통 lifecycle binding. TaskMappingProbe는 production ManagedTask의 mapper 출력을 관찰한다 |
-| harness-protocol/src/test | PublicModelTest: 미확인·부재·unknown 합산·독립 제약·명시 승인 범위의 값 타입 회귀 |
-| harness-conformance | main의 목적별 evidence seam과 testFixtures의 공통 판정. testFixtures 의존으로 소비하며 concrete 실행은 consumer 모듈에서 집계한다. 만능 HarnessFixture와 미연결 Core/Cleanup 본문은 없다 |
-| harness-codex/src/test, harness-gemini-cli/src/test | 현재 Port 공통 suite, mapper·정책·interaction 검사. Gemini에는 실제 process를 구동하는 ProcessLifecycleTest도 포함 |
-| harness-process-bridge/src/test | BridgeProtocolTest |
-| harness-native-integration/src/test | 세 실제 runtime의 구성·모델 경계와 공통 suite binding, Koog 실제 도구 효과 검사. 공통 판정 본문은 conformance에 있다 |
-| bridges/tests | Python CodexClient + stub App Server, Node host 검사 |
-| experiments/koog-validation | Koog native/Port 실험. [재현 안내](../experiments/koog-validation/README.md) |
+| `protocol/core/src/test` | 공개 값 타입과 기본 불변식 |
+| `protocol/conformance` | 목적별 fixture seam과 재사용 가능한 공통 판정 |
+| `implementations/*/src/test` | adapter 매핑·정책·resource·transport 회귀 |
+| `implementations/codex/host/tests` | Python Codex host와 stub App Server |
+| `implementations/gemini-cli/host/tests` | Node Gemini host |
+| `verification/adapter-testkit` | process adapter의 SDK 경계 공통 검사 |
+| `verification/native-integration` | 세 실제 runtime과 통제된 모델 경계의 계약 검사 |
+
+Gradle 프로젝트 이름과 발행 artifact 이름은 물리 디렉터리와 독립적으로 유지한다.
 
 ```powershell
 ./gradlew.bat test
 ./gradlew.bat :harness-conformance:testFixturesClasses
 ./gradlew.bat hostTests
 ./gradlew.bat check -PstrictHostTests
-./gradlew.bat -p experiments/koog-validation test
 ./gradlew.bat test hostTests -PnativeHarnessTests -PstrictHostTests
 ```
 
-Host 검사의 현재 준비 사항은 Python 환경의 `bridges/requirements-codex.txt` 및 pytest 설치, Node 20+다. hostTests는 interpreter가 없으면 skip할 수 있으므로 전체 검증을 요구할 때 strictHostTests gate를 사용하고 실제 실행된 수를 확인한다.
+Codex host는 Python 3.10+, `implementations/codex/host/requirements.txt`와 pytest가 필요하다. Gemini host는 Node 20+가 필요하다. `hostTests`는 interpreter가 없으면 건너뛸 수 있으므로 전체 검증에서는 `-PstrictHostTests`를 사용하고 실제 실행 수를 확인한다.
 
 ## 증거 기록
 
-문서/API 조사, 실제 runtime에 통제된 모델 응답을 연결한 재현, 실모델 통합을 구분한다. SDK·artifact·source revision·환경·실제 실행한 검사 수와 skip·미검증 범위를 기록한다.
+문서/API 조사, 통제된 모델 경계의 실제 runtime 검증, 외부 실모델 호출을 구별한다. 최종 실행 수와 source hash는 [native 실행 기록](../verification/native-integration/evidence/final-g01-g12.json), 전체 JVM·host 집계는 [최종 회귀 요약](../verification/native-integration/evidence/final-regression-summary.json)에 있다. 역사적 C/K identity의 처리 근거는 [시나리오 대응표](conformance-scenarios.md)와 [기계 판독 catalog](../protocol/conformance/scenario-catalog.json)에 남긴다.
 
-Koog 실험 18개와 기존 회귀 71개의 [검증 기록](../experiments/koog-validation/evidence/verification.json)은 이전 계약의 baseline이다. 새 계약의 적합성 통과로 재사용하지 않는다. Python/Node host suite와 실모델은 해당 실험 작업에서 별도로 실행하지 않았다.
-
-참조 하네스에서 얻었던 48개 통과는 제거 전의 이력이며 현재 검증 수에서 제외한다. 현재 집계와 제거 전 기록은 [native 검증 기록](native-port-validation.md#실행-결과)에서 구별한다. 이전 suite의 유효한 공통 행동과 SDK 특정 검사는 현재 adapter로 이전했다. 관찰 상실·정리 만료는 Unresolved, 재개는 명시적 persistence 요구, 범위 없는 지속 승인은 선택지 제외로 검증한다. `RecordingBridge`, stub App Server, 모델 응답 제어는 이 구현 경계 검사용이며 삭제한 임시 Port 구현과 역할이 다르다.
-
-실제 App Server 승인 payload와 Gemini SDK build의 현재 고정 경로는 host/native suite에서 검증한다. 외부 실모델과 다른 SDK 버전은 별도 통합 범위이며, 일부 환경이 준비되지 않으면 부분 완료로 표시한다.
-
-문서 개편 후 기존·계획된 보장의 누락을 검토하고 기존 suite를 재실행한 결과는 [회귀 검토](regression-review.md)에 기록한다. 위 새 시나리오를 문서에 추가한 사실과 그 시나리오를 구현·실행하여 통과한 사실은 구별한다.
+외부 실모델과 현재 구성이 거절하는 선택 기능은 검증된 성공 경로로 세지 않는다. 공통 판정 본문이 존재하는 것과 실제 adapter binding에서 실행된 것도 구별한다.
