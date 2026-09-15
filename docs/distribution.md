@@ -12,14 +12,14 @@
 
 ## 현재 구현의 좌표와 factory
 
-소스의 factory는 새 Port로 전환했고 기본 publication version은 `0.2.2`다. artifact는 이번 작업에서 발행하지 않았으며 기존 `0.1.0` 다운로드가 새 AgentTask API를 제공한다고 주장하지 않는다.
+소스의 factory는 새 Port로 전환했고 기본 publication version은 `0.2.3`이다. artifact는 이번 작업에서 발행하지 않았으며 기존 `0.1.0` 다운로드가 새 AgentTask API를 제공한다고 주장하지 않는다.
 
 다음 예시는 이 저장소에서 `./gradlew.bat publishToMavenLocal`을 실행해 로컬 Maven 저장소에 설치한 artifact를 소비한다. 공개 Maven repository에서 다운로드할 수 있다는 안내가 아니다. publicationGroup/publicationVersion을 변경했다면 소비 좌표도 실제 로컬 발행값에 맞춘다. 현재 문서 작업에서는 발행을 실행하지 않았다.
 
 ```kotlin
 repositories { mavenLocal() }
 dependencies {
-    implementation("io.github.joohyung-park:harness-bundle:0.2.2")
+    implementation("io.github.joohyung-park:harness-bundle:0.2.3")
 }
 ```
 
@@ -48,7 +48,7 @@ dependencies {
 ```powershell
 ./gradlew.bat publishToMavenLocal
 ./gradlew.bat publishAllPublicationsToBuildRepository
-./gradlew.bat bundleForMavenCentral -PpublicationVersion=0.2.2
+./gradlew.bat bundleForMavenCentral -PpublicationVersion=0.2.3
 ```
 
 publicationGroup/publicationVersion을 지정할 수 있다. 공개 발행에는 해당 repository의 namespace·서명·POM·의존성·라이선스·인증 구성을 확인한다. bundle 생성 성공과 실제 public repository 발행 성공을 구별한다. 생성 경로는 Gradle task의 실제 출력 위치를 따른다.
