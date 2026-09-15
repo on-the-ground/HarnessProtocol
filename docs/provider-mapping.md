@@ -30,6 +30,9 @@ Host는 고수준 Codex/AsyncCodex가 아닌 `openai_codex.client.CodexClient`�
 - thread/start·resume의 developerInstructions, model, cwd와 정책 wire 필드를 구성한다.
 - `CodexSdkOptions.codexExecutable`을 지정하면 Python SDK의 `CodexConfig.codex_bin`으로 전달하고, 생략하면 SDK에 포함된 runtime을 유지한다.
 - `CodexSdkOptions.reasoningEffort`은 이 harness가 시작하는 모든 Task의 `turn/start.effort`로 전달한다. 이는 Codex가 소유하는 운용 설정이며 공통 `TaskRequest` 요구가 아니다. 전달 성공은 provider 간 품질·비용·지연의 공통 의미나 실제 사용된 effort의 독립 관측을 뜻하지 않는다.
+- `CodexHarness.reasoningOptions`은 model/list의 `model`·`id`를 canonical identity와 alias로 함께 보존하고 model별 supportedReasoningEfforts를 Codex 전용 catalog로 제공한다. 조회 결과는 available/not-found를 명시적으로 구분한다. `CodexTaskSession.startTask` option overload는 명시적 Task option을 같은 session lock 안에서 `turn/start.effort`로 전달하며 harness 기본 effort보다 우선한다.
+- 기본 session model이 `null`이거나 alias 관계를 확인할 수 없으면 다른 model이라고 단정하지 않고 UNCONFIRMED로 거절한다. 확인된 canonical model 또는 SDK alias만 수락하고, 확인된 다른 model·목록에서 사라진 option은 native Task 시작 전에 INCOMPATIBLE로 거절한다.
+- Codex Task extension이 보장하는 범위는 선택 field를 포함한 native Task 시작 수락까지다. Provider가 effective effort를 독립적으로 보고하지 않으므로 requested 값을 effective 값으로 되풀이하거나 reasoning 품질·비용·지연 보장으로 확대하지 않는다.
 - ephemeral retention 요구는 `thread/start.ephemeral=true`로 전달하고 반환된 `thread.ephemeral`을 `AgentSession.disposition.retention`으로 보고한다. false·누락을 요청값으로 덮어쓰지 않는다.
 - pinned SDK의 ephemeral 설명은 in-memory/no disk materialization까지다. account-wide remote retention이나 Codex Desktop Recents 비노출의 독립 응답은 없으므로 user-history visibility는 UNKNOWN이며 Hidden 요구는 UNCONFIRMED로 사전 거절한다.
 - PROVIDER_DEFAULT는 approval 필드를 생략한다. SDK convenience default로 의미를 바꾸지 않는다.

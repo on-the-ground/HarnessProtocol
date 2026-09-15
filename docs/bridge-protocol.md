@@ -16,11 +16,12 @@ Host는 stdin 요청과 stdout 응답·이벤트를 한 줄에 하나의 JSON �
 | resume_session | sessionId, spec | provider가 정규화한 sessionId, 관측 가능한 retention/historyVisibility |
 | release_session | sessionId | 빈 객체. Codex ephemeral session은 provider-native thread 삭제 확인 뒤 반환 |
 | discard_session | 생성 요구 위반으로 반환된 sessionId | provider-native thread 삭제 확인 또는 error |
+| list_reasoning_options | 선택적 model | Codex canonical model·SDK alias·reasoning option catalog 또는 found=false |
 | start_execution | sessionId, requestId, input(type=text, text) | executionId |
 | cancel_execution | executionId | 빈 객체 |
 | respond_interaction | executionId, interactionId, response(decision) | 빈 객체 또는 error |
 
-현재 envelope는 instructions/model/workingDirectory, skills(name/path/activate), filesystem/additionalWritableRoots/network/approval과 선택적 retention을 사용한다. Codex의 `retention=ephemeral`은 `thread/start.ephemeral=true`로 전달하고 응답의 `thread.ephemeral`을 `ephemeral` 또는 `materialized`로 반환한다. user-history visibility는 SDK 응답에 독립 관측이 없어 `unknown`이다. 관측 필드를 제공하지 않는 host는 adapter에서 UNKNOWN으로 보존한다. 생략과 빈 문자열의 차이를 보존하며 Gemini 경로는 앞선 validation에서 지원하지 않는 policy를 거절한다. 이전 host decision에는 approve_for_session이 남아 있지만 새 Port mapper는 명시적인 승인 범위를 받지 못한 요청에 그 선택지를 제공하지 않는다.
+현재 envelope는 instructions/model/workingDirectory, skills(name/path/activate), filesystem/additionalWritableRoots/network/approval과 선택적 retention을 사용한다. Codex의 `retention=ephemeral`은 `thread/start.ephemeral=true`로 전달하고 응답의 `thread.ephemeral`을 `ephemeral` 또는 `materialized`로 반환한다. user-history visibility는 SDK 응답에 독립 관측이 없어 `unknown`이다. Codex 전용 `list_reasoning_options`은 model/list의 canonical model·SDK alias·supported reasoning option을 반환한다. start_execution의 선택적 reasoningOption은 같은 요청의 `turn/start.effort`로 전달되며 구성된 harness 기본값보다 우선한다. 관측 필드를 제공하지 않는 host는 adapter에서 UNKNOWN으로 보존한다. 생략과 빈 문자열의 차이를 보존하며 Gemini 경로는 앞선 validation에서 지원하지 않는 policy를 거절한다. 이전 host decision에는 approve_for_session이 남아 있지만 새 Port mapper는 명시적인 승인 범위를 받지 못한 요청에 그 선택지를 제공하지 않는다.
 
 공유 Kotlin encoder에는 `InteractionResponse.Answer`의 text 형태가 있지만 현재 Codex host는 approval decision만 해석하고 Gemini host는 interaction 응답 경로를 제공하지 않는다. 두 adapter가 질문 요구를 사전 거절하므로 text 형태는 현재 end-to-end bridge 지원으로 기록하지 않는다.
 

@@ -17,6 +17,7 @@ import tempfile
 import threading
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -24,13 +25,27 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 import codex_sdk_bridge as bridge_module  # noqa: E402
-from codex_sdk_bridge import Bridge, codex_config, make_inputs, thread_start_params, turn_start_params  # noqa: E402
+from codex_sdk_bridge import (  # noqa: E402
+    Bridge,
+    codex_config,
+    make_inputs,
+    reasoning_option_catalog,
+    thread_start_params,
+    turn_start_params,
+)
 
 pytest.importorskip("openai_codex")
 from openai_codex.client import CodexClient, CodexConfig  # noqa: E402
 
 
 # ---------------------------------------------------------------- mapping
+
+
+def reasoning_option(value: str, description: str) -> SimpleNamespace:
+    return SimpleNamespace(
+        reasoning_effort=SimpleNamespace(value=value),
+        description=description,
+    )
 
 
 def test_codex_runtime_override_is_explicit_and_optional():
@@ -73,7 +88,36 @@ def test_ephemeral_retention_is_explicit_and_provider_default_is_omitted():
 
 def test_codex_reasoning_effort_is_a_turn_option_and_omission_preserves_default():
     assert turn_start_params({"reasoningEffort": "high"}) == {"effort": "high"}
+    assert turn_start_params({"reasoningEffort": "medium"}, {"reasoningOption": "high"}) == {"effort": "high"}
     assert turn_start_params({}) == {}
+
+
+def test_reasoning_catalog_preserves_canonical_model_and_sdk_alias():
+    response = SimpleNamespace(data=[
+        SimpleNamespace(
+            id="model-a-alias",
+            model="model-a-canonical",
+            is_default=True,
+            default_reasoning_effort=SimpleNamespace(value="medium"),
+            supported_reasoning_efforts=[
+                reasoning_option("low", "Fast"),
+                reasoning_option("medium", "Balanced"),
+            ],
+        ),
+    ])
+    expected = {
+        "found": True,
+        "canonicalModel": "model-a-canonical",
+        "aliases": ["model-a-canonical", "model-a-alias"],
+        "options": [
+            {"id": "low", "displayName": "low", "description": "Fast"},
+            {"id": "medium", "displayName": "medium", "description": "Balanced"},
+        ],
+        "defaultOptionId": "medium",
+    }
+    assert reasoning_option_catalog(response) == expected
+    assert reasoning_option_catalog(response, "model-a-alias") == expected
+    assert reasoning_option_catalog(response, "missing") == {"found": False}
 
 
 def test_network_intent_rides_on_workspace_write_config_only():
@@ -222,6 +266,39 @@ def test_end_to_end_codex_reasoning_effort_reaches_turn_start(stub_log):
         _run(scenario())
     finally:
         client.close()
+    turn_start = next(e for e in _read_log(stub_log) if e["received"] == "turn/start")
+    assert turn_start["params"]["effort"] == "high"
+
+
+def test_end_to_end_reasoning_catalog_and_task_override(stub_log):
+    holder = {}
+    client = _stub_client("complete", stub_log, lambda m, p: holder["bridge"].on_server_request(m, p))
+    bridge = _CapturingBridge(client)
+    holder["bridge"] = bridge
+
+    async def scenario():
+        catalog = await bridge.dispatch("list_reasoning_options", {"model": "model-a-alias"})
+        session = await bridge.dispatch(
+            "create_session",
+            {"approval": "provider_default", "model": "model-a-alias", "reasoningEffort": "medium"},
+        )
+        await bridge.dispatch(
+            "start_execution",
+            {
+                "sessionId": session["sessionId"],
+                "input": {"type": "text", "text": "hi"},
+                "reasoningOption": "high",
+            },
+        )
+        await asyncio.to_thread(bridge.wait_for, "turn/completed")
+        return catalog
+
+    try:
+        catalog = _run(scenario())
+    finally:
+        client.close()
+    assert catalog["canonicalModel"] == "model-a-canonical"
+    assert catalog["aliases"] == ["model-a-canonical", "model-a-alias"]
     turn_start = next(e for e in _read_log(stub_log) if e["received"] == "turn/start")
     assert turn_start["params"]["effort"] == "high"
 

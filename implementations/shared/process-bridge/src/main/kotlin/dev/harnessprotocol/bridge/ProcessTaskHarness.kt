@@ -180,6 +180,20 @@ abstract class ProcessTaskHarness(
         storageNamespace?.let { blockedContexts += StoredContext(provider, it, context.id) }
     }
 
+    /** Adapter-specific typed APIs may add private host fields without exposing them through the common Port. */
+    protected suspend fun startTaskWithAdapterPayload(
+        session: AgentSession,
+        request: TaskRequest,
+        adapterPayload: JsonObject,
+    ): AgentTask {
+        require(adapterPayload.keys.none { it in RESERVED_TASK_FIELDS }) {
+            "Adapter task payload cannot replace common task fields"
+        }
+        val owned = session as? Session
+            ?: throw IllegalArgumentException("Session is not owned by this process harness")
+        return owned.startWithAdapterPayload(request, adapterPayload)
+    }
+
     private inner class Session(
         private val context: Context,
         override val spec: SessionSpec,
@@ -193,7 +207,10 @@ abstract class ProcessTaskHarness(
                 add(CompatibilityIssue("requirements.output", "This native connection does not yet enforce an output schema"))
         })
 
-        override suspend fun startTask(request: TaskRequest): AgentTask = context.mutex.withLock {
+        override suspend fun startTask(request: TaskRequest): AgentTask =
+            startWithAdapterPayload(request, JsonObject(emptyMap()))
+
+        suspend fun startWithAdapterPayload(request: TaskRequest, adapterPayload: JsonObject): AgentTask = context.mutex.withLock {
             if (closed.get() || released.get() || isBlocked(context)) throw SessionBlockedException(id, "Session is closed or its context is unresolved")
             check(context.active?.isTerminal != false) { "A task is already active on this session" }
             validate(request).requireCompatible()
@@ -204,6 +221,7 @@ abstract class ProcessTaskHarness(
                         put("sessionId", id.value)
                         put("requestId", requestId)
                         put("input", buildJsonObject { put("type", "text"); put("text", (request.input as TaskInput.Text).text) })
+                        adapterPayload.forEach { (key, value) -> put(key, value) }
                     })
                 }
             } catch (failure: Throwable) {
@@ -320,6 +338,7 @@ abstract class ProcessTaskHarness(
 
     private data class StoredContext(val provider: ProviderId, val namespace: StorageNamespace, val id: SessionId)
     private companion object {
+        val RESERVED_TASK_FIELDS = setOf("sessionId", "requestId", "input")
         // Native history survives harness recreation; its unresolved block must survive too.
         // Durable tombstones and recovery across the application process are not implemented.
         val blockedContexts = ConcurrentHashMap.newKeySet<StoredContext>()

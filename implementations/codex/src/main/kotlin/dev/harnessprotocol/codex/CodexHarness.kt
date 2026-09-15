@@ -21,6 +21,9 @@ open class CodexHarness protected constructor(
     }
 
     override val provider = ProviderId("codex")
+    private val reasoningCatalogs = ConcurrentHashMap<String, CodexReasoningOptionCatalog>()
+    private val unavailableReasoningModels = ConcurrentHashMap.newKeySet<String>()
+    private val reasoningCatalogLock = Any()
     override val support = SupportReport(mapOf(
         Capability.CALLER_APPROVAL to Support.Supported,
         Capability.QUESTIONS to Support.Unsupported("The configured client exposes approval handlers, not a typed question channel"),
@@ -83,6 +86,170 @@ open class CodexHarness protected constructor(
     }
     override fun ingest(task: ManagedTask, spec: SessionSpec, request: TaskRequest): (JsonObject) -> Unit =
         CodexTaskMapper(task, spec)::accept
+
+    /**
+     * Codex `model/list`에서 현재 reasoning option catalog을 조회한다.
+     *
+     * [model]을 생략하면 provider default model을 요청한다. 결과는 이 조회 시점의
+     * snapshot이며 이후 Task 시작 수락을 보장하지 않는다.
+     *
+     * @throws HarnessTransportException model catalog을 조회하지 못했을 때
+     */
+    suspend fun reasoningOptions(model: String? = null): CodexReasoningOptionLookup {
+        require(model == null || model.isNotBlank()) { "model must be null or non-blank" }
+        val result = call("list_reasoning_options", buildJsonObject { model?.let { put("model", it) } })
+        if (result["found"]?.jsonPrimitive?.booleanOrNull != true) {
+            model?.let(::forgetReasoningCatalog)
+            return CodexReasoningOptionLookup.NotFound(model)
+        }
+        val canonical = CodexModelId(result.getValue("canonicalModel").jsonPrimitive.content)
+        val aliases = result["aliases"]?.jsonArray.orEmpty().mapTo(linkedSetOf()) {
+            it.jsonPrimitive.content
+        }
+        val catalog = CodexReasoningOptionCatalog(
+            model = CodexModelIdentity(canonical, aliases),
+            options = result["options"]?.jsonArray.orEmpty().map { element ->
+                val option = element.jsonObject
+                CodexReasoningOptionDescriptor(
+                    id = CodexReasoningOptionId(option.getValue("id").jsonPrimitive.content),
+                    displayName = option.getValue("displayName").jsonPrimitive.content,
+                    description = option["description"]?.jsonPrimitive?.contentOrNull,
+                )
+            },
+            defaultOptionId = result["defaultOptionId"]?.jsonPrimitive?.contentOrNull
+                ?.let(::CodexReasoningOptionId),
+        )
+        rememberReasoningCatalog(model, catalog)
+        return CodexReasoningOptionLookup.Available(catalog)
+    }
+
+    private fun rememberReasoningCatalog(
+        requestedModel: String?,
+        catalog: CodexReasoningOptionCatalog,
+    ) = synchronized(reasoningCatalogLock) {
+        val keys = catalog.model.aliases + catalog.model.canonicalModel.value + listOfNotNull(requestedModel)
+        keys.mapNotNull(reasoningCatalogs::get).toSet().forEach { stale ->
+            reasoningCatalogs.entries.removeIf { it.value === stale }
+        }
+        keys.forEach { key ->
+            unavailableReasoningModels -= key
+            reasoningCatalogs[key] = catalog
+        }
+    }
+
+    private fun forgetReasoningCatalog(model: String) = synchronized(reasoningCatalogLock) {
+        unavailableReasoningModels += model
+        reasoningCatalogs[model]?.let { stale ->
+            reasoningCatalogs.entries.removeIf { it.value === stale }
+        }
+    }
+
+    private fun reasoningCatalog(model: String): CodexReasoningOptionCatalog? =
+        synchronized(reasoningCatalogLock) { reasoningCatalogs[model] }
+
+    private fun reasoningModelUnavailable(model: String): Boolean =
+        synchronized(reasoningCatalogLock) { model in unavailableReasoningModels }
+
+    /** Creates a session wrapper that can atomically apply Codex-only Task options. */
+    suspend fun createCodexSession(spec: SessionSpec): CodexTaskSession =
+        CodexSession(createSession(spec))
+
+    private inner class CodexSession(
+        private val delegate: AgentSession,
+    ) : CodexTaskSession, AgentSession by delegate {
+        override fun validate(
+            request: TaskRequest,
+            options: CodexTaskOptions,
+        ): CompatibilityReport = CompatibilityReport(
+            delegate.validate(request).issues + reasoningIssues(delegate.spec.model, options.reasoning),
+        )
+
+        override suspend fun startTask(
+            request: TaskRequest,
+            options: CodexTaskOptions,
+        ): AgentTask {
+            val common = delegate.validate(request)
+            common.requireCompatible()
+            val selection = options.reasoning ?: return delegate.startTask(request)
+            val selectedCatalog = when (val lookup = reasoningOptions(selection.model.value)) {
+                is CodexReasoningOptionLookup.Available -> lookup.catalog
+                is CodexReasoningOptionLookup.NotFound -> throw IncompatibleRequirementException(
+                    listOf(CompatibilityIssue(
+                        "codex.reasoning.model",
+                        "The selected Codex model is no longer present in model/list",
+                    )),
+                )
+            }
+            val sessionModel = delegate.spec.model
+            val sessionCatalog = when {
+                sessionModel == null -> null
+                selectedCatalog.model.matches(sessionModel) -> selectedCatalog
+                else -> when (val lookup = reasoningOptions(sessionModel)) {
+                    is CodexReasoningOptionLookup.Available -> lookup.catalog
+                    is CodexReasoningOptionLookup.NotFound -> null
+                }
+            }
+            CompatibilityReport(
+                common.issues + reasoningIssues(sessionModel, selection, selectedCatalog, sessionCatalog),
+            ).requireCompatible()
+            return startTaskWithAdapterPayload(delegate, request, buildJsonObject {
+                put("reasoningOption", selection.optionId.value)
+            })
+        }
+    }
+
+    private fun reasoningIssues(
+        sessionModel: String?,
+        selection: CodexReasoningOptionSelection?,
+        selectedCatalog: CodexReasoningOptionCatalog? = selection?.let {
+            reasoningCatalog(it.model.value)
+        },
+        sessionCatalog: CodexReasoningOptionCatalog? = sessionModel?.let(::reasoningCatalog),
+    ): List<CompatibilityIssue> {
+        if (selection == null) return emptyList()
+        if (selectedCatalog == null) {
+            val unavailable = reasoningModelUnavailable(selection.model.value)
+            return listOf(CompatibilityIssue(
+                "codex.reasoning.catalog",
+                if (unavailable) {
+                    "The selected Codex model is no longer present in model/list"
+                } else {
+                    "The selected Codex reasoning catalog has not been observed"
+                },
+                if (unavailable) CompatibilityIssueKind.UNSUPPORTED else CompatibilityIssueKind.UNCONFIRMED,
+            ))
+        }
+        if (selectedCatalog.model.canonicalModel != selection.model) return listOf(CompatibilityIssue(
+            "codex.reasoning.model",
+            "The selected reasoning option is bound to a different canonical Codex model",
+        ))
+        if (selectedCatalog.options.none { it.id == selection.optionId }) return listOf(CompatibilityIssue(
+            "codex.reasoning.optionId",
+            "The selected reasoning option is not available for the Codex model",
+        ))
+        if (sessionModel == null) return listOf(CompatibilityIssue(
+            "codex.reasoning.model",
+            "The session uses an unobserved provider-default model; pin the catalog canonical model",
+            CompatibilityIssueKind.UNCONFIRMED,
+        ))
+        if (!selectedCatalog.model.matches(sessionModel)) {
+            return when {
+                sessionCatalog == null -> listOf(CompatibilityIssue(
+                    "codex.reasoning.model",
+                    "The session model is not a confirmed alias of the selected catalog model",
+                    CompatibilityIssueKind.UNCONFIRMED,
+                ))
+                sessionCatalog.model.canonicalModel != selectedCatalog.model.canonicalModel -> listOf(
+                    CompatibilityIssue(
+                        "codex.reasoning.model",
+                        "The session and reasoning option use different Codex models",
+                    ),
+                )
+                else -> emptyList()
+            }
+        }
+        return emptyList()
+    }
     override fun sessionOpened(id: SessionId, spec: SessionSpec, resumed: Boolean) {
         storageNamespace?.let { namespace -> persistentSpecs.putIfAbsent(namespace to id, spec) }
     }
