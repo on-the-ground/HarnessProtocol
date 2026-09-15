@@ -199,6 +199,36 @@ class CodexReasoningOptionsTest {
     }
 
     @Test
+    fun `latest missing model invalidates its cached catalog before preflight`() {
+        var available = true
+        val bridge = RecordingBridge().apply {
+            respondTo("list_reasoning_options") {
+                if (available) reasoningCatalog() else buildJsonObject { put("found", false) }
+            }
+        }
+        withHarness(bridge) { _, harness ->
+            val catalog = assertIs<CodexReasoningOptionLookup.Available>(
+                harness.reasoningOptions("model-a-canonical"),
+            ).catalog
+            val session = harness.createCodexSession(SessionSpec(model = "model-a-alias"))
+            val options = CodexTaskOptions(CodexReasoningOptionSelection(
+                catalog.model.canonicalModel,
+                CodexReasoningOptionId("high"),
+            ))
+            val request = TaskRequest(TaskInput.Text("reason"))
+            assertEquals(CompatibilityStatus.COMPATIBLE, session.validate(request, options).status)
+
+            available = false
+            assertEquals(
+                CodexReasoningOptionLookup.NotFound("model-a-canonical"),
+                harness.reasoningOptions("model-a-canonical"),
+            )
+            assertEquals(CompatibilityStatus.INCOMPATIBLE, session.validate(request, options).status)
+            session.release()
+        }
+    }
+
+    @Test
     fun `Codex reasoning option public values enforce model scoped invariants`() {
         val model = CodexModelIdentity(CodexModelId("model-a"), setOf("model-a-alias"))
         val low = CodexReasoningOptionDescriptor(CodexReasoningOptionId("low"), "Low")

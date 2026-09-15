@@ -22,6 +22,8 @@ open class CodexHarness protected constructor(
 
     override val provider = ProviderId("codex")
     private val reasoningCatalogs = ConcurrentHashMap<String, CodexReasoningOptionCatalog>()
+    private val unavailableReasoningModels = ConcurrentHashMap.newKeySet<String>()
+    private val reasoningCatalogLock = Any()
     override val support = SupportReport(mapOf(
         Capability.CALLER_APPROVAL to Support.Supported,
         Capability.QUESTIONS to Support.Unsupported("The configured client exposes approval handlers, not a typed question channel"),
@@ -97,6 +99,7 @@ open class CodexHarness protected constructor(
         require(model == null || model.isNotBlank()) { "model must be null or non-blank" }
         val result = call("list_reasoning_options", buildJsonObject { model?.let { put("model", it) } })
         if (result["found"]?.jsonPrimitive?.booleanOrNull != true) {
+            model?.let(::forgetReasoningCatalog)
             return CodexReasoningOptionLookup.NotFound(model)
         }
         val canonical = CodexModelId(result.getValue("canonicalModel").jsonPrimitive.content)
@@ -116,11 +119,36 @@ open class CodexHarness protected constructor(
             defaultOptionId = result["defaultOptionId"]?.jsonPrimitive?.contentOrNull
                 ?.let(::CodexReasoningOptionId),
         )
-        (catalog.model.aliases + catalog.model.canonicalModel.value + listOfNotNull(model)).forEach {
-            reasoningCatalogs[it] = catalog
-        }
+        rememberReasoningCatalog(model, catalog)
         return CodexReasoningOptionLookup.Available(catalog)
     }
+
+    private fun rememberReasoningCatalog(
+        requestedModel: String?,
+        catalog: CodexReasoningOptionCatalog,
+    ) = synchronized(reasoningCatalogLock) {
+        val keys = catalog.model.aliases + catalog.model.canonicalModel.value + listOfNotNull(requestedModel)
+        keys.mapNotNull(reasoningCatalogs::get).toSet().forEach { stale ->
+            reasoningCatalogs.entries.removeIf { it.value === stale }
+        }
+        keys.forEach { key ->
+            unavailableReasoningModels -= key
+            reasoningCatalogs[key] = catalog
+        }
+    }
+
+    private fun forgetReasoningCatalog(model: String) = synchronized(reasoningCatalogLock) {
+        unavailableReasoningModels += model
+        reasoningCatalogs[model]?.let { stale ->
+            reasoningCatalogs.entries.removeIf { it.value === stale }
+        }
+    }
+
+    private fun reasoningCatalog(model: String): CodexReasoningOptionCatalog? =
+        synchronized(reasoningCatalogLock) { reasoningCatalogs[model] }
+
+    private fun reasoningModelUnavailable(model: String): Boolean =
+        synchronized(reasoningCatalogLock) { model in unavailableReasoningModels }
 
     /** Creates a session wrapper that can atomically apply Codex-only Task options. */
     suspend fun createCodexSession(spec: SessionSpec): CodexTaskSession =
@@ -174,16 +202,23 @@ open class CodexHarness protected constructor(
         sessionModel: String?,
         selection: CodexReasoningOptionSelection?,
         selectedCatalog: CodexReasoningOptionCatalog? = selection?.let {
-            reasoningCatalogs[it.model.value]
+            reasoningCatalog(it.model.value)
         },
-        sessionCatalog: CodexReasoningOptionCatalog? = sessionModel?.let(reasoningCatalogs::get),
+        sessionCatalog: CodexReasoningOptionCatalog? = sessionModel?.let(::reasoningCatalog),
     ): List<CompatibilityIssue> {
         if (selection == null) return emptyList()
-        if (selectedCatalog == null) return listOf(CompatibilityIssue(
-            "codex.reasoning.catalog",
-            "The selected Codex reasoning catalog has not been observed",
-            CompatibilityIssueKind.UNCONFIRMED,
-        ))
+        if (selectedCatalog == null) {
+            val unavailable = reasoningModelUnavailable(selection.model.value)
+            return listOf(CompatibilityIssue(
+                "codex.reasoning.catalog",
+                if (unavailable) {
+                    "The selected Codex model is no longer present in model/list"
+                } else {
+                    "The selected Codex reasoning catalog has not been observed"
+                },
+                if (unavailable) CompatibilityIssueKind.UNSUPPORTED else CompatibilityIssueKind.UNCONFIRMED,
+            ))
+        }
         if (selectedCatalog.model.canonicalModel != selection.model) return listOf(CompatibilityIssue(
             "codex.reasoning.model",
             "The selected reasoning option is bound to a different canonical Codex model",
